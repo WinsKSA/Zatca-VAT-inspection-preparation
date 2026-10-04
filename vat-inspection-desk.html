@@ -33,6 +33,11 @@ body{background:var(--bg);color:var(--fg);font:14px/1.5 var(--f-body);}
 nav.side{background:var(--surface);border-inline-end:1px solid var(--line);padding:20px 14px;position:sticky;top:env(safe-area-inset-top,0px);height:100vh;overflow:auto}
 .brand{font:600 19px/1.15 var(--f-display);color:var(--fg);margin:0 6px 4px}
 .brand-ar{font:500 13px var(--f-ar);color:var(--muted);margin:0 6px 12px;direction:rtl;text-align:start}
+.lang{margin:0 6px 8px}
+html[lang="ar"] body{font-family:var(--f-ar)}
+html[lang="ar"] h1,html[lang="ar"] .brand{font-family:var(--f-ar);font-weight:700}
+html[lang="ar"] .ar,html[lang="ar"] .brand-ar{display:none}
+html[lang="ar"] .nav-group,html[lang="ar"] thead th,html[lang="ar"] .kpi .lab{letter-spacing:0;text-transform:none}
 .nav-group{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:16px 8px 6px}
 .nav-btn{display:flex;justify-content:space-between;align-items:center;width:100%;text-align:start;border:0;background:none;color:var(--fg);font:500 13.5px var(--f-body);padding:7px 10px;border-radius:6px;cursor:pointer}
 .nav-btn:hover{background:var(--surface-2)}
@@ -60,6 +65,7 @@ table{border-collapse:collapse;width:100%;font-size:13px}
 th,td{padding:6px 9px;border-bottom:1px solid var(--line);text-align:start;vertical-align:middle}
 thead th{background:var(--surface-2);font-weight:600;font-size:12px;color:var(--fg);position:sticky;top:0;z-index:1;white-space:nowrap}
 th.n,td.n{text-align:right;font-family:var(--f-num);font-variant-numeric:tabular-nums;white-space:nowrap}
+td.n{direction:ltr} .num{direction:ltr}
 tr.total td{background:var(--surface-2);font-weight:600}
 tbody tr:hover td{background:color-mix(in srgb,var(--accent-soft) 35%,transparent)}
 td.calc{background:var(--surface-2)}
@@ -247,7 +253,7 @@ function normDate(v){
   if(/^\d{5}$/.test(s))return normDate(+s);
   return s;
 }
-function normSel(v,opts){if(v==null)return "";const s=String(v).trim();if(!s)return "";const hit=opts.find(o=>o.toLowerCase()===s.toLowerCase());if(hit)return hit;const part=opts.find(o=>o.toLowerCase().startsWith(s.toLowerCase()));return part||s}
+function normSel(v,opts){if(v==null)return "";const s=String(v).trim();if(!s)return "";const hit=opts.find(o=>o.toLowerCase()===s.toLowerCase());if(hit)return hit;const rev=opts.find(o=>AR[o]===s);if(rev)return rev;const part=opts.find(o=>o.toLowerCase().startsWith(s.toLowerCase()));return part||s}
 const vatOk=v=>/^3\d{13}3$/.test(String(v||"").trim());
 const pill=(k,t)=>`<span class="pill ${k}">${esc(t)}</span>`;
 function toast(t){const el=document.createElement("div");el.className="toast";el.textContent=t;document.body.appendChild(el);setTimeout(()=>el.remove(),3200)}
@@ -258,6 +264,7 @@ function copyText(txt){const fallback=()=>{const back=document.createElement("di
 // ---------------------------------------------------------------- language (Arabic / English)
 let LANG=(()=>{try{const v=localStorage.getItem(KEY+"-lang");if(v==="ar"||v==="en")return v}catch(e){}return /^ar/i.test(navigator.language||"")?"ar":"en"})();
 function applyLang(){document.documentElement.lang=LANG;document.documentElement.dir=LANG==="ar"?"rtl":"ltr"}
+const SHEET_AR={Setup:"الإعدادات",Checklist:"قائمة_المستندات",TB_Monthly:"ميزان_المراجعة",VAT_Returns:"الإقرارات",Sales_Register:"سجل_المبيعات",Purchase_Register:"سجل_المشتريات",ZATCA_Payments:"المدفوعات"};
 const MON_AR=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
 const AR={
 "Revenue vs VAT returns":"الإيرادات مقابل الإقرارات الضريبية","Sections":"الأقسام",
@@ -399,7 +406,7 @@ function purCalc(r,ps,c){
   if(r.claimed==="Yes"&&r.valid!=="Yes")f.push("VAT claimed without a valid tax invoice");
   if(r.claimed==="Yes"&&blocked)f.push("Blocked input VAT claimed");
   if(r.cat===PUR_CATS[1]&&!String(r.bayan||"").trim())f.push("Customs declaration no missing");
-  if(r.cat===PUR_CATS[2]&&/saudi|ksa|المملكة|السعودية/i.test(r.country||""))f.push("Reverse charge used for a local supplier");
+  if(r.cat===PUR_CATS[2]&&/saudi|\bksa\b|السعودية/i.test(r.country||""))f.push("Reverse charge used for a local supplier");
   if(r.claimed==="Yes"&&!vatable&&r.cat)f.push("VAT claimed on a non-taxable category");
   return{p,net,vat,exp,diff,total:net+vat,claimed,defensible,risk:r2(claimed-defensible),flags:f};
 }
@@ -487,7 +494,8 @@ function bindCommon(){
   document.querySelectorAll("[data-copy]").forEach(b=>b.onclick=()=>{const t=document.getElementById(b.dataset.copy);copyText(tableTSV(t))});
 }
 function tableTSV(t){return [...t.querySelectorAll("tr")].map(tr=>[...tr.children].map(td=>{const i=td.querySelector("input,select");return (i?(i.tagName==="SELECT"?(i.options[i.selectedIndex]||{text:""}).text:i.value):td.innerText).replace(/[\t\n]+/g," ").trim()}).join("\t")).join("\n")}
-function pickFile(cb){const i=document.createElement("input");i.type="file";i.accept=".xlsx,.xls,.xlsm,.csv";i.onchange=()=>{const f=i.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{if(typeof XLSX==="undefined")throw new Error("lib");const wb=XLSX.read(new Uint8Array(rd.result),{type:"array",cellDates:true});cb(wb)}catch(e){toast(e.message==="lib"?"The Excel reader didn't load. Check your connection and reload, or paste the data instead.":"That file couldn't be read. Save it as .xlsx and try again.")}};rd.readAsArrayBuffer(f)};i.click()}
+function pickFile(cb){const i=document.createElement("input");i.type="file";i.accept=".xlsx,.xls,.xlsm,.csv";i.onchange=()=>{const f=i.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{if(typeof XLSX==="undefined")throw new Error("lib");const wb=XLSX.read(new Uint8Array(rd.result),{type:"array",cellDates:false});cb(wb)}catch(e){toast(e.message==="lib"?"The Excel reader didn't load. Check your connection and reload, or paste the data instead.":"That file couldn't be read. Save it as .xlsx and try again.")}};rd.readAsArrayBuffer(f)};i.click()}
+const dropTotal=r=>[...r.slice(0,9),...r.slice(10)]; // workbook column J is a calculated total
 const sheetRows=ws=>XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:""});
 
 // ---------------------------------------------------------------- grid definitions
@@ -550,22 +558,22 @@ function normCell(c,v){v=v==null?"":v;if(c.t==="date")return normDate(v);if(c.t=
 function rowsInto(key,rows,colCount){const cols=COL[key]();let n=0;for(const r of rows){if(!r.slice(0,colCount).some(v=>String(v).trim()!==""))continue;const row=NEWROW[key]();cols.forEach((c,k)=>setV(key,row,c.k,normCell(c,r[k])));DATA[key]().push(row);n++}return n}
 function importTable(key,wb,rerender){
   const tmpl={tb:"TB_Monthly",sales:"Sales_Register",pur:"Purchase_Register",pay:"ZATCA_Payments"}[key];
-  let rows, ws=wb.Sheets[tmpl];
-  if(ws)rows=sheetRows(ws).slice(5); else{rows=sheetRows(wb.Sheets[wb.SheetNames[0]]);const numIdx={tb:4,sales:7,pur:7,pay:3}[key];if(rows.length&&rows[0][numIdx]!==""&&isNaN(num(rows[0][numIdx]))||rows.length&&typeof rows[0][numIdx]==="string"&&!/^[\d,.()\-\s]+$/.test(rows[0][numIdx]))rows=rows.slice(1)}
+  let rows, ws=wb.Sheets[tmpl]||wb.Sheets[SHEET_AR[tmpl]];
+  if(ws){rows=sheetRows(ws).slice(5);if(key==="sales"||key==="pur")rows=rows.map(dropTotal)} else{rows=sheetRows(wb.Sheets[wb.SheetNames[0]]);const numIdx={tb:4,sales:7,pur:7,pay:3}[key];if(rows.length&&rows[0][numIdx]!==""&&isNaN(num(rows[0][numIdx]))||rows.length&&typeof rows[0][numIdx]==="string"&&!/^[\d,.()\-\s]+$/.test(rows[0][numIdx]))rows=rows.slice(1)}
   if(key==="tb")rows=rows.filter(r=>String(r[0]).trim()!==""||String(r[1]).trim()!=="");
   const n=rowsInto(key,rows,COL[key]().length);S.example=false;save();rerender();toast(`Imported ${fmtInt(n)} rows`);
 }
 function importWorkbook(wb){
-  const has=n=>!!wb.Sheets[n];
+  const sh=n=>wb.Sheets[n]||wb.Sheets[SHEET_AR[n]];const has=n=>!!sh(n);
   if(!has("TB_Monthly")&&!has("Sales_Register")&&!has("VAT_Returns")){toast("This isn't the VAT Inspection Pack workbook. Use the Import button on each table instead.");return}
   const keepSetup=S.setup; S=exampleState(); S.example=false; S.tb=[];S.sales=[];S.purchases=[];S.payments=[];S.returns=Array.from({length:12},blankReturn); S.setup=keepSetup;
-  if(has("Setup")){const r=sheetRows(wb.Sheets.Setup);const g=i=>(r[i]||[])[1];S.setup={company:String(g(3)||""),vat:String(g(4)||""),cr:String(g(5)||""),fy:normDate(g(6))||"2025-01-01",freq:g(7)==="Quarterly"?"Quarterly":"Monthly",rate:String(num(g(8))<1?num(g(8))*100:num(g(8))),tol:String(num(g(9))),asof:normDate(g(10))||S.setup.asof,lpp:String(num(g(11))<1?num(g(11))*100:num(g(11))),irp:String(num(g(12))<=1?num(g(12))*100:num(g(12)))}}
-  if(has("TB_Monthly"))rowsInto("tb",sheetRows(wb.Sheets.TB_Monthly).slice(5).filter(r=>String(r[0]).trim()||String(r[1]).trim()),17);
-  if(has("Sales_Register"))rowsInto("sales",sheetRows(wb.Sheets.Sales_Register).slice(5),13);
-  if(has("Purchase_Register"))rowsInto("pur",sheetRows(wb.Sheets.Purchase_Register).slice(5),13);
-  if(has("ZATCA_Payments"))rowsInto("pay",sheetRows(wb.Sheets.ZATCA_Payments).slice(5),5);
-  if(has("VAT_Returns")){const rr=sheetRows(wb.Sheets.VAT_Returns);for(let i=0;i<12;i++){const r=rr[5+i]||[];const t=S.returns[i];t.filed=normDate(r[3]);t.ref=String(r[4]||"");BOX_IDS.forEach((b,k)=>{const c=5+3*k;t.b[b]={a:r[c]===""?"":String(num(r[c])),j:r[c+1]===""?"":String(num(r[c+1])),v:r[c+2]===""?"":String(num(r[c+2]))}});t.b14=r[35]===""?"":String(num(r[35]));t.b15=r[36]===""?"":String(num(r[36]));t.b16=r[37]===""?"":String(num(r[37]))}}
-  if(has("Checklist")){const rr=sheetRows(wb.Sheets.Checklist);S.checklist.forEach((c,i)=>{const r=rr[4+i]||[];if(r[6])c.status=normSel(r[6],STATUS);c.owner=String(r[4]||"");c.ref=String(r[7]||"");c.notes=String(r[8]||"")})}
+  if(has("Setup")){const r=sheetRows(sh("Setup"));const g=i=>(r[i]||[])[1];S.setup={company:String(g(3)||""),vat:String(g(4)||""),cr:String(g(5)||""),fy:normDate(g(6))||"2025-01-01",freq:(g(7)==="Quarterly"||g(7)==="ربع سنوي")?"Quarterly":"Monthly",rate:String(num(g(8))<1?num(g(8))*100:num(g(8))),tol:String(num(g(9))),asof:normDate(g(10))||S.setup.asof,lpp:String(num(g(11))<1?num(g(11))*100:num(g(11))),irp:String(num(g(12))<=1?num(g(12))*100:num(g(12)))}}
+  if(has("TB_Monthly"))rowsInto("tb",sheetRows(sh("TB_Monthly")).slice(5).filter(r=>String(r[0]).trim()||String(r[1]).trim()),17);
+  if(has("Sales_Register"))rowsInto("sales",sheetRows(sh("Sales_Register")).slice(5).map(dropTotal),13);
+  if(has("Purchase_Register"))rowsInto("pur",sheetRows(sh("Purchase_Register")).slice(5).map(dropTotal),13);
+  if(has("ZATCA_Payments"))rowsInto("pay",sheetRows(sh("ZATCA_Payments")).slice(5),5);
+  if(has("VAT_Returns")){const rr=sheetRows(sh("VAT_Returns"));for(let i=0;i<12;i++){const r=rr[5+i]||[];const t=S.returns[i];t.filed=normDate(r[3]);t.ref=String(r[4]||"");BOX_IDS.forEach((b,k)=>{const c=5+3*k;t.b[b]={a:r[c]===""?"":String(num(r[c])),j:r[c+1]===""?"":String(num(r[c+1])),v:r[c+2]===""?"":String(num(r[c+2]))}});t.b14=r[35]===""?"":String(num(r[35]));t.b15=r[36]===""?"":String(num(r[36]));t.b16=r[37]===""?"":String(num(r[37]))}}
+  if(has("Checklist")){const rr=sheetRows(sh("Checklist"));S.checklist.forEach((c,i)=>{const r=rr[4+i]||[];if(r[6])c.status=normSel(r[6],STATUS);c.owner=String(r[4]||"");c.ref=String(r[7]||"");c.notes=String(r[8]||"")})}
   save();render();toast("Workbook imported");
 }
 

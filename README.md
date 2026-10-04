@@ -8,6 +8,8 @@ Tools to prepare for a ZATCA (Saudi Arabia) VAT inspection: monthly trial balanc
 |---|---|
 | `vat-inspection-desk.html` | Browser app in **Arabic and English** (switch at the top of the menu). Open it in any modern browser. Everything runs locally, so your figures stay on your computer. |
 | `ZATCA_VAT_Inspection_Pack.xlsx` | Excel workbook with the same logic as formulas (14 linked sheets, VAT return boxes labelled in Arabic and English). Needs Excel 2007 or newer, Excel Online or Google Sheets. |
+| `ZATCA_VAT_Inspection_Pack_AR.xlsx` | The same workbook fully in **Arabic**: Arabic sheet names, right-to-left layout, Arabic labels, dropdowns and statuses. The browser app imports either version. |
+| `translate_to_arabic.py` | Script that creates the Arabic workbook from the English one (`python translate_to_arabic.py`). |
 | `build_zatca_pack.py` | Python script that generates the workbook (`pip install openpyxl`, then `python build_zatca_pack.py`). |
 
 ## What's covered
