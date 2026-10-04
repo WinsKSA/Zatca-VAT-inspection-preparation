@@ -1,0 +1,1140 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fahs – VAT Inspection Command Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+/* Layout: dark command-center rail + light working canvas; content in cards on a 12px rhythm. */
+:root{
+  --bg:#f2f5f4; --surface:#ffffff; --surface-2:#f6f8f7; --line:#dfe6e3; --line-2:#cbd5d1;
+  --ink:#0f1c1a; --ink-2:#44524f; --muted:#74827f;
+  --brand:#0b6b5f; --brand-2:#0f8a7a; --brand-ink:#ffffff; --brand-soft:#e1f1ed; --gold:#a8792c; --gold-2:#e3b866;
+  --rail:#0c201d; --rail-2:#12302b; --rail-ink:#d7e5e1; --rail-muted:#7e9a94; --rail-line:#1c3a35;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --grid:#e3e2db; --axis:#c3c2b7;
+  --good:#0ca30c; --good-ink:#0a6b23; --good-bg:#e2f4e6; --warn:#fab219; --warn-ink:#7a5200; --warn-bg:#fff2d2;
+  --crit:#d03b3b; --crit-ink:#b42323; --crit-bg:#fbe5e4; --none-ink:#6b7875; --none-bg:#edf1f0;
+  --input:#fffdf4; --input-line:#e5dcae;
+  --f-display:"Readex Pro","IBM Plex Sans Arabic",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans Arabic","IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  --r:12px; --r-sm:8px; --shadow:0 1px 2px rgba(12,32,29,.05),0 4px 16px rgba(12,32,29,.04);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0a1211; --surface:#111b19; --surface-2:#15211f; --line:#22312e; --line-2:#2e403c; --ink:#e6eeec; --ink-2:#b2c1bd; --muted:#7f8f8b;
+  --brand:#2fb39c; --brand-2:#4cc9b1; --brand-ink:#04211c; --brand-soft:#113a33; --gold:#d6a957; --gold-2:#e3b866;
+  --rail:#060d0c; --rail-2:#0f2420; --rail-ink:#cfe0db; --rail-muted:#6f8a84; --rail-line:#16302b;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --grid:#2c2c2a; --axis:#383835;
+  --good-ink:#4fd27f; --good-bg:#11301d; --warn-ink:#f2c14e; --warn-bg:#352a0e; --crit-ink:#ff8080; --crit-bg:#3a1a1a; --none-ink:#8d9a97; --none-bg:#1b2624;
+  --input:#17201b; --input-line:#3a4632; --shadow:none; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0a1211; --surface:#111b19; --surface-2:#15211f; --line:#22312e; --line-2:#2e403c; --ink:#e6eeec; --ink-2:#b2c1bd; --muted:#7f8f8b;
+  --brand:#2fb39c; --brand-2:#4cc9b1; --brand-ink:#04211c; --brand-soft:#113a33; --gold:#d6a957; --gold-2:#e3b866;
+  --rail:#060d0c; --rail-2:#0f2420; --rail-ink:#cfe0db; --rail-muted:#6f8a84; --rail-line:#16302b;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --grid:#2c2c2a; --axis:#383835;
+  --good-ink:#4fd27f; --good-bg:#11301d; --warn-ink:#f2c14e; --warn-bg:#352a0e; --crit-ink:#ff8080; --crit-bg:#3a1a1a; --none-ink:#8d9a97; --none-bg:#1b2624;
+  --input:#17201b; --input-line:#3a4632; --shadow:none; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:14px/1.55 var(--f-body);-webkit-font-smoothing:antialiased}
+.app{display:grid;grid-template-columns:260px minmax(0,1fr);min-height:100%}
+/* rail */
+nav.rail{background:var(--rail);color:var(--rail-ink);padding:18px 12px 18px;position:sticky;top:0;height:100vh;overflow:auto;display:flex;flex-direction:column;gap:2px}
+.brand{display:flex;gap:10px;align-items:center;padding:4px 8px 14px}
+.logo{width:38px;height:38px;flex:none}
+.wordmark{font:700 21px/1 var(--f-display);letter-spacing:.01em;color:#fff}
+.tagline{font-size:11.5px;color:var(--rail-muted);margin-top:4px;line-height:1.3}
+.entity{background:var(--rail-2);border:1px solid var(--rail-line);border-radius:10px;padding:10px 12px;margin:0 4px 10px}
+.ename{font-weight:600;color:#fff;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.evat{font:12px var(--f-mono);color:var(--rail-muted)}
+.nav-group{font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--rail-muted);margin:14px 12px 4px}
+.nav-btn{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;color:var(--rail-ink);font:500 13.5px var(--f-body);padding:8px 10px;border-radius:8px;cursor:pointer;text-align:start}
+.nav-btn:hover{background:var(--rail-2)}
+.nav-btn[aria-current="true"]{background:var(--rail-2);color:#fff;box-shadow:inset 3px 0 0 var(--gold-2)}
+[dir="rtl"] .nav-btn[aria-current="true"]{box-shadow:inset -3px 0 0 var(--gold-2)}
+.nav-btn .ic{width:18px;height:18px;opacity:.85}
+.nl{flex:1}
+.badge{background:var(--crit);color:#fff;font:600 11px var(--f-mono);min-width:20px;height:20px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;padding:0 6px}
+.nav-foot{margin-top:auto;display:flex;gap:8px;align-items:flex-start;font-size:11.5px;color:var(--rail-muted);padding:14px 10px 0;border-top:1px solid var(--rail-line)}
+.nav-foot .ic{width:16px;height:16px;flex:none;margin-top:1px}
+/* main */
+main{min-width:0}
+.topbar{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 28px;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.topbar h1{font:600 22px/1.2 var(--f-display);margin:0;text-wrap:balance}
+.tb-title{flex:1;min-width:0}
+.tb-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.content{padding:22px 28px 64px;display:flex;flex-direction:column;gap:18px;max-width:1440px}
+.lead{margin:0;color:var(--ink-2);max-width:80ch;font-size:14.5px}
+.note{color:var(--muted);font-size:12.5px;margin:0}
+.ic{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ic.lg{width:30px;height:30px;color:var(--brand)}
+.num,.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.grow{flex:1}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.row.end{justify-content:flex-end}.row.center{justify-content:center}
+/* buttons & chips */
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink);font:500 13px var(--f-body);padding:7px 13px;border-radius:8px;cursor:pointer;white-space:nowrap;text-decoration:none}
+.btn:hover{border-color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
+.btn.primary:hover{background:var(--brand-2)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--brand)}
+.btn.ghost:hover{background:var(--brand-soft)}
+.btn.danger{color:var(--crit-ink)}
+.btn.sm{padding:5px 10px;font-size:12.5px}
+.btn[disabled]{opacity:.45;cursor:default}
+.link{border:0;background:none;color:var(--ink);font:inherit;padding:0;cursor:pointer;text-align:start}
+.link:hover{color:var(--brand);text-decoration:underline}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 12px;font:500 12.5px var(--f-body);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.chip .cnt{font:600 11px var(--f-mono);opacity:.75}
+.dotc{width:8px;height:8px;border-radius:50%;display:inline-block}.dotc.ok{background:var(--good)}.dotc.bad{background:var(--crit)}.dotc.none{background:var(--line-2)}
+.chip-s{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;padding:5px 11px;border-radius:999px;background:var(--none-bg);color:var(--none-ink)}
+.chip-s.ok{background:var(--good-bg);color:var(--good-ink)}.chip-s.warn{background:var(--warn-bg);color:var(--warn-ink)}.chip-s.bad{background:var(--crit-bg);color:var(--crit-ink)}
+.pill{display:inline-flex;align-items:center;gap:4px;padding:2px 9px 2px 7px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;background:var(--none-bg);color:var(--none-ink)}
+.pill .ic{width:13px;height:13px;stroke-width:2.4}
+.pill.ok{background:var(--good-bg);color:var(--good-ink)}.pill.bad{background:var(--crit-bg);color:var(--crit-ink)}.pill.warn{background:var(--warn-bg);color:var(--warn-ink)}
+.sev{display:inline-block;font-size:11.5px;font-weight:600;padding:1px 8px;border-radius:5px;border:1px solid}
+.sev.high{color:var(--crit-ink);border-color:color-mix(in srgb,var(--crit) 45%,transparent);background:var(--crit-bg)}
+.sev.medium{color:var(--warn-ink);border-color:color-mix(in srgb,var(--warn) 55%,transparent);background:var(--warn-bg)}
+.sev.low{color:var(--none-ink);border-color:var(--line-2);background:var(--none-bg)}
+.sevrow{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+/* tiles & cards */
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.tiles.six{grid-template-columns:repeat(3,minmax(0,1fr))}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;display:flex;flex-direction:column;gap:6px;min-width:0;box-shadow:var(--shadow);text-align:start;font:inherit;color:inherit}
+button.tile{cursor:pointer}button.tile:hover{border-color:var(--brand)}
+.t-lab{font-size:12.5px;color:var(--muted);font-weight:500}
+.t-val{font:600 24px/1.1 var(--f-display);color:var(--ink)}
+.t-val.big{font-size:34px}
+.t-val small{font:500 13px var(--f-body);color:var(--muted)}
+.t-sub{font-size:12.5px;color:var(--ink-2);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.tile.hero{position:relative;overflow:hidden}
+.tile.hero::before{content:"";position:absolute;inset-inline-start:0;top:0;bottom:0;width:4px;background:var(--line-2)}
+.tile.hero.ok::before{background:var(--good)}.tile.hero.warn::before{background:var(--warn)}.tile.hero.bad::before{background:var(--crit)}
+.tile.okv .t-val{color:var(--good-ink)}.tile.badv .t-val{color:var(--crit-ink)}
+.meter{height:8px;border-radius:99px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden}
+.meter>span{display:block;height:100%;background:linear-gradient(90deg,var(--brand),var(--brand-2));border-radius:99px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;min-width:0;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:12px}
+.card-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.card-h h2{font:600 15.5px/1.3 var(--f-display);margin:0;flex:1}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
+.banner{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:var(--warn-bg);border:1px solid color-mix(in srgb,var(--warn) 40%,transparent);border-radius:var(--r);padding:10px 14px;color:var(--ink)}
+.banner .ic{color:var(--warn-ink)}
+.callout{display:flex;gap:12px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-inline-start:4px solid var(--warn);border-radius:var(--r);padding:14px 16px}
+.callout.ok{border-inline-start-color:var(--good)}
+.callout p{margin:4px 0 0;color:var(--ink-2);max-width:95ch}
+.callout .ic{width:20px;height:20px;color:var(--good-ink);margin-top:2px}
+.empty{display:flex;gap:8px;align-items:center;color:var(--muted);margin:0;padding:10px 4px}
+.empty .ic{color:var(--good-ink)}
+/* tables */
+.frame{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface)}
+.tbl{border-collapse:collapse;width:100%;font-size:13px}
+.tbl th,.tbl td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:start;vertical-align:middle}
+.tbl thead th{background:var(--surface-2);font-weight:600;font-size:12px;color:var(--ink-2);position:sticky;top:0;z-index:1;white-space:nowrap}
+.tbl th.n,.tbl td.n{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.tbl td.n{direction:ltr}
+.tbl tr.total td{background:var(--surface-2);font-weight:600}
+.tbl tr.sub th{background:var(--surface);text-align:start;color:var(--brand);font-size:12px;letter-spacing:.04em}
+.tbl tbody tr:hover td{background:color-mix(in srgb,var(--brand-soft) 45%,transparent)}
+.tbl tbody tr:last-child td{border-bottom:0}
+.tbl .neg{color:var(--crit-ink);font-weight:600}
+.tbl td.calc{background:var(--surface-2)}
+.tbl th.calc{color:var(--brand)}
+.tbl td.flags{color:var(--crit-ink);font-size:12px;min-width:260px}
+.tbl.edit td{padding:3px 4px}
+.tbl input,.tbl select,.fld input,.fld select,.fld textarea{width:100%;min-width:90px;background:var(--input);border:1px solid var(--input-line);color:var(--ink);border-radius:6px;padding:5px 7px;font:13px var(--f-body)}
+.tbl input.num,.fld input.num{text-align:right;font-family:var(--f-mono);direction:ltr}
+.rowno{color:var(--muted);font:11px var(--f-mono);text-align:end}
+.del{border:0;background:none;color:var(--muted);cursor:pointer;font-size:16px;padding:2px 8px;border-radius:6px}
+.del:hover{color:var(--crit-ink);background:var(--crit-bg)}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.tip-line{margin-top:-8px}
+.boxno{font:600 12px var(--f-mono);color:var(--brand);white-space:nowrap}
+.boxname{display:flex;flex-direction:column}.boxname .ar{font-size:12px;color:var(--muted)}
+.h3{font:600 16px var(--f-display)}
+/* heat matrix */
+.heat td.h{width:40px;min-width:36px;text-align:center;padding:5px 2px;cursor:pointer}
+.heat th.c{text-align:center}
+.heat td:first-child{white-space:nowrap}
+.cell{display:inline-flex;width:28px;height:24px;border-radius:6px;align-items:center;justify-content:center}
+.cell .ic{width:14px;height:14px;stroke-width:2.6}
+.cell.ok{background:var(--good-bg);color:var(--good-ink)}.cell.bad{background:var(--crit-bg);color:var(--crit-ink)}.cell.none{background:var(--none-bg);color:var(--line-2)}
+/* forms */
+.form-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 16px}
+.form-grid.four{grid-template-columns:repeat(3,minmax(0,220px))}
+.fld{display:flex;flex-direction:column;gap:5px;font-size:12.5px;color:var(--ink-2);font-weight:500;min-width:0}
+.fld small{color:var(--muted);font-weight:400}
+.fld.inline{flex-direction:row;align-items:center;gap:8px}.fld.inline input{width:auto;min-width:140px}
+.drop{display:flex;gap:16px;align-items:center;border:2px dashed var(--line-2);border-radius:var(--r);padding:18px 20px;flex-wrap:wrap}
+.drop.over{border-color:var(--brand);background:var(--brand-soft)}
+.drop p{margin:4px 0 0;color:var(--muted);font-size:13px}.drop>div{flex:1;min-width:220px}
+.steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;counter-reset:st}
+.steps li{counter-increment:st;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:4px}
+.steps li b::before{content:counter(st);display:inline-flex;width:22px;height:22px;border-radius:50%;background:var(--brand);color:var(--brand-ink);font:600 12px var(--f-mono);align-items:center;justify-content:center;margin-inline-end:8px}
+.steps li span{color:var(--ink-2);font-size:12.5px}
+/* charts */
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--ink-2)}
+.lg{display:inline-flex;align-items:center;gap:6px}.sw{width:10px;height:10px;border-radius:3px;display:inline-block}
+.chart svg{width:100%;height:auto;display:block}
+.chart .grid{stroke:var(--grid);stroke-width:1}.chart .axis{stroke:var(--axis);stroke-width:1}
+.chart .tick{fill:var(--muted);font:11px var(--f-mono)}
+.chart .mark{transition:opacity .15s}
+.barlist{display:flex;flex-direction:column;gap:9px}
+.bl-row{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) auto;gap:10px;align-items:center;font-size:13px}
+.bl-track{height:12px;background:var(--surface-2);border-radius:4px;overflow:hidden;border:1px solid var(--line)}
+.bl-bar{display:block;height:100%;border-radius:0 4px 4px 0}
+[dir="rtl"] .bl-bar{border-radius:4px 0 0 4px;margin-inline-start:auto;margin-left:auto}
+.bl-val{min-width:90px;text-align:end;direction:ltr}
+.sum-row{display:flex;justify-content:space-between;gap:10px;padding:8px 0 0;border-top:1px solid var(--line);font-size:13px}
+.sum-row.good b{color:var(--good-ink)}.sum-row.tot{font-weight:600;font-size:14px}
+.tip{position:fixed;z-index:60;background:var(--ink);color:var(--surface);font-size:12px;padding:6px 9px;border-radius:6px;pointer-events:none;max-width:320px}
+.bf{display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);border-radius:10px;padding:12px}
+/* tests */
+.tests{display:flex;flex-direction:column;gap:8px}
+.test{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.test.fail{border-inline-start:4px solid var(--crit)}.test.pass{border-inline-start:4px solid var(--good)}.test.na{border-inline-start:4px solid var(--line-2)}
+.test-h{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;color:inherit;font:inherit;padding:11px 14px;cursor:pointer;text-align:start;flex-wrap:wrap}
+.test-h:hover{background:var(--surface-2)}
+.st{display:inline-flex;width:24px;height:24px;border-radius:50%;align-items:center;justify-content:center}
+.st .ic{width:14px;height:14px;stroke-width:2.6}
+.st.fail{background:var(--crit-bg);color:var(--crit-ink)}.st.pass{background:var(--good-bg);color:var(--good-ink)}.st.na{background:var(--none-bg);color:var(--muted)}
+.tid{color:var(--muted);font-size:12px}.tt{font-weight:600}.area{font-size:12px;color:var(--muted)}
+.tm{min-width:80px;text-align:end;font-size:12.5px;color:var(--ink-2);direction:ltr}
+.test-b{padding:4px 14px 14px;display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line)}
+/* modal, toast, splash */
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:8px;font-size:13px;z-index:70;max-width:calc(100% - 32px)}
+.modal-back{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:65;padding:16px}
+.modal{background:var(--surface);border-radius:12px;padding:20px;max-width:520px;width:100%;border:1px solid var(--line)}
+.modal p{margin-top:0}
+.modal textarea{width:100%;height:180px;font:12px var(--f-mono);background:var(--surface-2);color:var(--ink);border:1px solid var(--line);border-radius:6px}
+.splash{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px}
+.splash h2{font:600 22px var(--f-display);margin:0}
+.spinner{width:36px;height:36px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--brand);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* Arabic */
+html[lang="ar"] body{font-family:var(--f-body)}
+html[lang="ar"] .ar{display:none}
+html[lang="ar"] .nav-group,html[lang="ar"] .tbl thead th{letter-spacing:0;text-transform:none}
+/* responsive */
+@media (max-width:1180px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.grid2{grid-template-columns:minmax(0,1fr)}.form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:820px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  nav.rail{position:sticky;top:0;height:auto;z-index:20;flex-direction:row;overflow-x:auto;padding:8px 12px;gap:4px}
+  .brand,.entity,.nav-group,.nav-foot,.tagline{display:none}
+  .nav-btn{width:auto;flex:none;white-space:nowrap}
+  .topbar{position:static;padding:12px 16px}
+  .content{padding:16px 16px 48px}
+  .tiles,.tiles.six{grid-template-columns:minmax(0,1fr)}
+  .form-grid,.form-grid.four{grid-template-columns:minmax(0,1fr)}
+  .bl-row{grid-template-columns:minmax(0,1fr) auto}.bl-track{grid-column:1/-1;order:3}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app"><nav class="rail" id="nav" aria-label="Sections"></nav><main id="main"></main></div>
+<script>
+"use strict";
+// ================================================================ constants
+const SALES_CATS=["Standard 15% (Box 1)","Citizens - Healthcare/Education (Box 2)","Zero-rated domestic (Box 3)","Export (Box 4)","Exempt (Box 5)","Out of scope"];
+const PUR_CATS=["Standard domestic 15% (Box 7)","Import - VAT paid at customs (Box 8)","Import - Reverse charge (Box 9)","Zero-rated purchase (Box 10)","Exempt purchase (Box 11)","Out of scope / Not reported"];
+const OOS_MAP="Revenue - Out of scope / Other income";
+const TB_MAPS=[...SALES_CATS.slice(0,5),OOS_MAP,"Output VAT","Input VAT","VAT Payable / Settlement","Not VAT relevant"];
+const DOC_TYPES=["Tax Invoice","Simplified Tax Invoice","Credit Note","Debit Note"];
+const CUST_TYPES=["B2B - VAT registered","B2B - Not registered","B2C - Individual","Government"];
+const NATURE=["General business expense","Capital asset","Entertainment / hospitality (blocked)","Motor vehicle - private use (blocked)","Staff personal benefit (blocked)","Other non-business (blocked)"];
+const YN=["Yes","No"], FS=["Asset","Liability","Equity","Revenue","Expense"], STATUS=["Not started","In progress","Ready","Submitted","N/A"];
+const AUDIT_TYPES=["Desk audit","Field audit","Information request","Refund review"];
+const REQ_STATUS=["Open","In preparation","Submitted","Closed"];
+const VOUCH=["Not tested","Agreed","Exception"];
+const DECISIONS=["","Correct and disclose","Defend with evidence","Accept assessment","Not an issue"];
+const BOXES=[
+ {b:1,en:"Standard rated sales (15%)",ar:"المبيعات الخاضعة للنسبة الأساسية"},
+ {b:2,en:"Sales to citizens (private healthcare / education)",ar:"المبيعات للمواطنين (الخدمات الصحية والتعليم الأهلي)"},
+ {b:3,en:"Zero-rated domestic sales",ar:"المبيعات المحلية الخاضعة للنسبة الصفرية"},
+ {b:4,en:"Exports",ar:"الصادرات"},
+ {b:5,en:"Exempt sales",ar:"المبيعات المعفاة"},
+ {b:7,en:"Standard rated domestic purchases (15%)",ar:"المشتريات المحلية الخاضعة للنسبة الأساسية"},
+ {b:8,en:"Imports subject to VAT paid at customs",ar:"الاستيرادات الخاضعة للضريبة المدفوعة في الجمارك"},
+ {b:9,en:"Imports subject to VAT – reverse charge",ar:"الاستيرادات الخاضعة لآلية الاحتساب العكسي"},
+ {b:10,en:"Zero-rated purchases",ar:"المشتريات الخاضعة للنسبة الصفرية"},
+ {b:11,en:"Exempt purchases",ar:"المشتريات المعفاة"}];
+const BOX_IDS=BOXES.map(x=>x.b);
+const CHECKLIST=[
+["General","VAT registration certificate, Commercial Registration, Articles of Association"],
+["General","Description of business activities and revenue streams, with the VAT treatment of each"],
+["General","List of branches, related parties and VAT group members"],
+["General","Chart of accounts with VAT mapping","Trial balance"],
+["General","ERP and e-invoicing (FATOORA) solution details, onboarding and CSID"],
+["General","Authorisation letter for the representative dealing with ZATCA"],
+["Financial","Audited financial statements for each year under review"],
+["Financial","Monthly trial balances (opening, movements, closing)","Trial balance"],
+["Financial","General ledger detail for revenue, VAT and major expense accounts"],
+["Financial","Bank statements (ZATCA compares receipts with declared sales)"],
+["VAT returns","Copies of all filed VAT returns and SADAD payment receipts","VAT returns, Payments"],
+["VAT returns","Voluntary disclosures and corrections filed (Box 14 usage)","VAT returns"],
+["Reconciliation","Revenue per financial statements vs total sales per VAT returns","Revenue reconciliation"],
+["Reconciliation","Sales per VAT box vs sales listing vs GL, by period","Sales reconciliation"],
+["Reconciliation","Output VAT per GL vs returns","Output VAT reconciliation"],
+["Reconciliation","Input VAT per GL vs returns","Input VAT reconciliation"],
+["Reconciliation","VAT payable account roll-forward","VAT account reconciliation"],
+["Reconciliation","Customs import data (Bayan) vs Box 8","Input VAT reconciliation"],
+["Sales","Sales listing at invoice level with customer VAT numbers","Sales register"],
+["Sales","Sample tax invoices, simplified invoices, credit and debit notes (XML / QR)"],
+["Sales","Export evidence: customs exit declarations, bills of lading, contracts, payment proof","Sales register"],
+["Sales","Zero-rated domestic supply evidence (qualifying medicines, international transport, etc.)","Sales register"],
+["Sales","Exempt supplies support (financial services margin, residential leases)"],
+["Sales","Major customer contracts, including government contracts and VAT clauses"],
+["Sales","Deemed supplies: free samples, gifts, own use, staff benefits, write-offs"],
+["Sales","Related-party and intercompany charges and their VAT treatment"],
+["Sales","Fixed asset and real estate disposals (VAT / RETT treatment)"],
+["Purchases","Purchase listing at invoice level with supplier VAT numbers","Purchase register"],
+["Purchases","Sample supplier tax invoices supporting input VAT claimed","Purchase register"],
+["Purchases","Import customs declarations (Bayan) and proof of customs VAT paid","Purchase register"],
+["Purchases","Reverse charge: foreign supplier invoices, contracts, RCM calculation","Purchase register"],
+["Purchases","Blocked input VAT analysis (entertainment, vehicles, staff benefits)","Purchase register"],
+["Purchases","Fixed asset register and capital asset adjustments"],
+["Purchases","Input VAT apportionment calculation (if any exempt supplies)"],
+["Cross-tax","Withholding tax returns (foreign payments should match Box 9)"],
+["Cross-tax","Zakat / income tax return revenue vs VAT revenue"],
+["E-invoicing","Phase 2 integration wave and cleared / reported invoices report","Sales register"],
+["Response","Written explanation for every difference found","Reconciliations"]];
+
+// ================================================================ state
+const KEY="fahs-vat-v2";
+function blankReturn(){const b={};BOX_IDS.forEach(x=>b[x]={a:"",j:"",v:""});return{filed:"",ref:"",b,b14:"",b15:"",b16:""}}
+function exampleState(){
+  const s={example:true,
+   setup:{company:"Example Trading Company",vat:"300000000000003",cr:"1010000000",fy:"2025-01-01",freq:"Monthly",rate:"15",tol:"10",asof:"2026-10-04",lpp:"5",irp:"50",init:"Yes",initEnd:"2026-12-31",initCut:"2026-06-30"},
+   tb:[],returns:Array.from({length:12},blankReturn),sales:[],purchases:[],payments:[],
+   checklist:CHECKLIST.map((c,i)=>({status:i<8?"Ready":(i<14?"In progress":"Not started"),owner:i<8?"Finance":"",ref:"",notes:""})),
+   recItems:[{d:"Timing – invoices booked in a different period",a:""},{d:"Revenue accruals not yet invoiced",a:""},{d:"Other",a:""}],
+   case:{notice:"ZATCA-AUD-2026-118734",type:"Field audit",received:"2026-09-21",due:"2026-10-11",auditor:"",scope:"VAT returns January – December 2025",notes:""},
+   requests:[{item:"Monthly trial balances and general ledger for 2025",req:"2026-09-21",due:"2026-10-05",status:"Submitted",sent:"2026-10-02",ref:"Pack-01"},
+     {item:"Revenue reconciliation: financial statements vs VAT returns",req:"2026-09-21",due:"2026-10-05",status:"In preparation",sent:"",ref:""},
+     {item:"Export evidence for all zero-rated sales",req:"2026-09-21",due:"2026-10-11",status:"Open",sent:"",ref:""},
+     {item:"Supplier invoices supporting input VAT above SAR 5,000",req:"2026-09-28",due:"2026-10-11",status:"Open",sent:"",ref:""}],
+   sample:{pop:"sales",size:"10",seed:"2026"},vouch:{},decisions:{}};
+  const tb=(code,name,fs,map,open,mv)=>{const m=Array(12).fill("");Object.entries(mv).forEach(([k,v])=>m[k-1]=String(v));return{code,name,fs,map,open:String(open),m}};
+  s.tb=[tb("1100","Cash at Bank","Asset","Not VAT relevant",500000,{1:81000,2:71150}),
+    tb("2210","Output VAT","Liability","Output VAT",0,{1:-16500,2:-18750}),
+    tb("2220","Input VAT","Asset","Input VAT",0,{1:7500,2:9600}),
+    tb("2230","VAT Payable – Settlement with ZATCA","Liability","VAT Payable / Settlement",0,{2:9000}),
+    tb("3100","Share Capital / Retained Earnings","Equity","Not VAT relevant",-500000,{}),
+    tb("4100","Sales – Local","Revenue",SALES_CATS[0],0,{1:-100000,2:-125000}),
+    tb("4200","Sales – Export","Revenue",SALES_CATS[3],0,{1:-20000,2:-30000}),
+    tb("4900","Other Income – Dividends","Revenue",OOS_MAP,0,{1:-2000}),
+    tb("5100","Cost of Goods Purchased","Expense","Not VAT relevant",0,{1:40000,2:60000}),
+    tb("6100","Consulting Fees – Foreign","Expense","Not VAT relevant",0,{1:10000}),
+    tb("6200","Hospitality & Entertainment","Expense","Not VAT relevant",0,{2:4000}),
+    tb("6300","Software Subscriptions – Foreign","Expense","Not VAT relevant",0,{2:20000})];
+  const r=s.returns[0]; r.filed="2025-02-25"; r.ref="VAT-2025-01";
+  r.b[1]={a:"100000",j:"",v:"15000"}; r.b[4]={a:"20000",j:"",v:"0"}; r.b[7]={a:"40000",j:"",v:"6000"}; r.b[9]={a:"10000",j:"",v:"1500"}; r.b16="9000";
+  const f=s.returns[1]; f.filed="2025-04-03"; f.ref="VAT-2025-02";
+  f.b[1]={a:"120000",j:"",v:"18000"}; f.b[4]={a:"30000",j:"",v:"0"}; f.b[7]={a:"124000",j:"",v:"18600"}; f.b16="-600";
+  const sl=(date,no,type,cust,cvat,ctype,cat,net,vat,uuid,fat,gl,ev)=>({date,no,type,cust,cvat,ctype,cat,net:String(net),vat:String(vat),uuid,fat,gl,ev});
+  s.sales=[sl("2025-01-15","INV-0001","Tax Invoice","ABC Trading Co","310123456700003",CUST_TYPES[0],SALES_CATS[0],100000,15000,"e3b0c442-98fc","Yes","4100",""),
+    sl("2025-01-20","INV-0002","Tax Invoice","Gulf Imports LLC (UAE)","",CUST_TYPES[1],SALES_CATS[3],20000,0,"a1f2c3d4-55aa","Yes","4200","Customs exit 123456 + B/L GLF-889"),
+    sl("2025-02-05","INV-0003","Tax Invoice","Riyadh Retail Est.","310987654300003",CUST_TYPES[0],SALES_CATS[0],80000,12000,"77c1d2e3-01ab","Yes","4100",""),
+    sl("2025-02-12","INV-0004","Tax Invoice","Najd Contracting","31012345",CUST_TYPES[0],SALES_CATS[0],50000,7500,"88d2e3f4-02bc","Yes","4100",""),
+    sl("2025-02-18","INV-0006","Tax Invoice","Oman Foods LLC","",CUST_TYPES[1],SALES_CATS[3],30000,0,"99e3f4a5-03cd","Yes","4200",""),
+    sl("2025-02-21","CN-0007","Credit Note","Walk-in customer","",CUST_TYPES[2],SALES_CATS[0],-5000,-750,"aaf4a5b6-04de","Yes","4100","")];
+  const pu=(date,no,sup,svat,country,cat,nature,net,vat,valid,claimed,bayan,gl)=>({date,no,sup,svat,country,cat,nature,net:String(net),vat:String(vat),valid,claimed,bayan,gl});
+  s.purchases=[pu("2025-01-10","SUP-778","Al Noor Supplies","310123456700003","Saudi Arabia",PUR_CATS[0],NATURE[0],40000,6000,"Yes","Yes","","5100"),
+    pu("2025-01-25","FX-2025-01","Global Consulting Ltd","","United Kingdom",PUR_CATS[2],NATURE[0],10000,1500,"Yes","Yes","","6100"),
+    pu("2025-02-08","SUP-801","Al Noor Supplies","310123456700003","Saudi Arabia",PUR_CATS[0],NATURE[0],60000,9000,"Yes","Yes","","5100"),
+    pu("2025-02-08","SUP-801","Al Noor Supplies","310123456700003","Saudi Arabia",PUR_CATS[0],NATURE[0],60000,9000,"Yes","Yes","","5100"),
+    pu("2025-02-14","H-5521","Al Faisaliah Hotel","300555666700003","Saudi Arabia",PUR_CATS[0],NATURE[2],4000,600,"Yes","Yes","","6200"),
+    pu("2025-02-28","CS-99812","Cloud Software Inc","","United States",PUR_CATS[5],NATURE[0],20000,0,"No","No","","6300")];
+  s.payments=[{p:"1",date:"2025-02-27",ref:"SADAD-90012345",amt:"9000",notes:"Jan 2025 VAT"}];
+  return s;
+}
+let S;
+function migrate(x){const e=exampleState();for(const k of Object.keys(e))if(x[k]==null)x[k]=e[k];for(const k of Object.keys(e.setup))if(x.setup[k]==null)x.setup[k]=e.setup[k];if(!x.returns||x.returns.length!==12)x.returns=e.returns;return x}
+try{const raw=localStorage.getItem(KEY);S=raw?migrate(JSON.parse(raw)):exampleState()}catch(e){S=exampleState()}
+let saveTimer=null,saveWarned=false;
+
+// ================================================================ helpers
+const $=s=>document.querySelector(s);
+const esc=v=>String(v??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function num(v){if(typeof v==="number")return isFinite(v)?v:0;if(v==null)return 0;let s=String(v).trim().replace(/[,\s]|SAR|ر\.س/gi,"");if(!s)return 0;let neg=false;if(/^\(.*\)$/.test(s)){neg=true;s=s.slice(1,-1)}const n=parseFloat(s);return isFinite(n)?(neg?-n:n):0}
+const r2=n=>Math.round((n+Number.EPSILON)*100)/100;
+function fmt(n){n=r2(n||0);if(Math.abs(n)<0.005)return "–";const s=Math.abs(n).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});return n<0?`(${s})`:s}
+function fmt0(n){n=Math.round(n||0);if(!n)return "0";const s=Math.abs(n).toLocaleString("en-US");return n<0?`(${s})`:s}
+function fmtK(n){const a=Math.abs(n);if(a>=1e6)return (n/1e6).toFixed(a>=1e7?0:1)+"M";if(a>=1e3)return (n/1e3).toFixed(a>=1e4?0:1)+"K";return String(Math.round(n))}
+const fmtInt=n=>(n||0).toLocaleString("en-US");
+const pad=n=>String(n).padStart(2,"0");
+function iso(d){return `${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())}`}
+function D(s){if(!s)return null;const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s);return m?new Date(Date.UTC(+m[1],+m[2]-1,+m[3])):null}
+function addM(d,n){return new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+n,1))}
+function eom(d){return new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,0))}
+const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const showDate=s=>{const d=typeof s==="string"?D(s):s;return d?`${pad(d.getUTCDate())} ${MON[d.getUTCMonth()]} ${d.getUTCFullYear()}`:""};
+function normDate(v){
+  if(v==null||v==="")return "";
+  if(v instanceof Date&&!isNaN(v))return `${v.getFullYear()}-${pad(v.getMonth()+1)}-${pad(v.getDate())}`;
+  if(typeof v==="number"&&v>20000&&v<80000)return iso(new Date(Date.UTC(1899,11,30)+Math.round(v)*864e5));
+  const s=String(v).trim();let m;
+  if((m=/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/.exec(s)))return `${m[1]}-${pad(m[2])}-${pad(m[3])}`;
+  if((m=/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})/.exec(s)))return `${m[3]}-${pad(m[2])}-${pad(m[1])}`;
+  if((m=/^(\d{1,2})[-\s]([A-Za-z]{3})[A-Za-z]*[-\s](\d{4})/.exec(s))){const i=MON.findIndex(x=>x.toLowerCase()===m[2].toLowerCase());if(i>=0)return `${m[3]}-${pad(i+1)}-${pad(m[1])}`}
+  if(/^\d{5}$/.test(s))return normDate(+s);
+  return s;
+}
+function normSel(v,opts){if(v==null)return "";const s=String(v).trim();if(!s)return "";const hit=opts.find(o=>o.toLowerCase()===s.toLowerCase());if(hit)return hit;const rev=opts.find(o=>AR[o]===s);if(rev)return rev;const part=opts.find(o=>o.toLowerCase().startsWith(s.toLowerCase()));return part||s}
+const vatOk=v=>/^3\d{13}3$/.test(String(v||"").trim());
+const isSaudi=c=>/saudi|\bksa\b|السعودية/i.test(c||"");
+const todayD=()=>{const t=new Date();return new Date(Date.UTC(t.getFullYear(),t.getMonth(),t.getDate()))};
+const daysBetween=(a,b)=>Math.round((b-a)/864e5);
+function toast(t){const el=document.createElement("div");el.className="toast";el.setAttribute("role","status");el.textContent=t;document.body.appendChild(el);setTimeout(()=>el.remove(),3400)}
+function confirmBox(msg,okLabel,onOk){const back=document.createElement("div");back.className="modal-back";back.innerHTML=`<div class="modal" role="dialog" aria-modal="true"><p>${esc(msg)}</p><div class="row end"><button class="btn" id="mCancel">Cancel</button><button class="btn primary" id="mOk">${esc(okLabel)}</button></div></div>`;document.body.appendChild(back);back.querySelector("#mCancel").onclick=()=>back.remove();back.querySelector("#mOk").onclick=()=>{back.remove();onOk()};back.querySelector("#mOk").focus()}
+function copyText(txt){const fallback=()=>{const back=document.createElement("div");back.className="modal-back";back.innerHTML=`<div class="modal"><p>Select all and copy (Ctrl+C), then paste into Excel.</p><textarea readonly></textarea><div class="row end"><button class="btn">Close</button></div></div>`;document.body.appendChild(back);const ta=back.querySelector("textarea");ta.value=txt;ta.select();back.querySelector("button").onclick=()=>back.remove()};
+  try{navigator.clipboard.writeText(txt).then(()=>toast("Copied. Paste it into Excel."),fallback)}catch(e){fallback()}}
+// seeded random for reproducible samples
+function rng(seed){let a=0;for(const ch of String(seed))a=(a*31+ch.charCodeAt(0))>>>0;a=a||1;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+// ---------------------------------------------------------------- language (Arabic / English)
+let LANG=(()=>{try{const v=localStorage.getItem(KEY+"-lang");if(v==="ar"||v==="en")return v}catch(e){}return /^ar/i.test(navigator.language||"")?"ar":"en"})();
+function applyLang(){document.documentElement.lang=LANG;document.documentElement.dir=LANG==="ar"?"rtl":"ltr"}
+const MON_AR=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
+const AR={
+"VAT Inspection Desk":"مكتب الفحص الضريبي","Overview":"نظرة عامة","Your data":"بياناتك","Reconciliations":"المطابقات","Prepare":"التحضير",
+"Dashboard":"لوحة المتابعة","Company & period":"المنشأة والفترة","Trial balance":"ميزان المراجعة","VAT returns":"الإقرارات الضريبية","Sales register":"سجل المبيعات","Purchase register":"سجل المشتريات","Payments to ZATCA":"المدفوعات للهيئة","Sales by VAT box":"المبيعات حسب خانات الإقرار","Revenue vs returns":"الإيرادات مقابل الإقرارات","Output VAT":"ضريبة المخرجات","Input VAT":"ضريبة المدخلات","VAT account & penalties":"حساب الضريبة والغرامات","Document checklist":"قائمة المستندات","Inspection guide":"دليل الفحص",
+"Your figures stay in this browser. Nothing is uploaded or sent anywhere.":"تبقى أرقامك في هذا المتصفح فقط، ولا يتم رفع أو إرسال أي شيء.",
+"Example figures.":"أرقام توضيحية.","January 2025 is filled in with sample data so you can see how everything ties out.":"شهر يناير 2025 معبأ ببيانات تجريبية لتوضيح كيفية تطابق الأرقام.","Import my Excel workbook":"استيراد ملف Excel الخاص بي","Clear example data":"مسح البيانات التوضيحية",
+"Remove all data (example or your own) and start with empty tables? Company settings are kept.":"حذف جميع البيانات (التوضيحية أو الخاصة بك) والبدء بجداول فارغة؟ سيتم الاحتفاظ بإعدادات المنشأة.","Clear all data":"مسح جميع البيانات","Cancel":"إلغاء","All tables cleared":"تم مسح جميع الجداول",
+"Select all and copy (Ctrl+C), then paste into Excel.":"حدد الكل وانسخ (Ctrl+C)، ثم الصقه في Excel.","Close":"إغلاق","Copied. Paste it into Excel.":"تم النسخ. الصقه في Excel.",
+"This data is too large to keep in the browser. It stays here until you close the page.":"حجم البيانات كبير جداً لحفظه في المتصفح، وستبقى متاحة حتى تغلق الصفحة.",
+"The Excel reader didn't load. Check your connection and reload, or paste the data instead.":"لم يتم تحميل قارئ Excel. تحقق من الاتصال وأعد تحميل الصفحة، أو الصق البيانات بدلاً من ذلك.",
+"That file couldn't be read. Save it as .xlsx and try again.":"تعذرت قراءة الملف. احفظه بصيغة ‎.xlsx وحاول مرة أخرى.",
+"This isn't the VAT Inspection Pack workbook. Use the Import button on each table instead.":"هذا ليس ملف حزمة الفحص الضريبي. استخدم زر الاستيراد في كل جدول بدلاً من ذلك.","Workbook imported":"تم استيراد الملف",
+"Add row":"إضافة صف","Import from Excel / CSV":"استيراد من Excel / CSV","Show only rows with exceptions":"عرض الصفوف التي بها ملاحظات فقط","Show all rows":"عرض جميع الصفوف","Copy table":"نسخ الجدول","Clear this table":"مسح هذا الجدول",
+"Tip: copy a block of cells from Excel and paste into any cell here. Rows are added automatically. Dates can be dd/mm/yyyy or yyyy-mm-dd.":"نصيحة: انسخ مجموعة خلايا من Excel والصقها في أي خلية هنا، وستُضاف الصفوف تلقائياً. يمكن كتابة التواريخ بصيغة dd/mm/yyyy أو yyyy-mm-dd.",
+"No rows with exceptions.":"لا توجد صفوف بها ملاحظات.","No rows yet. Paste from Excel, import a file, or add a row.":"لا توجد صفوف بعد. الصق من Excel أو استورد ملفاً أو أضف صفاً.","Delete row":"حذف الصف","Delete every row in this table?":"حذف جميع صفوف هذا الجدول؟","Delete rows":"حذف الصفوف",
+"Account code":"رمز الحساب","Account name":"اسم الحساب","FS class":"تصنيف القوائم المالية","VAT mapping":"التصنيف الضريبي","Opening balance":"الرصيد الافتتاحي","Total movements":"إجمالي الحركات","Closing balance":"الرصيد الختامي",
+"Invoice date":"تاريخ الفاتورة","Invoice no":"رقم الفاتورة","Document type":"نوع المستند","Customer":"العميل","Customer VAT no":"الرقم الضريبي للعميل","Customer type":"نوع العميل","VAT category":"الفئة الضريبية","Net (SAR)":"الصافي (ريال)","VAT (SAR)":"الضريبة (ريال)","E-invoice UUID":"المعرّف الفريد للفاتورة الإلكترونية","On FATOORA?":"مُبلّغة في فاتورة؟","GL account":"حساب الأستاذ","Export / zero-rate evidence":"إثبات التصدير / النسبة الصفرية","Period":"الفترة","Expected VAT":"الضريبة المتوقعة","VAT difference":"فرق الضريبة","Exceptions":"الملاحظات",
+"Supplier invoice no":"رقم فاتورة المورد","Supplier":"المورد","Supplier VAT no":"الرقم الضريبي للمورد","Country":"الدولة","Expense nature":"طبيعة المصروف","Valid tax invoice?":"فاتورة ضريبية صحيحة؟","Claimed in return?":"مخصومة في الإقرار؟","Customs decl. (Bayan)":"البيان الجمركي","VAT claimed":"الضريبة المخصومة","Defensible VAT":"الضريبة القابلة للدفاع عنها","VAT at risk":"الضريبة المعرضة للرفض",
+"Period # (0 = prior)":"رقم الفترة (0 = سابقة)","Payment date":"تاريخ السداد","SADAD / reference":"سداد / المرجع","Amount (SAR, refunds −)":"المبلغ (ريال، المستردات بالسالب)","Notes":"ملاحظات","Due date":"تاريخ الاستحقاق","Days late":"أيام التأخير","Months late":"أشهر التأخير","Est. penalty":"الغرامة التقديرية","Prior period":"فترة سابقة",
+"Date outside audit periods":"التاريخ خارج فترات الفحص","No VAT category":"لا توجد فئة ضريبية","VAT ≠ 15% × net":"الضريبة ≠ 15% × الصافي","Invalid or missing customer VAT no":"الرقم الضريبي للعميل غير صحيح أو مفقود","Not reported/cleared on FATOORA":"غير مُبلّغ عنها أو غير معتمدة في فاتورة","Zero-rate/export evidence missing":"إثبات النسبة الصفرية أو التصدير مفقود","Credit note should be negative":"يجب أن يكون الإشعار الدائن بالسالب","Simplified invoice to VAT-registered B2B":"فاتورة مبسطة لمنشأة مسجلة في الضريبة","Unknown VAT category":"فئة ضريبية غير معروفة","Invalid or missing supplier VAT no":"الرقم الضريبي للمورد غير صحيح أو مفقود","VAT claimed without a valid tax invoice":"ضريبة مخصومة دون فاتورة ضريبية صحيحة","Blocked input VAT claimed":"خصم ضريبة مدخلات غير قابلة للخصم","Customs declaration no missing":"رقم البيان الجمركي مفقود","Reverse charge used for a local supplier":"تطبيق الاحتساب العكسي على مورد محلي","VAT claimed on a non-taxable category":"خصم ضريبة على فئة غير خاضعة",
+"Standard 15% (Box 1)":"النسبة الأساسية 15% (خانة 1)","Citizens - Healthcare/Education (Box 2)":"المواطنون - صحة/تعليم (خانة 2)","Zero-rated domestic (Box 3)":"محلية بنسبة صفر (خانة 3)","Export (Box 4)":"صادرات (خانة 4)","Exempt (Box 5)":"معفاة (خانة 5)","Out of scope":"خارج النطاق",
+"Standard 15%":"النسبة الأساسية 15%","Citizens - Healthcare/Education":"المواطنون - صحة/تعليم","Zero-rated domestic":"محلية بنسبة صفر","Export":"صادرات","Exempt":"معفاة",
+"Standard domestic 15% (Box 7)":"محلية بالنسبة الأساسية 15% (خانة 7)","Import - VAT paid at customs (Box 8)":"استيراد - ضريبة مدفوعة في الجمارك (خانة 8)","Import - Reverse charge (Box 9)":"استيراد - احتساب عكسي (خانة 9)","Zero-rated purchase (Box 10)":"مشتريات بنسبة صفر (خانة 10)","Exempt purchase (Box 11)":"مشتريات معفاة (خانة 11)","Out of scope / Not reported":"خارج النطاق / غير مُقر عنها",
+"Revenue - Out of scope / Other income":"إيرادات خارج النطاق / إيرادات أخرى","VAT Payable / Settlement":"ضريبة مستحقة / تسوية","Not VAT relevant":"غير متعلق بالضريبة",
+"Tax Invoice":"فاتورة ضريبية","Simplified Tax Invoice":"فاتورة ضريبية مبسطة","Credit Note":"إشعار دائن","Debit Note":"إشعار مدين",
+"B2B - VAT registered":"منشأة - مسجلة في الضريبة","B2B - Not registered":"منشأة - غير مسجلة","B2C - Individual":"فرد (مستهلك)","Government":"جهة حكومية",
+"General business expense":"مصروف تشغيلي عام","Capital asset":"أصل رأسمالي","Entertainment / hospitality (blocked)":"ترفيه / ضيافة (غير قابلة للخصم)","Motor vehicle - private use (blocked)":"سيارة - استخدام شخصي (غير قابلة للخصم)","Staff personal benefit (blocked)":"منفعة شخصية للموظفين (غير قابلة للخصم)","Other non-business (blocked)":"أخرى غير تجارية (غير قابلة للخصم)",
+"Yes":"نعم","No":"لا","Asset":"أصول","Liability":"التزامات","Equity":"حقوق ملكية","Revenue":"إيرادات","Expense":"مصروفات",
+"Not started":"لم يبدأ","In progress":"قيد التنفيذ","Ready":"جاهز","Submitted":"تم التسليم","N/A":"لا ينطبق","Monthly":"شهري","Quarterly":"ربع سنوي",
+"These settings drive every period, due date and check in the app.":"تحدد هذه الإعدادات جميع الفترات وتواريخ الاستحقاق والفحوصات في التطبيق.","Company name":"اسم المنشأة","VAT registration number":"الرقم الضريبي","15 digits, starts and ends with 3.":"15 رقماً، يبدأ وينتهي بالرقم 3.","Valid format":"صيغة صحيحة","Invalid format":"صيغة غير صحيحة","Commercial registration no":"رقم السجل التجاري","Start of the year under inspection":"بداية السنة محل الفحص","The first day of a month. Periods are generated from this date.":"أول يوم من الشهر. يتم إنشاء الفترات بدءاً من هذا التاريخ.","Filing frequency":"دورية تقديم الإقرار","Monthly if taxable supplies exceed SAR 40 million a year, otherwise quarterly.":"شهري إذا تجاوزت التوريدات الخاضعة 40 مليون ريال سنوياً، وإلا ربع سنوي.","Standard VAT rate (%)":"نسبة الضريبة الأساسية (%)","15% since 1 July 2020.":"15% منذ 1 يوليو 2020.","Rounding tolerance (SAR)":"حد فروق التقريب (ريال)","Differences up to this amount count as matched.":"الفروق حتى هذا المبلغ تعتبر مطابقة.","Penalty calculation date":"تاريخ احتساب الغرامات","Usually today or the date of the ZATCA notice.":"عادةً تاريخ اليوم أو تاريخ إشعار الهيئة.","Late payment penalty (% per month or part)":"غرامة التأخر في السداد (% عن كل شهر أو جزء منه)","VAT Law Art. 43.":"المادة 43 من نظام ضريبة القيمة المضافة.","Incorrect return penalty (% of the difference)":"غرامة الإقرار الخاطئ (% من الفرق)","VAT Law Art. 42. Indicative.":"المادة 42 من النظام. تقديرية.","Tax periods":"الفترات الضريبية","Start":"البداية","End":"النهاية","Return & payment due":"موعد الإقرار والسداد","Data":"البيانات","Import the VAT Inspection Pack workbook":"استيراد ملف حزمة الفحص الضريبي","Clear all tables":"مسح جميع الجداول","Load example data":"تحميل البيانات التوضيحية",
+"Import reads the Excel workbook from earlier (Setup, TB_Monthly, VAT_Returns, Sales_Register, Purchase_Register, ZATCA_Payments, Checklist) and replaces what's here.":"يقرأ الاستيراد ملف Excel الخاص بالحزمة (Setup و TB_Monthly و VAT_Returns و Sales_Register و Purchase_Register و ZATCA_Payments و Checklist) ويستبدل البيانات الحالية.","Replace everything with the example data?":"استبدال جميع البيانات بالبيانات التوضيحية؟","Load example":"تحميل المثال",
+"Opening balance plus the net movement for each month. Debits positive, credits negative. Give every account a VAT mapping: that's how the app finds revenue by VAT box and the VAT accounts.":"الرصيد الافتتاحي مع صافي الحركة لكل شهر. المدين بالموجب والدائن بالسالب. حدد تصنيفاً ضريبياً لكل حساب، فبه يحدد التطبيق الإيرادات حسب خانات الإقرار وحسابات الضريبة.","Balance check":"فحص التوازن","Opening":"افتتاحي","Must be zero":"يجب أن يساوي صفراً",
+"VAT returns as filed":"الإقرارات الضريبية كما قُدمت","Copy each return exactly as it appears on the ZATCA portal. Enter credit-note adjustments as negative amounts. The app recalculates each return and checks it.":"انقل كل إقرار كما يظهر في بوابة الهيئة تماماً. أدخل تعديلات الإشعارات الدائنة بالسالب. يعيد التطبيق احتساب كل إقرار ويفحصه.","Date filed":"تاريخ التقديم","Return ref":"مرجع الإقرار","Sales":"المبيعات","Purchases":"المشتريات","Amount (SAR)":"المبلغ (ريال)","Adjustment":"التعديل","VAT amount":"مبلغ الضريبة","Borne by the State":"تتحملها الدولة","Total sales":"إجمالي المبيعات","Total purchases":"إجمالي المشتريات","Total VAT due for the period":"إجمالي الضريبة المستحقة للفترة","Corrections from previous periods (max ±5,000)":"تصحيحات من فترات سابقة (بحد أقصى ±5,000)","VAT credit carried forward from previous periods":"الرصيد الدائن المرحّل من فترات سابقة","Net VAT due (or claimed)":"صافي الضريبة المستحقة (أو المطالب باستردادها)","as filed":"كما قُدم",
+"VAT on reverse-charge imports (Box 9) counts as both output and input VAT on the return, so it is added to total output VAT here. Check this against your filed return.":"ضريبة الاستيراد بآلية الاحتساب العكسي (خانة 9) تُحتسب كضريبة مخرجات ومدخلات معاً في الإقرار، لذا تُضاف هنا إلى إجمالي ضريبة المخرجات. تحقق من ذلك مقابل الإقرار المقدم.","All periods":"جميع الفترات","over limit":"تجاوز الحد","✗ differs":"✗ مختلف",
+"Filed":"تاريخ التقديم","Box 16 recalculated":"خانة 16 بعد إعادة الاحتساب","Box 16 filed":"خانة 16 كما قُدمت","Arithmetic":"الصحة الحسابية","On time":"في الموعد","✓ Agrees":"✓ مطابق","✗ Filed ≠ recalculated":"✗ المقدم ≠ المعاد احتسابه","Not entered":"لم يُدخل","✓ On time":"✓ في الموعد","✗ Over 5,000: voluntary disclosure":"✗ يتجاوز 5,000: إفصاح طوعي","Year":"السنة","Box 16 as filed":"خانة 16 كما قُدمت",
+"Every invoice, simplified invoice, credit and debit note. For high-volume point-of-sale, use one summary line per day and VAT category. Credit notes are negative.":"كل فاتورة ضريبية ومبسطة وإشعار دائن ومدين. لمبيعات نقاط البيع الكبيرة استخدم سطراً ملخصاً لكل يوم ولكل فئة ضريبية. الإشعارات الدائنة بالسالب.",
+"Every supplier invoice and customs declaration with VAT. The app tests whether the input VAT you claimed would survive an inspection.":"كل فاتورة مورد وبيان جمركي يتضمن ضريبة. يختبر التطبيق ما إذا كانت ضريبة المدخلات المخصومة ستصمد أمام الفحص.",
+"One row per SADAD payment. Enter refunds received as negative amounts. Use period 0 for payments of periods before this year.":"صف لكل عملية سداد. أدخل المبالغ المستردة بالسالب. استخدم الفترة 0 لمدفوعات فترات ما قبل هذه السنة.",
+"For each box: what you declared, what you invoiced, and what you booked in the ledger. ZATCA usually starts here.":"لكل خانة: ما أقررت به، وما أصدرت به فواتير، وما سجلته في الدفاتر. عادةً تبدأ الهيئة من هنا.","VAT return":"الإقرار الضريبي","Return − register":"الإقرار − السجل","Return − TB":"الإقرار − الميزان","Status":"الحالة","✓ Matched":"✓ مطابق","✗ Investigate":"✗ يحتاج إلى فحص","No activity":"لا يوجد نشاط",
+"Revenue in the financial statements against total sales declared for the year. ZATCA treats any unexplained excess as undeclared taxable sales.":"الإيرادات في القوائم المالية مقابل إجمالي المبيعات المُقر بها للسنة. تعتبر الهيئة أي زيادة غير مفسرة مبيعات خاضعة غير مُقر بها.","Total revenue per trial balance (FS class = Revenue)":"إجمالي الإيرادات حسب ميزان المراجعة (التصنيف = إيرادات)","Less: revenue mapped as out of scope / other income":"يُخصم: إيرادات مصنفة خارج النطاق / إيرادات أخرى","Revenue subject to VAT reporting":"الإيرادات الخاضعة للإقرار الضريبي","Total sales per VAT returns (Box 6, full year)":"إجمالي المبيعات حسب الإقرارات (خانة 6، السنة كاملة)","Difference before reconciling items":"الفرق قبل بنود التسوية","Explained reconciling items":"بنود التسوية المفسَّرة","Enter each item with the sign that reduces the difference.":"أدخل كل بند بالإشارة التي تقلل الفرق.","Description":"الوصف","Add item":"إضافة بند","Delete item":"حذف البند","Unexplained difference":"الفرق غير المفسَّر","Explain or correct before submitting":"فسّره أو صحّحه قبل التقديم","Fully reconciled":"مطابق بالكامل",
+"Output VAT declared against invoices, the ledger and a 15% recomputation. Box 2 VAT is borne by the State and is left out of the recomputation.":"ضريبة المخرجات المُقر بها مقابل الفواتير والدفاتر وإعادة الاحتساب بنسبة 15%. ضريبة خانة 2 تتحملها الدولة ولا تدخل في إعادة الاحتساب.","Return (incl. RCM)":"الإقرار (شامل الاحتساب العكسي)","Register sales VAT":"ضريبة المبيعات في السجل","Register RCM VAT":"ضريبة الاحتساب العكسي في السجل","15% × (Box 1 + Box 9)":"15% × (خانة 1 + خانة 9)","GL output VAT":"ضريبة المخرجات في الدفاتر","Return − 15%":"الإقرار − 15%","Return − GL":"الإقرار − الدفاتر","Possible under-declaration":"نقص محتمل في الإقرار",
+"Input VAT claimed against the register and the ledger, and the part ZATCA is likely to disallow (no valid invoice, blocked expense, invalid supplier VAT number).":"ضريبة المدخلات المخصومة مقابل السجل والدفاتر، والجزء المرجّح أن ترفضه الهيئة (لا توجد فاتورة صحيحة، مصروف غير قابل للخصم، رقم ضريبي غير صحيح للمورد).","Return (Box 12)":"الإقرار (خانة 12)","Register claimed":"المخصوم حسب السجل","Defensible":"القابل للدفاع عنه","At risk":"المعرّض للرفض","GL input VAT":"ضريبة المدخلات في الدفاتر","Possible over-claim":"زيادة محتملة في الخصم","Imports: Box 8 and Box 9":"الاستيراد: خانة 8 وخانة 9","Box 8 VAT (return)":"ضريبة خانة 8 (الإقرار)","Customs VAT (register)":"ضريبة الجمارك (السجل)","Difference":"الفرق","Box 9 VAT (return)":"ضريبة خانة 9 (الإقرار)","RCM VAT (register)":"ضريبة الاحتساب العكسي (السجل)",
+"Also match Box 8 to ZATCA's customs import data. Customs VAT is deductible only when your company is the importer of record on the Bayan.":"طابق أيضاً خانة 8 مع بيانات الاستيراد الجمركية لدى الهيئة. ضريبة الجمارك قابلة للخصم فقط إذا كانت منشأتك هي المستورد المسجل في البيان الجمركي.",
+"Opening VAT liability per ledger:":"التزام الضريبة الافتتاحي حسب الدفاتر:","Net VAT (Box 13 + 14)":"صافي الضريبة (خانة 13 + 14)","Paid / (refunded)":"المسدد / (المسترد)","Outstanding":"المتبقي","Due":"الاستحقاق","Penalty: paid late":"غرامة: سداد متأخر","Penalty: still unpaid":"غرامة: غير مسدد","GL liability":"الالتزام في الدفاتر","Expected liability":"الالتزام المتوقع",
+"Expected liability = opening liability + cumulative (Box 13 + Box 14) − payments dated on or before period end. Late filing (5% to 25% of the tax) and incorrect return (50% of the difference) penalties may also apply.":"الالتزام المتوقع = الالتزام الافتتاحي + المجموع التراكمي (خانة 13 + خانة 14) − المدفوعات حتى نهاية الفترة. قد تنطبق أيضاً غرامة التأخر في التقديم (5% إلى 25% من الضريبة) وغرامة الإقرار الخاطئ (50% من الفرق).",
+"Your company":"منشأتك","VAT no":"الرقم الضريبي","valid format":"صيغة صحيحة","check VAT no":"تحقق من الرقم الضريبي","Total indicative exposure":"إجمالي التعرض التقديري","Tax + 50% penalty + late payment":"الضريبة + غرامة 50% + التأخر في السداد","Under-declared output VAT":"ضريبة مخرجات غير مُقر بها","Over-claimed input VAT":"ضريبة مدخلات مخصومة بالزيادة","Unexplained revenue difference":"فرق إيرادات غير مفسَّر","Documents ready":"المستندات الجاهزة","Reconciliation status by period":"حالة المطابقة حسب الفترة","Check":"الفحص","VAT account (GL vs returns − payments)":"حساب الضريبة (الدفاتر مقابل الإقرارات − المدفوعات)","Return arithmetic":"الصحة الحسابية للإقرار","Filed on time":"التقديم في الموعد","What to fix before ZATCA sees it":"ما يجب معالجته قبل أن تراه الهيئة","Open":"فتح","No open issues in the data entered so far.":"لا توجد ملاحظات مفتوحة في البيانات المدخلة حتى الآن.","Exposure breakdown":"تفاصيل التعرض","Tax exposure":"التعرض الضريبي","Late payment penalties (paid late + still unpaid)":"غرامات التأخر في السداد (المسدد متأخراً + غير المسدد)","Total indicative exposure (SAR)":"إجمالي التعرض التقديري (ريال)","Estimates only, before any objection, voluntary disclosure relief or penalty waiver. Confirm with your tax advisor.":"تقديرات فقط، قبل أي اعتراض أو تخفيف عبر الإفصاح الطوعي أو إعفاء من الغرامات. تأكد مع مستشارك الضريبي.",
+"What ZATCA usually asks for in a VAT inspection. Track who owns each item and where the file is.":"ما تطلبه الهيئة عادةً في فحص ضريبة القيمة المضافة. تابع المسؤول عن كل بند ومكان ملفه.","Readiness":"الجاهزية","Area":"المجال","Document or analysis":"المستند أو التحليل","Prepared in this app":"مُعدّ في هذا التطبيق","Owner":"المسؤول","File reference":"مرجع الملف",
+"General":"عام","Financial":"مالي","Reconciliation":"مطابقة","Cross-tax":"ضرائب أخرى","E-invoicing":"الفوترة الإلكترونية","Response":"الرد على الهيئة",
+"VAT returns, Payments":"الإقرارات الضريبية، المدفوعات","Revenue reconciliation":"مطابقة الإيرادات","Sales reconciliation":"مطابقة المبيعات","Output VAT reconciliation":"مطابقة ضريبة المخرجات","Input VAT reconciliation":"مطابقة ضريبة المدخلات","VAT account reconciliation":"مطابقة حساب الضريبة",
+"Timing – invoices booked in a different period":"توقيت – فواتير مسجلة في فترة مختلفة","Revenue accruals not yet invoiced":"إيرادات مستحقة لم تصدر بها فواتير","Advance payments invoiced":"دفعات مقدمة صدرت بها فواتير","Other":"أخرى"};
+const CHK_AR=["شهادة التسجيل في ضريبة القيمة المضافة، السجل التجاري، عقد التأسيس","وصف الأنشطة ومصادر الإيرادات مع المعالجة الضريبية لكل منها","قائمة الفروع والأطراف ذات العلاقة وأعضاء المجموعة الضريبية","دليل الحسابات مع التصنيف الضريبي","تفاصيل نظام ERP وحل الفوترة الإلكترونية (فاتورة) والربط وشهادة التشفير","خطاب تفويض الممثل المسؤول عن التعامل مع الهيئة","القوائم المالية المدققة لكل سنة محل الفحص","موازين المراجعة الشهرية (افتتاحي، حركات، ختامي)","تفاصيل دفتر الأستاذ للإيرادات والضريبة والمصروفات الرئيسية","كشوف الحسابات البنكية (تقارن الهيئة المتحصلات بالمبيعات المُقر بها)","نسخ جميع الإقرارات المقدمة وإيصالات السداد","الإفصاحات الطوعية والتصحيحات المقدمة (استخدام خانة 14)","مطابقة الإيرادات في القوائم المالية مع إجمالي المبيعات في الإقرارات","مطابقة المبيعات لكل خانة مع سجل المبيعات ودفتر الأستاذ لكل فترة","مطابقة ضريبة المخرجات في الدفاتر مع الإقرارات","مطابقة ضريبة المدخلات في الدفاتر مع الإقرارات","حركة حساب الضريبة المستحقة","مطابقة بيانات الاستيراد الجمركية (البيان) مع خانة 8","سجل المبيعات على مستوى الفاتورة مع الأرقام الضريبية للعملاء","عينات من الفواتير الضريبية والمبسطة والإشعارات الدائنة والمدينة (XML / رمز QR)","إثباتات التصدير: بيانات الخروج الجمركية، بوالص الشحن، العقود، إثبات التحصيل","إثباتات التوريدات المحلية بنسبة صفر (الأدوية المؤهلة، النقل الدولي، وغيرها)","مستندات التوريدات المعفاة (هامش الخدمات المالية، الإيجارات السكنية)","العقود الرئيسية مع العملاء بما فيها العقود الحكومية وبنود الضريبة","التوريدات الافتراضية: العينات المجانية، الهدايا، الاستخدام الخاص، منافع الموظفين، الشطب","تعاملات الأطراف ذات العلاقة والمعالجة الضريبية لها","استبعاد الأصول الثابتة والعقارات (معالجة ضريبة القيمة المضافة / ضريبة التصرفات العقارية)","سجل المشتريات على مستوى الفاتورة مع الأرقام الضريبية للموردين","عينات من فواتير الموردين المؤيدة لضريبة المدخلات المخصومة","البيانات الجمركية للاستيراد وإثبات سداد الضريبة في الجمارك","الاحتساب العكسي: فواتير الموردين الأجانب والعقود وطريقة الاحتساب","تحليل ضريبة المدخلات غير القابلة للخصم (الترفيه، السيارات، منافع الموظفين)","سجل الأصول الثابتة وتعديلات الأصول الرأسمالية","احتساب نسبة توزيع ضريبة المدخلات (في حال وجود توريدات معفاة)","إقرارات ضريبة الاستقطاع (يجب أن تطابق المدفوعات للخارج خانة 9)","مطابقة إيرادات إقرار الزكاة / ضريبة الدخل مع إيرادات ضريبة القيمة المضافة","موجة الربط في المرحلة الثانية وتقرير الفواتير المعتمدة / المبلّغة","تفسير مكتوب لكل فرق يتم اكتشافه"];
+const MONRE="(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)";
+const mAr=m=>MON_AR[MON.indexOf(m)];
+const dAr=s=>s.replace(new RegExp("(\\d{1,2}) "+MONRE+" (\\d{4})","g"),(_,d,m,y)=>`${d} ${mAr(m)} ${y}`);
+const PAT=[
+ [new RegExp("^"+MONRE+"$"),m=>mAr(m[1])],
+ [new RegExp("^"+MONRE+" (\\d{2,4})$"),m=>`${mAr(m[1])} ${m[2]}`],
+ [new RegExp("^\\d{1,2} "+MONRE+" \\d{4}$"),m=>dAr(m[0])],
+ [/^Q(\d)( \d{4})?$/,m=>`الربع ${m[1]}${m[2]||""}`],
+ [/^Box (\d+)$/,m=>`خانة ${m[1]}`],
+ [/^Box (\d+) · (.+)$/,m=>`خانة ${m[1]} · ${trx(m[2])}`],
+ [/^Sales – Box (\d)$/,m=>`المبيعات – خانة ${m[1]}`],
+ [/^Pasted (\d+) rows?$/,m=>`تم لصق ${m[1]} صف`],
+ [/^Imported ([\d,]+) rows$/,m=>`تم استيراد ${m[1]} صف`],
+ [/^([\d,]+) rows(?: · ([\d,]+) with exceptions)?$/,m=>`${m[1]} صف`+(m[2]?` · ${m[2]} بها ملاحظات`:"")],
+ [/^Page (\d+) of (\d+)$/,m=>`صفحة ${m[1]} من ${m[2]}`],
+ [/^Delete row (\d+)$/,m=>`حذف الصف ${m[1]}`],
+ [/^✗ (\d+) ?d(?:ays)? late$/,m=>`✗ متأخر ${m[1]} يوم`],
+ [/^Due (.+)$/,m=>`الاستحقاق ${dAr(m[1])}`],
+ [/^Recalculated: (.*)$/,m=>`بعد إعادة الاحتساب: ${m[1]}`],
+ [/^(\d+) of (\d+) items$/,m=>`${m[1]} من ${m[2]} بند`],
+ [/^(\d+)% ready$/,m=>`جاهز بنسبة ${m[1]}%`],
+ [/^SAR (.+)$/,m=>`${m[1]} ريال`],
+ [/^· (.+) to (.+) · (Monthly|Quarterly) filing$/,m=>`· من ${dAr(m[1])} إلى ${dAr(m[2])} · إقرار ${m[3]==="Monthly"?"شهري":"ربع سنوي"}`],
+ [/^Proves the ledger VAT liability equals returns filed less payments made, and estimates late-payment penalties up to (.+)\.$/,m=>`يثبت أن التزام الضريبة في الدفاتر يساوي الإقرارات المقدمة ناقص المدفوعات، ويقدّر غرامات التأخر في السداد حتى ${dAr(m[1])}.`],
+ [/^✓ agrees within SAR (.+) · ✗ needs investigation · · no activity in that period\. Click a row to open the reconciliation\.$/,m=>`✓ مطابق ضمن ${m[1]} ريال · ✗ يحتاج إلى فحص · · لا يوجد نشاط في الفترة. اضغط على أي صف لفتح المطابقة.`],
+ [/^Unexplained revenue × (\d+)%$/,m=>`الإيرادات غير المفسرة × ${m[1]}%`],
+ [/^Incorrect-return penalty \((\d+)% of the difference\)$/,m=>`غرامة الإقرار الخاطئ (${m[1]}% من الفرق)`],
+ [/^Revenue difference of SAR (.+) between the trial balance and the VAT returns is not explained$/,m=>`فرق إيرادات بمبلغ ${m[1]} ريال بين ميزان المراجعة والإقرارات غير مفسَّر`],
+ [/^(.+): (\d+) periods? needs? investigation$/,m=>`${trx(m[1])}: ${m[2]} فترة تحتاج إلى فحص`],
+ [/^([\d,]+) sales invoices? (?:have|has) exceptions$/,m=>`${m[1]} فاتورة مبيعات بها ملاحظات`],
+ [/^([\d,]+) purchase invoices? (?:have|has) exceptions$/,m=>`${m[1]} فاتورة مشتريات بها ملاحظات`],
+ [/^Trial balance doesn't balance in (\d+) columns?$/,m=>`ميزان المراجعة غير متوازن في ${m[1]} عمود`],
+ [/^(\d+) TB accounts? (?:have|has) no VAT mapping$/,m=>`${m[1]} حساب في الميزان بدون تصنيف ضريبي`],
+ [/^SAR (.+) of VAT is still unpaid$/,m=>`${m[1]} ريال من الضريبة لم تُسدد بعد`]];
+function trCore(c){if(AR[c]!=null)return AR[c];for(const[re,f]of PAT){const m=re.exec(c);if(m)return f(m)}if(c.includes("; ")){const t=c.split("; ").map(p=>AR[p]);if(t.every(x=>x!=null))return t.join("؛ ")}return null}
+function trx(s){const r=trCore(s);return r==null?s:r}
+function tr(s){if(LANG!=="ar"||s==null)return s;const m=/^(\s*)([\s\S]*?)(\s*)$/.exec(String(s));if(!m[2])return s;const o=trCore(m[2]);return o==null?s:m[1]+o+m[3]}
+function translateNode(root){
+  if(LANG!=="ar"||!root)return;
+  if(root.nodeType===3){const p=root.parentElement;if(!p||p.closest("script,style,textarea,[data-notr]"))return;const v=tr(root.nodeValue);if(v!==root.nodeValue)root.nodeValue=v;return}
+  if(root.nodeType!==1)return;
+  if(root.closest&&root.closest("script,style,textarea,[data-notr]"))return;
+  const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);const list=[];let n;while((n=w.nextNode()))list.push(n);list.forEach(translateNode);
+  [root,...root.querySelectorAll("[title],[aria-label],[placeholder]")].forEach(el=>{if(!el.getAttribute)return;for(const a of["title","aria-label","placeholder"]){const v=el.getAttribute(a);if(v){const t=tr(v);if(t!==v)el.setAttribute(a,t)}}});
+}
+const langObserver=new MutationObserver(ms=>{if(LANG!=="ar")return;for(const m of ms){if(m.type==="characterData")translateNode(m.target);else m.addedNodes.forEach(translateNode)}});
+
+// ================================================================ glue: extra translations for shared lists
+CHECKLIST.forEach((c,i)=>{AR[c[1]]=CHK_AR[i]});BOXES.forEach(b=>{AR[b.en]=b.ar});AR["Sections"]="الأقسام";
+PAT.push([/^Box (\d+) ([ajv])$/,m=>`خانة ${m[1]} ${({a:"المبلغ",j:"التعديل",v:"الضريبة"})[m[2]]}`],
+ [/^VAT IR Art\. (.+)$/,m=>`اللائحة التنفيذية، المادة ${m[1]}`],
+ [/^VAT Law Art\. (.+)$/,m=>`نظام ضريبة القيمة المضافة، المادة ${m[1]}`]);
+Object.assign(AR,{"ZATCA risk indicator":"مؤشر مخاطر لدى الهيئة","Analytics":"تحليلات","E-invoicing Regulation":"لائحة الفوترة الإلكترونية","VAT Law Art. 2 & 9":"نظام ضريبة القيمة المضافة، المادتان 2 و9"});
+
+// ================================================================ engine
+function cfg(){const s=S.setup;return{rate:num(s.rate)/100,tol:num(s.tol),lpp:num(s.lpp)/100,irp:num(s.irp)/100,asof:D(s.asof)||todayD(),init:s.init==="Yes",initEnd:D(s.initEnd),initCut:D(s.initCut)}}
+function periods(){
+  let fy=D(S.setup.fy)||D("2025-01-01"); fy=new Date(Date.UTC(fy.getUTCFullYear(),fy.getUTCMonth(),1));
+  const n=S.setup.freq==="Quarterly"?4:12, mp=12/n, out=[];
+  for(let i=0;i<n;i++){const st=addM(fy,i*mp), en=new Date(addM(fy,(i+1)*mp)-864e5), due=eom(addM(en,1));
+    out.push({i,no:i+1,st,en,due,label:n===12?`${MON[st.getUTCMonth()]} ${st.getUTCFullYear()}`:`Q${i+1} ${st.getUTCFullYear()}`,short:n===12?MON[st.getUTCMonth()]:`Q${i+1}`,months:Array.from({length:mp},(_,k)=>i*mp+k)})}
+  return out;
+}
+function monthLabels(){let fy=D(S.setup.fy)||D("2025-01-01");return Array.from({length:12},(_,m)=>{const d=addM(fy,m);return `${MON[d.getUTCMonth()]} ${String(d.getUTCFullYear()).slice(2)}`})}
+function periodOf(ps,s){const d=D(s);if(!d)return 0;const p=ps.find(p=>d>=p.st&&d<=p.en);return p?p.no:0}
+function monthsLate(due,d){if(!due||!d||d<=due)return 0;return (d.getUTCFullYear()-due.getUTCFullYear())*12+d.getUTCMonth()-due.getUTCMonth()+(d.getUTCDate()>due.getUTCDate()?1:0)}
+const normNo=s=>String(s||"").trim().toUpperCase().replace(/\s+/g,"");
+
+function salesCalc(r,ps,c){
+  if(!r.date&&!r.no&&!r.net)return null;
+  const p=periodOf(ps,r.date), net=num(r.net), vat=num(r.vat), exp=r.cat===SALES_CATS[0]?r2(net*c.rate):0, diff=r2(vat-exp), f=[];
+  if(!p)f.push("Date outside audit periods");
+  if(!r.cat)f.push("No VAT category");
+  if(Math.abs(diff)>c.tol)f.push("VAT ≠ 15% × net");
+  if(r.ctype===CUST_TYPES[0]&&!vatOk(r.cvat))f.push("Invalid or missing customer VAT no");
+  if(r.fat!=="Yes")f.push("Not reported/cleared on FATOORA");
+  if((r.cat===SALES_CATS[2]||r.cat===SALES_CATS[3])&&!String(r.ev||"").trim())f.push("Zero-rate/export evidence missing");
+  if(r.type==="Credit Note"&&net>0)f.push("Credit note should be negative");
+  if(r.type==="Simplified Tax Invoice"&&r.ctype===CUST_TYPES[0])f.push("Simplified invoice to VAT-registered B2B");
+  if(r.cat&&!SALES_CATS.includes(r.cat))f.push("Unknown VAT category");
+  return{p,net,vat,exp,diff,total:net+vat,flags:f};
+}
+function purCalc(r,ps,c,dup){
+  if(!r.date&&!r.no&&!r.net)return null;
+  const p=periodOf(ps,r.date), net=num(r.net), vat=num(r.vat), vatable=PUR_CATS.slice(0,3).includes(r.cat), blocked=/blocked/i.test(r.nature||"");
+  const exp=vatable?r2(net*c.rate):0, diff=r2(vat-exp), claimed=r.claimed==="Yes"?vat:0;
+  const defensible=(!dup&&r.claimed==="Yes"&&r.valid==="Yes"&&!blocked&&vatable&&(r.cat!==PUR_CATS[0]||vatOk(r.svat)))?vat:0;
+  const f=[];
+  if(!p)f.push("Date outside audit periods");
+  if(!r.cat)f.push("No VAT category");
+  if(dup)f.push("Duplicate supplier invoice");
+  if(Math.abs(diff)>c.tol)f.push("VAT ≠ 15% × net");
+  if(r.cat===PUR_CATS[0]&&!vatOk(r.svat))f.push("Invalid or missing supplier VAT no");
+  if(r.claimed==="Yes"&&r.valid!=="Yes")f.push("VAT claimed without a valid tax invoice");
+  if(r.claimed==="Yes"&&blocked)f.push("Blocked input VAT claimed");
+  if(r.cat===PUR_CATS[1]&&!String(r.bayan||"").trim())f.push("Customs declaration no missing");
+  if(r.cat===PUR_CATS[2]&&isSaudi(r.country))f.push("Reverse charge used for a local supplier");
+  if(r.claimed==="Yes"&&!vatable&&r.cat)f.push("VAT claimed on a non-taxable category");
+  if(r.country&&!isSaudi(r.country)&&net>0&&r.cat!==PUR_CATS[1]&&r.cat!==PUR_CATS[2])f.push("Foreign supplier without reverse charge");
+  return{p,net,vat,exp,diff,total:net+vat,claimed,defensible,risk:r2(claimed-defensible),flags:f,dup};
+}
+function retCalc(r,c,p){
+  const n=b=>num(r.b[b].a)+num(r.b[b].j), v=b=>num(r.b[b].v);
+  const box6=[1,2,3,4,5].reduce((s,b)=>s+n(b),0), out=[1,2,3,4,5,9].reduce((s,b)=>s+v(b),0);
+  const box12=[7,8,9,10,11].reduce((s,b)=>s+n(b),0), inp=[7,8,9,10,11].reduce((s,b)=>s+v(b),0);
+  const box13=r2(out-inp), b14=num(r.b14), b15=num(r.b15), b16c=r2(box13+b14-b15);
+  const entered=!!(r.filed||String(r.b16).trim()||BOX_IDS.some(b=>String(r.b[b].a).trim()||String(r.b[b].v).trim()));
+  const arith=!entered?"none":(Math.abs(num(r.b16)-b16c)<=c.tol?"ok":"bad");
+  const fd=D(r.filed); const late=!r.filed?"none":(fd<=p.due?"ok":"bad");
+  return{n,v,box6,out,box12,inp,box13,b14,b15,b16:num(r.b16),b16c,entered,arith,late,lateDays:fd&&fd>p.due?daysBetween(p.due,fd):0,b14ok:Math.abs(b14)<=5000};
+}
+function tbSum(pred,months){let s=0;for(const r of S.tb){if(!pred(r))continue;for(const m of months)s+=num(r.m[m])}return s}
+const BENFORD=[0,...Array.from({length:9},(_,i)=>Math.log10(1+1/(i+1)))];
+function benford(amts){const c=Array(10).fill(0);let n=0;for(const a of amts){const x=Math.abs(a);if(x<10)continue;const d=+String(Math.floor(x))[0];if(d>=1){c[d]++;n++}}
+  const obs=c.map(v=>n?v/n:0);const mad=n?obs.slice(1).reduce((s,o,i)=>s+Math.abs(o-BENFORD[i+1]),0)/9:0;
+  return{n,obs,counts:c,mad,level:n<50?"na":mad<=0.006?"close":mad<=0.012?"acceptable":mad<=0.015?"marginal":"nonconforming"}}
+
+function compute(){
+  const c=cfg(), ps=periods();
+  const sales=S.sales.map(r=>salesCalc(r,ps,c));
+  const seen=new Map(); const pur=S.purchases.map(r=>{const k=normNo(r.sup)+"|"+normNo(r.no);const dup=!!(r.no&&seen.has(k));if(r.no&&!seen.has(k))seen.set(k,1);return purCalc(r,ps,c,dup)});
+  const rets=ps.map(p=>retCalc(S.returns[p.i],c,p));
+  const pays=S.payments.map(r=>{const p=num(r.p), date=D(r.date), per=ps[p-1], due=per?per.due:null, ml=monthsLate(due,date), amt=num(r.amt);
+    return{p,date,due,days:due&&date&&date>due?daysBetween(due,date):0,ml,amt,pen:amt>0?r2(amt*c.lpp*ml):0,label:per?per.label:(p===0&&r.date?"Prior period":"")}});
+  const st=(diffs,zeros)=>zeros.every(z=>Math.abs(z)<0.005)?"none":(diffs.every(d=>Math.abs(d)<=c.tol)?"ok":"bad");
+  const sumS=(p,f,pred)=>sales.reduce((s,x,i)=>x&&x.p===p&&(!pred||pred(S.sales[i]))?s+x[f]:s,0);
+  const sumP=(p,f,pred)=>pur.reduce((s,x,i)=>x&&x.p===p&&(!pred||pred(S.purchases[i]))?s+x[f]:s,0);
+  const salesRec=[1,2,3,4,5].map((b,k)=>{const cat=SALES_CATS[k];const rows=ps.map((p,i)=>{const ret=rets[i].n(b), reg=sumS(p.no,"net",r=>r.cat===cat), tb=-tbSum(r=>r.map===cat,p.months);
+    return{p,ret,reg,tb,d1:ret-reg,d2:ret-tb,s:st([ret-reg,ret-tb],[ret,reg,tb])}});return{b,cat,rows}});
+  const outRec=ps.map((p,i)=>{const R=rets[i], ret=R.out, rs=sumS(p.no,"vat"), rr=sumP(p.no,"vat",r=>r.cat===PUR_CATS[2]), reg=rs+rr, rc=r2((R.n(1)+R.n(9))*c.rate), gl=-tbSum(r=>r.map==="Output VAT",p.months);
+    return{p,ret,rs,rr,reg,rc,gl,d1:ret-reg,d2:ret-rc,d3:ret-gl,s:st([ret-reg,ret-rc,ret-gl],[ret,reg,gl]),under:Math.max(0,reg-ret,gl-ret)}});
+  const inRec=ps.map((p,i)=>{const R=rets[i], ret=R.inp, cl=sumP(p.no,"claimed"), df=sumP(p.no,"defensible"), rk=sumP(p.no,"risk"), gl=tbSum(r=>r.map==="Input VAT",p.months);
+    const b8=R.v(8), c8=sumP(p.no,"vat",r=>r.cat===PUR_CATS[1]), b9=R.v(9), c9=sumP(p.no,"vat",r=>r.cat===PUR_CATS[2]);
+    return{p,ret,cl,df,rk,gl,d1:ret-cl,d2:ret-gl,s:st([ret-cl,ret-gl],[ret,cl,gl]),over:Math.max(0,ret-df),b8,c8,d8:b8-c8,b9,c9,d9:b9-c9}});
+  const isV=r=>r.map==="Output VAT"||r.map==="Input VAT"||r.map==="VAT Payable / Settlement";
+  const openSum=S.tb.reduce((s,r)=>isV(r)?s+num(r.open):s,0), openLiab=-openSum;
+  let cum=0, vatPrev=0;
+  const vatRec=ps.map((p,i)=>{const R=rets[i], net=R.box13+R.b14; cum+=net;
+    const paid=pays.reduce((s,x)=>x.p===p.no?s+x.amt:s,0), outst=Math.max(R.b16,0)-paid, latePen=pays.reduce((s,x)=>x.p===p.no?s+x.pen:s,0);
+    const unpaidPen=outst>c.tol&&c.asof>p.due?r2(outst*c.lpp*monthsLate(p.due,c.asof)):0;
+    const upto=[];for(let m=0;m<=p.months[p.months.length-1];m++)upto.push(m);
+    const gl=-(openSum+tbSum(isV,upto)), paidToDate=pays.reduce((s,x)=>x.date&&x.date<=p.en?s+x.amt:s,0), exp=openLiab+cum-paidToDate;
+    const diff=r2(gl-exp), prev=i?vatPrev:0; vatPrev=diff; const moved=Math.abs(diff-prev)>c.tol;
+    return{p,net,b16:R.b16,paid,outst,latePen,unpaidPen,late:R.late,lateDays:R.lateDays,gl,exp,diff,carried:!moved&&Math.abs(diff)>c.tol,s:Math.abs(diff)<=c.tol?(Math.abs(gl)<0.005&&Math.abs(exp)<0.005?"none":"ok"):(moved?"bad":"none")}});
+  const tot=r=>r.m.reduce((s,v)=>s+num(v),0);
+  const tbRev=-S.tb.reduce((s,r)=>r.fs==="Revenue"?s+tot(r):s,0), oos=-S.tb.reduce((s,r)=>r.map===OOS_MAP?s+tot(r):s,0);
+  const subj=tbRev-oos, retSales=rets.reduce((s,R)=>s+R.box6,0), rdiff=subj-retSales, items=S.recItems.reduce((s,x)=>s+num(x.a),0), unexpl=r2(rdiff-items);
+  const tbCheck=[S.tb.reduce((s,r)=>s+num(r.open),0),...Array.from({length:12},(_,m)=>S.tb.reduce((s,r)=>s+num(r.m[m]),0))].map(r2);
+  const unmapped=S.tb.filter(r=>(r.code||r.name)&&!r.map).length;
+  const C={c,ps,sales,pur,rets,pays,salesRec,outRec,inRec,vatRec,openLiab,rev:{tbRev,oos,subj,retSales,rdiff,items,unexpl},tbCheck,unmapped,
+    sFlag:sales.filter(x=>x&&x.flags.length).length,pFlag:pur.filter(x=>x&&x.flags.length).length};
+  C.tests=runTests(C);
+  C.exposure=exposure(C);
+  const app=C.tests.filter(t=>t.status!=="na"), w={high:3,medium:2,low:1};
+  const wt=app.reduce((s,t)=>s+w[t.sev],0), wp=app.filter(t=>t.status==="pass").reduce((s,t)=>s+w[t.sev],0);
+  C.score=wt?Math.round(100*wp/wt):null;
+  C.ready=S.checklist.filter(x=>["Ready","Submitted","N/A"].includes(x.status)).length/S.checklist.length;
+  return C;
+}
+
+// ================================================================ exposure (two scenarios, no double counting)
+function exposure(C){
+  const c=C.c, rows=C.ps.map((p,i)=>{const o=C.outRec[i], n=C.inRec[i], v=C.vatRec[i];
+    return{p,out:o.under,inp:n.over,latePay:v.latePen+v.unpaidPen,lateFile:v.late==="bad"&&C.rets[i].box13>0?r2(C.rets[i].box13*0.05):0,eligible:!!(c.initCut&&p.due<=c.initCut)}});
+  // unexplained revenue beyond what period-level under-declaration already explains
+  const extraRev=Math.max(0,r2(Math.max(0,C.rev.unexpl)*c.rate-rows.reduce((s,r)=>s+r.out,0)));
+  if(extraRev>0){const last=[...rows].reverse().find(r=>C.rets[r.p.i].entered)||rows[rows.length-1];last.out+=extraRev}
+  rows.forEach(r=>{r.tax=r2(r.out+r.inp);r.pen=r2(r.tax*c.irp);r.allPen=r2(r.pen+r.latePay+r.lateFile)});
+  const sum=f=>r2(rows.reduce((s,r)=>s+r[f],0));
+  const tax=sum("tax"), pen=sum("pen"), latePay=sum("latePay"), lateFile=sum("lateFile");
+  const today=todayD(), active=c.init&&c.initEnd&&today<=c.initEnd;
+  const waived=active?r2(rows.reduce((s,r)=>r.eligible?s+r.allPen:s,0)):0;
+  const A=r2(tax+pen+latePay+lateFile), B=r2(A-waived);
+  return{rows,tax,out:sum("out"),inp:sum("inp"),pen,latePay,lateFile,A,B,waived,active,daysLeft:c.initEnd?daysBetween(today,c.initEnd):null,extraRev};
+}
+
+// ================================================================ test library (100% population)
+const L=(en,ar)=>{AR[en]=ar;return en};
+const AREAS={sales:L("Sales","المبيعات"),purchases:L("Purchases","المشتريات"),returns:L("Returns & payments","الإقرارات والسداد"),ledger:L("Ledger & reconciliation","الدفاتر والمطابقة"),anomaly:L("Anomaly analytics","تحليلات الأنماط غير الطبيعية")};
+const SEV={high:L("High","عالية"),medium:L("Medium","متوسطة"),low:L("Low","منخفضة")};
+function T(id,area,sev,en,ar,ref,go,fn){return{id,area,sev,title:L(en,ar),ref,go,fn}}
+const hitS=(C,pred,note)=>S.sales.map((r,i)=>({r,x:C.sales[i],i})).filter(o=>o.x&&pred(o.r,o.x)).map(o=>({ref:o.r.no,date:o.r.date,party:o.r.cust,amount:o.x.net,tax:typeof note==="function"?note(o.r,o.x):0}));
+const hitP=(C,pred,taxf)=>S.purchases.map((r,i)=>({r,x:C.pur[i],i})).filter(o=>o.x&&pred(o.r,o.x)).map(o=>({ref:o.r.no,date:o.r.date,party:o.r.sup,amount:o.x.net,tax:taxf?taxf(o.r,o.x):0}));
+const hitPer=(C,arr,pred,amt,taxf)=>arr.map((x,i)=>({x,i})).filter(o=>pred(o.x,o.i)).map(o=>({ref:C.ps[o.i].label,date:"",party:"",amount:amt(o.x,o.i),tax:taxf?taxf(o.x,o.i):0}));
+const TESTS=[
+ T("S01","sales","high","Duplicate sales invoice numbers","أرقام فواتير مبيعات مكررة","VAT IR Art. 53","sales",C=>{const m=new Map();S.sales.forEach(r=>{const k=normNo(r.no);if(k)m.set(k,(m.get(k)||0)+1)});return hitS(C,r=>m.get(normNo(r.no))>1,(r,x)=>0)}),
+ T("S02","sales","medium","Gaps in invoice number sequence","فجوات في تسلسل أرقام الفواتير","VAT IR Art. 53(5)","sales",C=>{const g={};S.sales.forEach(r=>{const m=/^(.*?)(\d+)$/.exec(String(r.no||"").trim());if(m&&r.type!=="Credit Note"&&r.type!=="Debit Note")(g[m[1]]=g[m[1]]||[]).push(+m[2])});const out=[];
+   Object.entries(g).forEach(([pre,arr])=>{arr.sort((a,b)=>a-b);for(let i=1;i<arr.length;i++)for(let k=arr[i-1]+1;k<arr[i]&&out.length<200;k++)out.push({ref:pre+String(k).padStart(String(arr[i]).length,"0"),date:"",party:"",amount:0,tax:0})});return out}),
+ T("S03","sales","high","VAT charged differs from 15% of the net amount","الضريبة المحتسبة تختلف عن 15% من الصافي","VAT Law Art. 2 & 9","sales",C=>hitS(C,(r,x)=>r.cat===SALES_CATS[0]&&Math.abs(x.diff)>C.c.tol,(r,x)=>Math.max(0,-x.diff))),
+ T("S04","sales","high","B2B invoices with missing or invalid buyer VAT number","فواتير منشآت برقم ضريبي للعميل مفقود أو غير صحيح","VAT IR Art. 53","sales",C=>hitS(C,(r)=>r.ctype===CUST_TYPES[0]&&!vatOk(r.cvat))),
+ T("S05","sales","medium","Simplified invoices issued to VAT-registered businesses","فواتير مبسطة صادرة لمنشآت مسجلة","VAT IR Art. 53(7)","sales",C=>hitS(C,(r)=>r.type==="Simplified Tax Invoice"&&r.ctype===CUST_TYPES[0])),
+ T("S06","sales","high","Invoices not reported or cleared on FATOORA","فواتير غير مُبلّغ عنها أو غير معتمدة في فاتورة","E-invoicing Regulation","sales",C=>hitS(C,(r)=>r.fat!=="Yes")),
+ T("S07","sales","high","Zero-rated or export sales without evidence","مبيعات بنسبة صفر أو صادرات دون إثبات","VAT IR Art. 32–33","sales",C=>hitS(C,(r)=>(r.cat===SALES_CATS[2]||r.cat===SALES_CATS[3])&&!String(r.ev||"").trim(),(r,x)=>r2(x.net*C.c.rate))),
+ T("S08","sales","medium","Credit notes with a positive amount","إشعارات دائنة بمبلغ موجب","VAT IR Art. 54","sales",C=>hitS(C,(r,x)=>r.type==="Credit Note"&&x.net>0)),
+ T("S09","sales","medium","Standard-rated sales with zero VAT","مبيعات بالنسبة الأساسية دون ضريبة","VAT Law Art. 2","sales",C=>hitS(C,(r,x)=>r.cat===SALES_CATS[0]&&x.net>0&&Math.abs(x.vat)<0.005,(r,x)=>r2(x.net*C.c.rate))),
+ T("S10","sales","low","Credit notes above 10% of standard sales in a period","إشعارات دائنة تتجاوز 10% من المبيعات الأساسية في الفترة","ZATCA risk indicator","sales",C=>C.ps.map(p=>{let g=0,cn=0;S.sales.forEach((r,i)=>{const x=C.sales[i];if(x&&x.p===p.no&&r.cat===SALES_CATS[0]){if(x.net<0)cn+=-x.net;else g+=x.net}});return{p,g,cn}}).filter(o=>o.g>0&&o.cn/o.g>0.1).map(o=>({ref:o.p.label,date:"",party:"",amount:o.cn,tax:0}))),
+ T("S11","sales","low","Sales dated outside the audit periods","مبيعات بتاريخ خارج فترات الفحص","—","sales",C=>hitS(C,(r,x)=>!x.p)),
+ T("P01","purchases","high","Duplicate supplier invoices (double claim)","فواتير موردين مكررة (خصم مزدوج)","VAT IR Art. 49","pur",C=>hitP(C,(r,x)=>x.dup,(r,x)=>x.claimed)),
+ T("P02","purchases","high","Domestic purchases with invalid supplier VAT number","مشتريات محلية برقم ضريبي غير صحيح للمورد","VAT IR Art. 49(7)","pur",C=>hitP(C,(r)=>r.cat===PUR_CATS[0]&&!vatOk(r.svat),(r,x)=>x.claimed)),
+ T("P03","purchases","high","Input VAT claimed without a valid tax invoice","ضريبة مدخلات مخصومة دون فاتورة ضريبية صحيحة","VAT IR Art. 49","pur",C=>hitP(C,(r)=>r.claimed==="Yes"&&r.valid!=="Yes",(r,x)=>x.claimed)),
+ T("P04","purchases","high","Blocked input VAT claimed (entertainment, vehicles, staff benefits)","خصم ضريبة غير قابلة للخصم (ترفيه، سيارات، منافع موظفين)","VAT IR Art. 50","pur",C=>hitP(C,(r)=>r.claimed==="Yes"&&/blocked/i.test(r.nature||""),(r,x)=>x.claimed)),
+ T("P05","purchases","medium","Customs VAT claimed without a customs declaration","ضريبة جمارك مخصومة دون بيان جمركي","VAT IR Art. 49(2)","pur",C=>hitP(C,(r)=>r.cat===PUR_CATS[1]&&!String(r.bayan||"").trim(),(r,x)=>x.claimed)),
+ T("P06","purchases","medium","Reverse charge applied to a Saudi supplier","تطبيق الاحتساب العكسي على مورد سعودي","VAT Law Art. 47","pur",C=>hitP(C,(r)=>r.cat===PUR_CATS[2]&&isSaudi(r.country))),
+ T("P07","purchases","high","Foreign services with no reverse charge declared","خدمات أجنبية دون إقرار بالاحتساب العكسي","VAT Law Art. 47","pur",C=>hitP(C,(r,x)=>r.country&&!isSaudi(r.country)&&x.net>0&&r.cat!==PUR_CATS[1]&&r.cat!==PUR_CATS[2],(r,x)=>r2(x.net*C.c.rate))),
+ T("P08","purchases","medium","Input VAT differs from 15% of the net amount","ضريبة المدخلات تختلف عن 15% من الصافي","VAT Law Art. 2","pur",C=>hitP(C,(r,x)=>PUR_CATS.slice(0,3).includes(r.cat)&&Math.abs(x.diff)>C.c.tol,(r,x)=>Math.max(0,x.diff))),
+ T("P09","purchases","medium","VAT claimed on zero-rated, exempt or out-of-scope purchases","خصم ضريبة على مشتريات صفرية أو معفاة أو خارج النطاق","VAT IR Art. 49","pur",C=>hitP(C,(r)=>r.claimed==="Yes"&&r.cat&&!PUR_CATS.slice(0,3).includes(r.cat),(r,x)=>x.claimed)),
+ T("R01","returns","high","Return arithmetic does not agree (Box 16)","الصحة الحسابية للإقرار غير متطابقة (خانة 16)","VAT IR Art. 59","ret",C=>hitPer(C,C.rets,x=>x.arith==="bad",x=>x.b16-x.b16c)),
+ T("R02","returns","high","Returns filed after the due date","إقرارات قُدمت بعد الموعد","VAT Law Art. 43","ret",C=>hitPer(C,C.rets,x=>x.late==="bad",x=>x.lateDays)),
+ T("R03","returns","medium","Box 14 corrections above SAR 5,000","تصحيحات خانة 14 تتجاوز 5,000 ريال","VAT IR Art. 63","ret",C=>hitPer(C,C.rets,x=>!x.b14ok,x=>x.b14)),
+ T("R04","returns","high","VAT paid late or still unpaid","ضريبة مسددة متأخراً أو غير مسددة","VAT Law Art. 43","rvat",C=>hitPer(C,C.vatRec,x=>x.latePen>0||x.unpaidPen>0,x=>x.outst,x=>x.latePen+x.unpaidPen)),
+ T("R05","returns","medium","Effective Box 1 rate is not 15%","النسبة الفعلية لخانة 1 ليست 15%","VAT Law Art. 2","ret",C=>hitPer(C,C.rets,x=>x.n(1)>0&&Math.abs(x.v(1)-x.n(1)*C.c.rate)>C.c.tol,x=>x.v(1)-x.n(1)*C.c.rate,x=>Math.max(0,x.n(1)*C.c.rate-x.v(1)))),
+ T("R06","returns","low","Refund or credit position (ZATCA review trigger)","وضع دائن أو مطالبة باسترداد (مؤشر مراجعة لدى الهيئة)","ZATCA risk indicator","ret",C=>hitPer(C,C.rets,x=>x.entered&&x.b16<0,x=>x.b16)),
+ T("L01","ledger","high","Trial balance does not balance","ميزان المراجعة غير متوازن","—","tb",C=>C.tbCheck.map((v,i)=>({v,i})).filter(o=>Math.abs(o.v)>0.005).map(o=>({ref:o.i?monthLabels()[o.i-1]:"Opening",date:"",party:"",amount:o.v,tax:0}))),
+ T("L02","ledger","medium","Accounts without a VAT mapping","حسابات بدون تصنيف ضريبي","—","tb",C=>S.tb.filter(r=>(r.code||r.name)&&!r.map).map(r=>({ref:r.code,date:"",party:r.name,amount:0,tax:0}))),
+ T("L03","ledger","high","Sales by VAT box do not reconcile","المبيعات حسب خانات الإقرار غير مطابقة","VAT IR Art. 66","rsales",C=>C.salesRec.flatMap(x=>x.rows.filter(r=>r.s==="bad").map(r=>({ref:`Box ${x.b} · ${r.p.label}`,date:"",party:"",amount:r.d2,tax:0})))),
+ T("L04","ledger","high","Revenue in the ledger above declared sales","إيرادات في الدفاتر تتجاوز المبيعات المُقر بها","VAT IR Art. 66","rrev",C=>Math.abs(C.rev.unexpl)>C.c.tol?[{ref:"Year",date:"",party:"",amount:C.rev.unexpl,tax:r2(Math.max(0,C.rev.unexpl)*C.c.rate)}]:[]),
+ T("L05","ledger","high","Output VAT in the ledger differs from returns","ضريبة المخرجات في الدفاتر تختلف عن الإقرارات","VAT IR Art. 66","rout",C=>hitPer(C,C.outRec,x=>x.s==="bad",x=>x.d3,x=>x.under)),
+ T("L06","ledger","high","Input VAT in the ledger differs from returns","ضريبة المدخلات في الدفاتر تختلف عن الإقرارات","VAT IR Art. 66","rin",C=>hitPer(C,C.inRec,x=>x.s==="bad",x=>x.d2,x=>x.over)),
+ T("L07","ledger","high","VAT control account does not agree with returns and payments","حساب الضريبة لا يطابق الإقرارات والمدفوعات","VAT IR Art. 66","rvat",C=>hitPer(C,C.vatRec,x=>x.s==="bad",x=>x.diff)),
+ T("L08","ledger","medium","Box 8 customs VAT differs from customs declarations","ضريبة خانة 8 تختلف عن البيانات الجمركية","VAT IR Art. 49(2)","rin",C=>hitPer(C,C.inRec,x=>Math.abs(x.d8)>C.c.tol,x=>x.d8)),
+ T("A01","anomaly","medium","Sales amounts deviate from Benford's law","مبالغ المبيعات تنحرف عن قانون بنفورد","Analytics","tests",C=>{const b=benford(C.sales.filter(Boolean).map(x=>x.net));C.bfS=b;return b.level==="na"?null:(b.level==="nonconforming"?[{ref:`MAD ${b.mad.toFixed(4)}`,date:"",party:"",amount:b.n,tax:0}]:[])}),
+ T("A02","anomaly","medium","Purchase amounts deviate from Benford's law","مبالغ المشتريات تنحرف عن قانون بنفورد","Analytics","tests",C=>{const b=benford(C.pur.filter(Boolean).map(x=>x.net));C.bfP=b;return b.level==="na"?null:(b.level==="nonconforming"?[{ref:`MAD ${b.mad.toFixed(4)}`,date:"",party:"",amount:b.n,tax:0}]:[])}),
+ T("A03","anomaly","low","Large round-amount invoices","فواتير بمبالغ كبيرة مقربة","Analytics","sales",C=>[...hitS(C,(r,x)=>Math.abs(x.net)>=50000&&x.net%10000===0),...hitP(C,(r,x)=>Math.abs(x.net)>=50000&&x.net%10000===0)]),
+ T("A04","anomaly","low","Invoices dated on a Friday or Saturday","فواتير بتاريخ يوم جمعة أو سبت","Analytics","sales",C=>[...hitS(C,(r)=>{const d=D(r.date);return d&&(d.getUTCDay()===5||d.getUTCDay()===6)}),...hitP(C,(r)=>{const d=D(r.date);return d&&(d.getUTCDay()===5||d.getUTCDay()===6)})]),
+ T("A05","anomaly","medium","Input VAT spike: a period above twice the median","ارتفاع مفاجئ في ضريبة المدخلات: فترة تتجاوز ضعف الوسيط","ZATCA risk indicator","rin",C=>{const v=C.rets.map(x=>x.inp).filter(x=>x>0).sort((a,b)=>a-b);if(v.length<3)return null;const med=v[Math.floor(v.length/2)];return hitPer(C,C.rets,x=>x.inp>2*med,x=>x.inp)})];
+function runTests(C){return TESTS.map(t=>{let hits=t.fn(C);const na=hits===null;hits=hits||[];
+  const noData={sales:!S.sales.length,purchases:!S.purchases.length,returns:!C.rets.some(r=>r.entered),ledger:!S.tb.length,anomaly:false}[t.area];
+  const status=na||noData?"na":(hits.length?"fail":"pass");
+  return{...t,hits,status,count:hits.length,value:r2(hits.reduce((s,h)=>s+Math.abs(h.amount||0),0)),tax:r2(hits.reduce((s,h)=>s+(h.tax||0),0))}})}
+
+// ================================================================ monetary-unit sampling
+function sampleItems(C){
+  const pop=S.sample.pop==="purchases"?S.purchases.map((r,i)=>({r,x:C.pur[i],i,key:"p|"+i+"|"+r.no})):S.sales.map((r,i)=>({r,x:C.sales[i],i,key:"s|"+i+"|"+r.no}));
+  const items=pop.filter(o=>o.x&&Math.abs(o.x.net)>0);const total=items.reduce((s,o)=>s+Math.abs(o.x.net),0);const n=Math.max(1,Math.min(items.length,Math.round(num(S.sample.size))||1));
+  if(!items.length)return{items:[],total:0,interval:0,n:0};
+  const interval=total/n, rand=rng(S.sample.seed||"1"), start=rand()*interval, picks=[];let cum=0,k=0;
+  for(const o of items){const a=Math.abs(o.x.net);while(k<n&&start+k*interval<cum+a){if(picks[picks.length-1]!==o)picks.push(o);k++}cum+=a}
+  return{items:picks,total,interval,n};
+}
+
+// ================================================================ storage: Google Sheets (Apps Script) or browser
+const REMOTE=!!(window.google&&google.script&&google.script.run);
+const SALES_F=["date","no","type","cust","cvat","ctype","cat","net","vat","uuid","fat","gl","ev"];
+const PUR_F=["date","no","sup","svat","country","cat","nature","net","vat","valid","claimed","bayan","gl"];
+const SCHEMA={
+ meta:{kind:"kv",get:()=>({example:S.example?"yes":"no",version:"2"}),set:o=>{S.example=o.example==="yes"}},
+ setup:{kind:"kv",get:()=>S.setup,set:o=>{Object.assign(S.setup,o)}},
+ case:{kind:"kv",get:()=>S.case,set:o=>{Object.assign(S.case,o)}},
+ sample:{kind:"kv",get:()=>S.sample,set:o=>{Object.assign(S.sample,o)}},
+ tb:{kind:"rows",headers:["code","name","fs","map","open",...Array.from({length:12},(_,i)=>"m"+(i+1))],
+   get:()=>S.tb.map(r=>[r.code,r.name,r.fs,r.map,r.open,...r.m]),set:rows=>{S.tb=rows.map(a=>({code:a[0]||"",name:a[1]||"",fs:a[2]||"",map:a[3]||"",open:a[4]||"",m:Array.from({length:12},(_,i)=>a[5+i]||"")}))}},
+ returns:{kind:"rows",headers:["period","filed","ref",...BOX_IDS.flatMap(b=>["b"+b+"_amount","b"+b+"_adjustment","b"+b+"_vat"]),"b14","b15","b16"],
+   get:()=>S.returns.map((r,i)=>[String(i+1),r.filed,r.ref,...BOX_IDS.flatMap(b=>[r.b[b].a,r.b[b].j,r.b[b].v]),r.b14,r.b15,r.b16]),
+   set:rows=>{const out=Array.from({length:12},blankReturn);rows.forEach(a=>{const i=num(a[0])-1;if(i<0||i>11)return;const t=out[i];t.filed=a[1]||"";t.ref=a[2]||"";BOX_IDS.forEach((b,k)=>{t.b[b]={a:a[3+3*k]||"",j:a[4+3*k]||"",v:a[5+3*k]||""}});const o=3+3*BOX_IDS.length;t.b14=a[o]||"";t.b15=a[o+1]||"";t.b16=a[o+2]||""});S.returns=out}},
+ sales:{kind:"rows",headers:SALES_F,get:()=>S.sales.map(r=>SALES_F.map(k=>r[k]??"")),set:rows=>{S.sales=rows.map(a=>Object.fromEntries(SALES_F.map((k,i)=>[k,a[i]||""])))}},
+ purchases:{kind:"rows",headers:PUR_F,get:()=>S.purchases.map(r=>PUR_F.map(k=>r[k]??"")),set:rows=>{S.purchases=rows.map(a=>Object.fromEntries(PUR_F.map((k,i)=>[k,a[i]||""])))}},
+ payments:{kind:"rows",headers:["p","date","ref","amt","notes"],get:()=>S.payments.map(r=>[r.p,r.date,r.ref,r.amt,r.notes].map(v=>v??"")),set:rows=>{S.payments=rows.map(a=>({p:a[0]||"",date:a[1]||"",ref:a[2]||"",amt:a[3]||"",notes:a[4]||""}))}},
+ requests:{kind:"rows",headers:["item","requested","due","status","sent","ref"],get:()=>S.requests.map(r=>[r.item,r.req,r.due,r.status,r.sent,r.ref].map(v=>v??"")),set:rows=>{S.requests=rows.map(a=>({item:a[0]||"",req:a[1]||"",due:a[2]||"",status:a[3]||"Open",sent:a[4]||"",ref:a[5]||""}))}},
+ checklist:{kind:"rows",headers:["no","area","document","status","owner","ref","notes"],get:()=>S.checklist.map((x,i)=>[String(i+1),CHECKLIST[i][0],CHECKLIST[i][1],x.status,x.owner,x.ref,x.notes].map(v=>v??"")),set:rows=>{rows.forEach(a=>{const i=num(a[0])-1;if(S.checklist[i])S.checklist[i]={status:a[3]||"Not started",owner:a[4]||"",ref:a[5]||"",notes:a[6]||""}})}},
+ recItems:{kind:"rows",headers:["description","amount"],get:()=>S.recItems.map(x=>[x.d,x.a].map(v=>v??"")),set:rows=>{S.recItems=rows.map(a=>({d:a[0]||"",a:a[1]||""}))}},
+ decisions:{kind:"rows",headers:["test","decision","explanation"],get:()=>Object.entries(S.decisions).map(([k,v])=>[k,v.d||"",v.n||""]),set:rows=>{S.decisions={};rows.forEach(a=>{if(a[0])S.decisions[a[0]]={d:a[1]||"",n:a[2]||""}})}},
+ vouch:{kind:"rows",headers:["item","status","note"],get:()=>Object.entries(S.vouch).map(([k,v])=>[k,v.s||"",v.n||""]),set:rows=>{S.vouch={};rows.forEach(a=>{if(a[0])S.vouch[a[0]]={s:a[1]||"",n:a[2]||""}})}}};
+function toTable(k){const s=SCHEMA[k];if(s.kind==="kv"){const o=s.get();return{headers:["key","value"],rows:Object.entries(o).map(([a,b])=>[a,String(b??"")])}}return{headers:s.headers,rows:s.get().map(r=>r.map(v=>String(v??"")))}}
+function fromTable(k,t){const s=SCHEMA[k];if(!t||!t.rows)return;if(s.kind==="kv"){const o={};t.rows.forEach(r=>{if(r[0])o[r[0]]=r[1]??""});s.set(o)}else s.set(t.rows)}
+let lastSent={}, sync={state:REMOTE?"loading":"local",at:null,msg:""}, sending=false, pending=false;
+function setSync(state,msg){sync.state=state;sync.msg=msg||"";if(state==="saved")sync.at=new Date();const el=document.getElementById("sync");if(el)el.outerHTML=syncChip()}
+function snapshotAll(){const o={};for(const k of Object.keys(SCHEMA))o[k]=JSON.stringify(toTable(k));return o}
+function save(){
+  try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){if(!REMOTE&&!saveWarned){saveWarned=true;toast("This data is too large to keep in the browser. It stays here until you close the page.")}}
+  if(!REMOTE||sync.state==="loading"||sync.state==="choose")return;
+  clearTimeout(saveTimer);setSync("pending");saveTimer=setTimeout(pushRemote,1200);
+}
+function pushRemote(){
+  if(sending){pending=true;return}
+  const snap=snapshotAll(), payload={};for(const k of Object.keys(snap))if(snap[k]!==lastSent[k])payload[k]=JSON.parse(snap[k]);
+  if(!Object.keys(payload).length){setSync("saved");return}
+  sending=true;setSync("saving");
+  google.script.run.withSuccessHandler(()=>{Object.assign(lastSent,Object.fromEntries(Object.keys(payload).map(k=>[k,snap[k]])));sending=false;setSync("saved");if(pending){pending=false;pushRemote()}})
+    .withFailureHandler(err=>{sending=false;setSync("error",err&&err.message||String(err))}).saveCollections(payload);
+}
+function loadRemote(){
+  google.script.run.withSuccessHandler(res=>{
+    sync.sheetUrl=res.sheetUrl;sync.user=res.user;
+    if(res.empty){sync.state="choose";render();return}
+    S=exampleState();S.example=false;S.tb=[];S.sales=[];S.purchases=[];S.payments=[];S.requests=[];S.decisions={};S.vouch={};
+    for(const k of Object.keys(SCHEMA))if(res.data[k])fromTable(k,res.data[k]);
+    S=migrate(S);lastSent=snapshotAll();setSync("saved");render();
+  }).withFailureHandler(err=>{sync.state="error";sync.msg=err&&err.message||String(err);render()}).loadState();
+}
+function startRemote(withExample){S=exampleState();if(!withExample){S.example=false;S.tb=[];S.sales=[];S.purchases=[];S.payments=[];S.requests=[];S.returns=Array.from({length:12},blankReturn);S.decisions={};S.vouch={};S.case={notice:"",type:"Field audit",received:"",due:"",auditor:"",scope:"",notes:""}}
+  lastSent={};sync.state="saving";render();pushRemote()}
+
+// ================================================================ charts (SVG, single axis, thin marks, hover tooltips)
+function niceMax(v){if(!(v>0))return 1;const e=Math.pow(10,Math.floor(Math.log10(v))),f=v/e;return (f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*e}
+const tipAttr=t=>`data-tip="${esc(t)}"`;
+function legend(series){return `<div class="legend">${series.map(s=>`<span class="lg"><i class="sw" style="background:var(--${s.c})"></i>${esc(s.name)}</span>`).join("")}</div>`}
+// vertical grouped bars; series: [{name,c:'s1',values:[],type:'bar'|'line'}]
+function columnChart(cats,series,{h=220,fmtv=fmt0,pct=false,id=""}={}){
+  const W=680,H=h,padL=56,padR=12,padT=12,padB=28,iw=W-padL-padR,ih=H-padT-padB;
+  const max=niceMax(Math.max(...series.flatMap(s=>s.values.map(v=>Math.max(0,v))),0)), y=v=>padT+ih-ih*Math.max(0,v)/max;
+  const band=iw/cats.length, bars=series.filter(s=>s.type!=="line"), gw=band*0.66, bw=Math.max(3,Math.min(22,gw/Math.max(1,bars.length)-2));
+  const ticks=[0,.25,.5,.75,1].map(f=>f*max);
+  let g=ticks.map(t=>`<line x1="${padL}" x2="${W-padR}" y1="${y(t)}" y2="${y(t)}" class="grid"/><text x="${padL-8}" y="${y(t)+4}" class="tick" text-anchor="end">${pct?(t*100).toFixed(0)+"%":fmtK(t)}</text>`).join("");
+  g+=`<line x1="${padL}" x2="${W-padR}" y1="${y(0)}" y2="${y(0)}" class="axis"/>`;
+  cats.forEach((c,i)=>{const cx=padL+band*i+band/2;g+=`<text x="${cx}" y="${H-8}" class="tick" text-anchor="middle">${esc(c)}</text>`;
+    const tot=bars.length*bw+(bars.length-1)*2;bars.forEach((s,k)=>{const v=s.values[i]||0,x=cx-tot/2+k*(bw+2),top=y(v),hgt=y(0)-top;
+      if(hgt>0.5){const r=Math.min(4,bw/2,hgt);g+=`<path d="M${x},${y(0)} V${top+r} Q${x},${top} ${x+r},${top} H${x+bw-r} Q${x+bw},${top} ${x+bw},${top+r} V${y(0)} Z" fill="var(--${s.c})" class="mark"/>`}
+      g+=`<rect x="${x-1}" y="${padT}" width="${bw+2}" height="${ih}" fill="transparent" ${tipAttr(`${tr(c)} · ${tr(s.name)}: ${pct?(v*100).toFixed(1)+"%":fmt(v)}`)}/>`})});
+  series.filter(s=>s.type==="line").forEach(s=>{const pts=s.values.map((v,i)=>[padL+band*i+band/2,y(v)]);
+    g+=`<polyline points="${pts.map(p=>p.join(",")).join(" ")}" fill="none" stroke="var(--${s.c})" stroke-width="2"/>`;
+    pts.forEach((p,i)=>{g+=`<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="var(--${s.c})" stroke="var(--surface)" stroke-width="2"/><circle cx="${p[0]}" cy="${p[1]}" r="11" fill="transparent" ${tipAttr(`${tr(cats[i])} · ${tr(s.name)}: ${pct?(s.values[i]*100).toFixed(1)+"%":fmt(s.values[i])}`)}/>`})});
+  return `${legend(series)}<div class="chart" dir="ltr"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(series.map(s=>tr(s.name)).join(", "))}" ${id?`id="${id}"`:""}>${g}</svg></div>`;
+}
+// horizontal bars (HTML, RTL-aware); items [{label,value,c}]
+function barList(items,{fmtv=fmt}={}){const max=Math.max(...items.map(i=>Math.abs(i.value)),1);
+  return `<div class="barlist">${items.map(i=>`<div class="bl-row" ${tipAttr(`${tr(i.label)}: ${fmtv(i.value)}`)}><span class="bl-lab">${esc(i.label)}</span><span class="bl-track"><span class="bl-bar" style="width:${Math.max(i.value?1.5:0,100*Math.abs(i.value)/max)}%;background:var(--${i.c||"s1"})"></span></span><span class="bl-val num">${fmtv(i.value)}</span></div>`).join("")}</div>`}
+// tooltip layer
+(function(){const tip=document.createElement("div");tip.className="tip";tip.hidden=true;document.addEventListener("DOMContentLoaded",()=>document.body.appendChild(tip));
+  document.addEventListener("mouseover",e=>{const t=e.target.closest&&e.target.closest("[data-tip]");if(!t){tip.hidden=true;return}tip.textContent=tr(t.getAttribute("data-tip"));tip.hidden=false});
+  document.addEventListener("mousemove",e=>{if(tip.hidden)return;const w=tip.offsetWidth,x=Math.min(window.innerWidth-w-8,e.clientX+14),y=e.clientY+16;tip.style.left=Math.max(8,x)+"px";tip.style.top=y+"px"});
+  document.addEventListener("scroll",()=>{tip.hidden=true},true)})();
+
+// ================================================================ icons (24px line icons)
+const IC={
+ home:'<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+ case:'<path d="M3 7h18v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M8 7V5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M3 12h18"/>',
+ hub:'<ellipse cx="12" cy="5.5" rx="8" ry="2.5"/><path d="M4 5.5v13c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5v-13"/><path d="M4 12c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5"/>',
+ tb:'<rect x="3" y="4" width="18" height="16" rx="1.5"/><path d="M3 9h18M9 9v11M15 9v11"/>',
+ ret:'<path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 12h7M9 16h7"/>',
+ up:'<path d="M12 19V5M6 11l6-6 6 6"/>',
+ down:'<path d="M12 5v14M6 13l6 6 6-6"/>',
+ pay:'<rect x="3" y="6" width="18" height="13" rx="1.5"/><path d="M3 10h18M7 15h4"/>',
+ test:'<path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.7 3h10.6A2 2 0 0 0 19 18l-5-9V3"/><path d="M7.5 14h9"/>',
+ scale:'<path d="M12 4v16M5 20h14M6 8h12"/><path d="M6 8l-3 6a3 3 0 0 0 6 0zM18 8l-3 6a3 3 0 0 0 6 0z"/>',
+ rev:'<path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/>',
+ dice:'<rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9" cy="9" r="1.2"/><circle cx="15" cy="15" r="1.2"/><circle cx="15" cy="9" r="1.2"/><circle cx="9" cy="15" r="1.2"/>',
+ flag:'<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>',
+ pack:'<path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/>',
+ book:'<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/>',
+ gear:'<circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2z"/>',
+ sheet:'<rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M4 9h16M4 15h16M10 9v12"/>',
+ check:'<path d="M5 12l5 5 9-10"/>', x:'<path d="M6 6l12 12M18 6L6 18"/>', dot:'<circle cx="12" cy="12" r="3"/>', alert:'<path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17v.5"/>',
+ clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', ext:'<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
+ lang:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/>', upl:'<path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/>'};
+const icon=(n,cls="")=>`<svg class="ic ${cls}" viewBox="0 0 24 24" aria-hidden="true">${IC[n]||""}</svg>`;
+const STI={ok:"check",bad:"x",none:"dot",pass:"check",fail:"x",na:"dot"};
+const pill=(k,t)=>`<span class="pill ${k}">${STI[k]?icon(STI[k]):""}${esc(t)}</span>`;
+const sp=s=>s==="ok"?pill("ok","Matched"):s==="bad"?pill("bad","Investigate"):pill("none","No activity");
+L("Matched","مطابق");L("Investigate","يحتاج إلى فحص");
+const sevPill=s=>`<span class="sev ${s}">${esc(SEV[s])}</span>`;
+const nc=(v,bad)=>`<td class="n${bad?" neg":""}">${fmt(v)}</td>`;
+const dc=(v,tol)=>nc(v,Math.abs(v)>tol);
+
+// ================================================================ navigation
+const VIEWS=[
+ {g:L("Overview","نظرة عامة")},{id:"dash",t:L("Command center","مركز القيادة"),i:"home"},{id:"case",t:L("Inspection case","ملف الفحص"),i:"case"},
+ {g:L("Data","البيانات")},{id:"hub",t:L("Data hub","مركز البيانات"),i:"hub"},{id:"tb",t:"Trial balance",i:"tb"},{id:"ret",t:"VAT returns",i:"ret"},{id:"sales",t:"Sales register",i:"up"},{id:"pur",t:"Purchase register",i:"down"},{id:"pay",t:"Payments to ZATCA",i:"pay"},
+ {g:L("Analysis","التحليل")},{id:"tests",t:L("Test library","مكتبة الاختبارات"),i:"test"},{id:"rsales",t:"Sales by VAT box",i:"scale"},{id:"rrev",t:"Revenue vs returns",i:"rev"},{id:"rout",t:"Output VAT",i:"up"},{id:"rin",t:"Input VAT",i:"down"},{id:"rvat",t:"VAT account & penalties",i:"pay"},{id:"samp",t:L("Sampling","العينات"),i:"dice"},
+ {g:L("Response","الرد على الهيئة")},{id:"find",t:L("Findings & exposure","الملاحظات والتعرض"),i:"flag"},{id:"chk",t:L("Response pack","ملف الرد"),i:"pack"},{id:"method",t:L("Methodology","المنهجية"),i:"book"},{id:"setup",t:L("Settings","الإعدادات"),i:"gear"}];
+let cur="dash";try{const h=location.hash.slice(1);if(VIEWS.some(v=>v.id===h))cur=h;else{const v=localStorage.getItem(KEY+"-view");if(v&&VIEWS.some(x=>x.id===v))cur=v}}catch(e){}
+const UI={ret:{p:0},tests:{f:"fail",open:{}},find:{}};
+function navCounts(C){const f=a=>C.tests.filter(t=>t.status==="fail"&&a.includes(t.go)).length;
+  return{tests:C.tests.filter(t=>t.status==="fail").length,sales:C.sFlag,pur:C.pFlag,rsales:C.salesRec.flatMap(x=>x.rows).filter(r=>r.s==="bad").length,rout:C.outRec.filter(r=>r.s==="bad").length,rin:C.inRec.filter(r=>r.s==="bad").length,rvat:C.vatRec.filter(r=>r.s==="bad").length,rrev:Math.abs(C.rev.unexpl)>C.c.tol?1:0,ret:C.rets.filter(r=>r.arith==="bad"||r.late==="bad").length,tb:C.tbCheck.filter(x=>Math.abs(x)>0.005).length+C.unmapped,case:openReq().filter(r=>r.overdue).length}}
+function openReq(){const t=todayD();return S.requests.map(r=>{const d=D(r.due);return{...r,days:d?daysBetween(t,d):null,overdue:!!(d&&d<t&&r.status!=="Submitted"&&r.status!=="Closed")}})}
+function renderNav(C){const n=navCounts(C);
+  $("#nav").innerHTML=`<div class="brand"><svg viewBox="0 0 40 40" class="logo" aria-hidden="true"><rect x="2" y="2" width="36" height="36" rx="10" fill="var(--brand)"/><circle cx="18" cy="18" r="8" fill="none" stroke="#fff" stroke-width="3"/><path d="M24 24l7 7" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/><path d="M14.5 18.5l2.5 2.5 4.5-5" fill="none" stroke="var(--gold-2)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><div><div class="wordmark">${LANG==="ar"?"فحص":"Fahs"}</div><div class="tagline">${esc(L("VAT inspection command center","مركز قيادة فحص ضريبة القيمة المضافة"))}</div></div></div>
+  <div class="entity"><div class="ename" data-notr>${esc(S.setup.company||"—")}</div><div class="evat num">${esc(S.setup.vat||"")}</div></div>
+  ${VIEWS.map(v=>v.g?`<div class="nav-group">${esc(v.g)}</div>`:`<button class="nav-btn" data-v="${v.id}" aria-current="${v.id===cur}">${icon(v.i)}<span class="nl">${esc(v.t)}</span>${n[v.id]?`<span class="badge">${n[v.id]}</span>`:""}</button>`).join("")}
+  <div class="nav-foot">${icon("sheet")}<span>${esc(REMOTE?L("Data saved in your Google Sheet","البيانات محفوظة في جدول Google الخاص بك"):L("Data stays in this browser","البيانات تبقى في هذا المتصفح"))}</span></div>`;
+}
+$("#nav").addEventListener("click",e=>{const b=e.target.closest("[data-v]");if(b)go(b.dataset.v)});
+function go(v){cur=v;try{localStorage.setItem(KEY+"-view",v)}catch(e){}render();$("#main").scrollTo?.(0,0);window.scrollTo(0,0)}
+function syncChip(){const m={local:[L("Saved in this browser","محفوظ في هذا المتصفح"),"none"],loading:[L("Connecting to Google Sheets…","جارٍ الاتصال بجداول Google…"),"warn"],choose:[L("Google Sheet connected","تم الاتصال بجدول Google"),"ok"],pending:[L("Unsaved changes","تغييرات غير محفوظة"),"warn"],saving:[L("Saving to Google Sheets…","جارٍ الحفظ في جداول Google…"),"warn"],saved:[L("Saved to Google Sheets","تم الحفظ في جداول Google"),"ok"],error:[L("Not saved – retrying on next change","لم يُحفظ – ستتم إعادة المحاولة عند التغيير التالي"),"bad"]}[sync.state]||["",""];
+  return `<span id="sync" class="chip-s ${m[1]}" title="${esc(sync.msg)}">${icon(m[1]==="ok"?"check":m[1]==="bad"?"alert":"sheet")}${esc(m[0])}</span>`}
+function topbar(){const v=VIEWS.find(x=>x.id===cur)||{t:""};const due=D(S.case.due);let dl="";
+  if(due){const d=daysBetween(todayD(),due);dl=`<span class="chip-s ${d<0?"bad":d<=7?"warn":"none"}">${icon("clock")}${esc(d<0?L(`Response overdue by ${-d} days`,`الرد متأخر ${-d} يوم`):L(`Response due in ${d} days`,`موعد الرد خلال ${d} يوم`))}</span>`}
+  return `<header class="topbar"><div class="tb-title"><h1>${esc(v.t)}</h1></div><div class="tb-actions">${dl}${syncChip()}<button class="btn ghost" id="langBtn" data-notr lang="${LANG==="ar"?"en":"ar"}">${icon("lang")}${LANG==="ar"?"English":"العربية"}</button></div></header>`}
+function render(){
+  const m=$("#main");
+  if(sync.state==="loading"){m.innerHTML=`<div class="splash"><div class="spinner"></div><p>${esc(L("Connecting to your Google Sheet…","جارٍ الاتصال بجدول Google الخاص بك…"))}</p></div>`;$("#nav").innerHTML="";return}
+  if(sync.state==="choose"){m.innerHTML=`<div class="splash"><h2>${esc(L("Your Google Sheet is connected","تم ربط جدول Google الخاص بك"))}</h2><p>${esc(L("The sheet is empty. How do you want to start?","الجدول فارغ. كيف تريد أن تبدأ؟"))}</p><div class="row center"><button class="btn primary" id="stEx">${esc(L("Start with example data","البدء ببيانات توضيحية"))}</button><button class="btn" id="stEmpty">${esc(L("Start empty","البدء بجداول فارغة"))}</button></div></div>`;$("#nav").innerHTML="";$("#stEx").onclick=()=>startRemote(true);$("#stEmpty").onclick=()=>startRemote(false);return}
+  const C=compute();renderNav(C);
+  m.innerHTML=topbar()+`<div class="content">${S.example?exampleBanner():""}${(R[cur]||R.dash)(C)}</div>`;
+  (AFTER[cur]||(()=>{}))(C);bindCommon();
+}
+function exampleBanner(){return `<div class="banner">${icon("alert")}<span><b>${esc(L("Example data.","بيانات توضيحية."))}</b> ${esc(L("January–February 2025 contain sample figures with deliberate errors so you can see what the system catches.","يناير وفبراير 2025 يحتويان على أرقام تجريبية بها أخطاء متعمدة لتوضيح ما يكتشفه النظام."))}</span><span class="grow"></span><button class="btn sm" data-act="import">${icon("upl")}${esc("Import my Excel workbook")}</button><button class="btn sm danger" data-act="clear">${esc("Clear example data")}</button></div>`}
+function bindCommon(){
+  document.querySelectorAll('[data-act="clear"]').forEach(b=>b.onclick=()=>confirmBox("Remove all data (example or your own) and start with empty tables? Company settings are kept.","Clear all data",()=>{const keep=S.setup;S=exampleState();S.setup=keep;S.example=false;S.tb=[];S.sales=[];S.purchases=[];S.payments=[];S.requests=[];S.decisions={};S.vouch={};S.returns=Array.from({length:12},blankReturn);save();render();toast("All tables cleared")}));
+  document.querySelectorAll('[data-act="import"]').forEach(b=>b.onclick=()=>pickFile(importWorkbook));
+  document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>go(b.dataset.go));
+  document.querySelectorAll("[data-copy]").forEach(b=>b.onclick=()=>copyText(tableTSV(document.getElementById(b.dataset.copy))));
+  const lb=$("#langBtn");if(lb)lb.onclick=()=>{LANG=LANG==="ar"?"en":"ar";try{localStorage.setItem(KEY+"-lang",LANG)}catch(e){}applyLang();render()};
+}
+function tableTSV(t){return [...t.querySelectorAll("tr")].map(tr=>[...tr.children].map(td=>{const i=td.querySelector("input,select");return (i?(i.tagName==="SELECT"?(i.options[i.selectedIndex]||{text:""}).text:i.value):td.innerText).replace(/[\t\n]+/g," ").trim()}).join("\t")).join("\n")}
+function pickFile(cb){const i=document.createElement("input");i.type="file";i.accept=".xlsx,.xls,.xlsm,.csv";i.onchange=()=>{const f=i.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{if(typeof XLSX==="undefined")throw new Error("lib");cb(XLSX.read(new Uint8Array(rd.result),{type:"array",cellDates:false}))}catch(e){toast(e.message==="lib"?"The Excel reader didn't load. Check your connection and reload, or paste the data instead.":"That file couldn't be read. Save it as .xlsx and try again.")}};rd.readAsArrayBuffer(f)};i.click()}
+const dropTotal=r=>[...r.slice(0,9),...r.slice(10)]; // workbook column J is a calculated total
+const sheetRows=ws=>XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:""});
+const card=(title,body,extra="",cls="")=>`<section class="card ${cls}">${title?`<div class="card-h"><h2>${esc(title)}</h2>${extra}</div>`:""}${body}</section>`;
+const tile=(lab,val,sub="",cls="")=>`<div class="tile ${cls}"><span class="t-lab">${esc(lab)}</span><span class="t-val">${val}</span>${sub?`<span class="t-sub">${sub}</span>`:""}</div>`;
+const R={}, AFTER={};
+
+// ================================================================ command center
+R.dash=C=>{
+  const E=C.exposure, sc=C.score, fails=C.tests.filter(t=>t.status==="fail"), bySev=s=>fails.filter(t=>t.sev===s).length;
+  const scLab=sc==null?L("No data yet","لا توجد بيانات بعد"):sc>=85?L("Strong","قوي"):sc>=65?L("Needs attention","يحتاج إلى اهتمام"):L("At risk","معرّض للمخاطر");
+  const scCls=sc==null?"none":sc>=85?"ok":sc>=65?"warn":"bad";
+  const due=D(S.case.due), days=due?daysBetween(todayD(),due):null, rq=openReq(), openN=rq.filter(r=>r.status!=="Submitted"&&r.status!=="Closed").length;
+  const rows=[...C.salesRec.map(x=>({lab:L(`Sales – Box ${x.b}`,`المبيعات – خانة ${x.b}`),go:"rsales",cells:x.rows.map(r=>r.s)})),
+    {lab:"Output VAT",go:"rout",cells:C.outRec.map(r=>r.s)},{lab:"Input VAT",go:"rin",cells:C.inRec.map(r=>r.s)},
+    {lab:L("VAT control account","حساب الضريبة"),go:"rvat",cells:C.vatRec.map(r=>r.s)},{lab:"Return arithmetic",go:"ret",cells:C.rets.map(r=>r.arith)},{lab:"Filed on time",go:"ret",cells:C.rets.map(r=>r.late)}];
+  const top=[...fails].sort((a,b)=>b.tax-a.tax||({high:3,medium:2,low:1}[b.sev]-{high:3,medium:2,low:1}[a.sev])).slice(0,6);
+  const activeP=C.ps.filter((p,i)=>C.rets[i].entered||C.outRec[i].gl||C.outRec[i].reg);
+  const cats=(activeP.length?activeP:C.ps.slice(0,3)).map(p=>p.short), idx=(activeP.length?activeP:C.ps.slice(0,3)).map(p=>p.i);
+  return `<div class="tiles">
+   <div class="tile hero ${scCls}"><span class="t-lab">${esc(L("Compliance score","مؤشر الالتزام"))}</span><span class="t-val big">${sc==null?"–":sc}<small>/100</small></span><div class="meter"><span style="width:${sc||0}%"></span></div><span class="t-sub">${pill(scCls==="warn"?"warn":scCls,scLab)}<span>${esc(L(`${C.tests.filter(t=>t.status!=="na").length} tests applied`,`${C.tests.filter(t=>t.status!=="na").length} اختبار مطبق`))}</span></span></div>
+   <div class="tile hero"><span class="t-lab">${esc(L("Indicative exposure","التعرض التقديري"))}</span><span class="t-val big num">${fmt0(E.A)}<small> SAR</small></span><span class="t-sub"><span>${esc(L("With fines initiative","مع مبادرة الإعفاء من الغرامات"))}</span><b class="num">${fmt0(E.B)} SAR</b>${E.active?pill("ok",L(`${E.daysLeft} days left`,`متبقي ${E.daysLeft} يوم`)):pill("none",L("Not active","غير سارية"))}</span></div>
+   <div class="tile hero ${days!=null&&days<=7?"bad":""}"><span class="t-lab">${esc(L("Response deadline","موعد الرد"))}</span><span class="t-val big num">${days==null?"–":days<0?-days:days}<small> ${esc(days!=null&&days<0?L("days overdue","يوم تأخير"):L("days","يوم"))}</small></span><span class="t-sub">${due?`<span>${esc(showDate(due))}</span><span>·</span>`:""}<span>${esc(L(`${openN} ZATCA requests open`,`${openN} طلب مفتوح من الهيئة`))}</span></span></div>
+   <div class="tile hero"><span class="t-lab">${esc(L("Open findings","الملاحظات المفتوحة"))}</span><span class="t-val big num">${fails.length}</span><span class="t-sub sevrow">${sevPill("high")}<b class="num">${bySev("high")}</b>${sevPill("medium")}<b class="num">${bySev("medium")}</b>${sevPill("low")}<b class="num">${bySev("low")}</b></span></div>
+  </div>
+  <div class="grid2">
+   ${card(L("Reconciliation status by period","حالة المطابقة حسب الفترة"),`<div class="frame"><table class="heat"><thead><tr><th>${esc("Check")}</th>${C.ps.map(p=>`<th class="c">${esc(p.short)}</th>`).join("")}</tr></thead><tbody>
+    ${rows.map(r=>`<tr><td><button class="link" data-go="${r.go}">${esc(r.lab)}</button></td>${r.cells.map((c,i)=>`<td class="h" data-go="${r.go}" ${tipAttr(`${tr(r.lab)} · ${tr(C.ps[i].label)}`)}><span class="cell ${c}">${icon(STI[c])}</span></td>`).join("")}</tr>`).join("")}</tbody></table></div>
+    <p class="note">${esc(L(`Matched within SAR ${fmt(C.c.tol)} · needs investigation · no activity. Click a row to open it.`,`مطابق ضمن ${fmt(C.c.tol)} ريال · يحتاج إلى فحص · لا يوجد نشاط. اضغط على أي صف لفتحه.`))}</p>`)}
+   ${card(L("Where the exposure comes from","مصادر التعرض"),barList([{label:L("Under-declared output VAT","ضريبة مخرجات غير مُقر بها"),value:E.out,c:"s2"},{label:L("Over-claimed input VAT","ضريبة مدخلات مخصومة بالزيادة"),value:E.inp,c:"s2"},{label:L("Incorrect-return penalty (50%)","غرامة الإقرار الخاطئ (50%)"),value:E.pen,c:"s1"},{label:L("Late payment penalties","غرامات التأخر في السداد"),value:E.latePay,c:"s1"},{label:L("Late filing penalty (minimum 5%)","غرامة التأخر في التقديم (5% كحد أدنى)"),value:E.lateFile,c:"s1"}])+`<div class="sum-row"><span>${esc(L("Total without initiative","الإجمالي دون المبادرة"))}</span><b class="num">${fmt(E.A)}</b></div><div class="sum-row good"><span>${esc(L("Penalties the initiative can remove","الغرامات التي يمكن أن تلغيها المبادرة"))}</span><b class="num">(${fmt(E.waived)})</b></div><div class="sum-row tot"><span>${esc(L("Total with initiative","الإجمالي مع المبادرة"))}</span><b class="num">${fmt(E.B)}</b></div>`,`<button class="btn sm ghost" data-go="find">${esc(L("Details","التفاصيل"))}</button>`)}
+  </div>
+  <div class="grid2">
+   ${card(L("Output VAT: declared vs ledger","ضريبة المخرجات: المُقر بها مقابل الدفاتر"),columnChart(cats,[{name:L("Declared in return","المُقر بها في الإقرار"),c:"s1",values:idx.map(i=>C.outRec[i].ret)},{name:L("Booked in ledger","المسجلة في الدفاتر"),c:"s2",values:idx.map(i=>C.outRec[i].gl)}]),`<button class="btn sm ghost" data-go="rout">${esc(L("Open","فتح"))}</button>`)}
+   ${card(L("Input VAT: claimed vs defensible","ضريبة المدخلات: المخصومة مقابل القابلة للدفاع"),columnChart(cats,[{name:L("Claimed in return","المخصومة في الإقرار"),c:"s1",values:idx.map(i=>C.inRec[i].ret)},{name:L("Defensible","القابلة للدفاع عنها"),c:"s3",values:idx.map(i=>C.inRec[i].df)}]),`<button class="btn sm ghost" data-go="rin">${esc(L("Open","فتح"))}</button>`)}
+  </div>
+  ${card(L("Top findings","أهم الملاحظات"),top.length?`<div class="frame"><table class="tbl"><thead><tr><th>ID</th><th>${esc(L("Finding","الملاحظة"))}</th><th>${esc(L("Severity","الخطورة"))}</th><th class="n">${esc(L("Items","البنود"))}</th><th class="n">${esc(L("Tax at risk (SAR)","الضريبة المعرضة (ريال)"))}</th><th></th></tr></thead><tbody>${top.map(t=>`<tr><td class="mono">${t.id}</td><td>${esc(t.title)}</td><td>${sevPill(t.sev)}</td><td class="n">${t.count}</td>${nc(t.tax)}<td><button class="btn sm ghost" data-test="${t.id}">${esc(L("Review","مراجعة"))}</button></td></tr>`).join("")}</tbody></table></div>`:`<p class="empty">${icon("check")}${esc(L("No findings in the data entered so far.","لا توجد ملاحظات في البيانات المدخلة حتى الآن."))}</p>`,`<button class="btn sm ghost" data-go="tests">${esc(L("All tests","جميع الاختبارات"))}</button>`)}`;
+};
+AFTER.dash=()=>document.querySelectorAll("[data-test]").forEach(b=>b.onclick=()=>{UI.tests.f="all";UI.tests.open={[b.dataset.test]:true};go("tests");setTimeout(()=>document.getElementById("t-"+b.dataset.test)?.scrollIntoView({block:"start"}),50)});
+
+// ================================================================ inspection case
+R.case=C=>{const c=S.case;const f=(id,lab,inp)=>`<label class="fld"><span>${esc(lab)}</span>${inp}</label>`;const I=(id,type="text")=>`<input id="c-${id}" data-c="${id}" type="${type}" value="${esc(c[id])}">`;
+  const rq=openReq();
+  return `<p class="lead">${esc(L("Everything about the ZATCA inspection in one place: the notice, every request ZATCA makes, and its deadline.","كل ما يخص فحص الهيئة في مكان واحد: الإشعار، وكل طلب من الهيئة، وموعده."))}</p>
+  ${card(L("ZATCA notice","إشعار الهيئة"),`<div class="form-grid">${f("notice",L("Notice / case number","رقم الإشعار / الملف"),I("notice"))}${f("type",L("Inspection type","نوع الفحص"),`<select id="c-type" data-c="type">${AUDIT_TYPES.map(o=>`<option value="${o}"${o===c.type?" selected":""}>${esc(L(o,{"Desk audit":"فحص مكتبي","Field audit":"فحص ميداني","Information request":"طلب معلومات","Refund review":"مراجعة استرداد"}[o]))}</option>`).join("")}</select>`)}${f("received",L("Notice received","تاريخ استلام الإشعار"),I("received","date"))}${f("due",L("Response due","موعد الرد"),I("due","date"))}${f("auditor",L("ZATCA auditor","مدقق الهيئة"),I("auditor"))}${f("scope",L("Periods in scope","الفترات محل الفحص"),I("scope"))}</div>${f("notes",L("Notes","ملاحظات"),`<textarea id="c-notes" data-c="notes" rows="2">${esc(c.notes)}</textarea>`)}`)}
+  ${card(L("ZATCA requests","طلبات الهيئة"),`<div class="frame"><table class="tbl edit" id="t-req"><thead><tr><th>#</th><th>${esc(L("What ZATCA asked for","المطلوب من الهيئة"))}</th><th>${esc(L("Requested","تاريخ الطلب"))}</th><th>${esc(L("Due","الاستحقاق"))}</th><th>${esc("Status")}</th><th>${esc(L("Sent on","تاريخ الإرسال"))}</th><th>${esc(L("Reference","المرجع"))}</th><th>${esc(L("Deadline","المهلة"))}</th><th></th></tr></thead><tbody>
+   ${rq.map((r,i)=>`<tr><td class="rowno">${i+1}</td><td><input data-r="${i}" data-f="item" value="${esc(r.item)}" style="min-width:260px"></td><td><input type="date" data-r="${i}" data-f="req" value="${esc(r.req)}"></td><td><input type="date" data-r="${i}" data-f="due" value="${esc(r.due)}"></td><td><select data-r="${i}" data-f="status">${REQ_STATUS.map(o=>`<option value="${o}"${o===r.status?" selected":""}>${esc(L(o,{"Open":"مفتوح","In preparation":"قيد الإعداد","Submitted":"تم الإرسال","Closed":"مغلق"}[o]))}</option>`).join("")}</select></td><td><input type="date" data-r="${i}" data-f="sent" value="${esc(r.sent)}"></td><td><input data-r="${i}" data-f="ref" value="${esc(r.ref)}"></td><td>${r.status==="Submitted"||r.status==="Closed"?pill("ok",L("Done","منجز")):r.days==null?"":r.overdue?pill("bad",L(`${-r.days} days overdue`,`متأخر ${-r.days} يوم`)):pill(r.days<=3?"warn":"none",L(`${r.days} days left`,`متبقي ${r.days} يوم`))}</td><td><button class="del" data-del="${i}" aria-label="Delete row">×</button></td></tr>`).join("")||`<tr><td colspan="9" class="empty">${esc(L("No requests yet. Add each item ZATCA asks for.","لا توجد طلبات بعد. أضف كل بند تطلبه الهيئة."))}</td></tr>`}
+  </tbody></table></div><div class="row"><button class="btn sm primary" id="addReq">${esc(L("Add request","إضافة طلب"))}</button><button class="btn sm" data-copy="t-req">${esc("Copy table")}</button></div>`)}
+  ${card(L("ZATCA inspection process","مراحل فحص الهيئة"),`<ol class="steps">${[[L("Risk selection","اختيار الحالة"),L("ZATCA analytics flag mismatches, frequent amendments, large refunds, e-invoice inconsistencies.","تحليلات الهيئة ترصد الفروق، والتعديلات المتكررة، والاستردادات الكبيرة، وتعارضات الفوترة الإلكترونية.")],[L("Notice","الإشعار"),L("At least 20 days' notice before a field visit, unless non-compliance is suspected.","إشعار قبل 20 يوماً على الأقل من الزيارة الميدانية، ما لم يُشتبه في عدم الالتزام.")],[L("Document requests","طلب المستندات"),L("Returns, invoices, contracts, bank statements, reconciliations, e-invoice data.","الإقرارات والفواتير والعقود وكشوف البنوك والمطابقات وبيانات الفوترة الإلكترونية.")],[L("Queries","الاستفسارات"),L("Follow-up questions on differences. Answer in writing, within the deadline.","أسئلة متابعة حول الفروق. أجب كتابةً وخلال المهلة.")],[L("Assessment","التقييم"),L("Adjustments, penalties and any additional tax.","التعديلات والغرامات وأي ضريبة إضافية.")],[L("Objection","الاعتراض"),L("Object within the statutory deadline, then the GSTC committees.","الاعتراض خلال المهلة النظامية، ثم لجان الفصل الضريبية.")]].map(([a,b],i)=>`<li><b>${esc(a)}</b><span>${esc(b)}</span></li>`).join("")}</ol>`)}`};
+AFTER.case=()=>{document.querySelectorAll("[data-c]").forEach(el=>{el.addEventListener("input",()=>{S.case[el.dataset.c]=el.value;save()});el.addEventListener("change",()=>{S.case[el.dataset.c]=el.value;save();render()})});
+  document.querySelectorAll("[data-r]").forEach(el=>{const h=()=>{S.requests[+el.dataset.r][el.dataset.f]=el.value;save()};el.addEventListener("input",h);el.addEventListener("change",()=>{h();render()})});
+  document.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{S.requests.splice(+b.dataset.del,1);save();render()});
+  $("#addReq").onclick=()=>{S.requests.push({item:"",req:iso(todayD()),due:"",status:"Open",sent:"",ref:""});save();render()}};
+
+// ================================================================ data hub
+R.hub=C=>{const ds=[["tb","Trial balance",S.tb.length,L("accounts","حساب"),C.tbCheck.some(x=>Math.abs(x)>0.005)?L("Out of balance","غير متوازن"):C.unmapped?L(`${C.unmapped} unmapped`,`${C.unmapped} بدون تصنيف`):"",S.tb.length?"":"empty"],
+   ["ret","VAT returns",C.rets.filter(r=>r.entered).length,L("periods entered","فترة مدخلة"),C.rets.some(r=>r.arith==="bad")?L("Arithmetic errors","أخطاء حسابية"):""],
+   ["sales","Sales register",S.sales.length,L("invoices","فاتورة"),C.sFlag?L(`${C.sFlag} with exceptions`,`${C.sFlag} بها ملاحظات`):""],
+   ["pur","Purchase register",S.purchases.length,L("invoices","فاتورة"),C.pFlag?L(`${C.pFlag} with exceptions`,`${C.pFlag} بها ملاحظات`):""],
+   ["pay","Payments to ZATCA",S.payments.length,L("payments","دفعة"),""],
+   ["case","Inspection case",S.requests.length,L("ZATCA requests","طلب من الهيئة"),""]];
+  return `<p class="lead">${esc(L("Load each dataset once. Every test and reconciliation updates instantly.","حمّل كل مجموعة بيانات مرة واحدة، وتتحدث جميع الاختبارات والمطابقات فوراً."))}</p>
+  <div class="tiles six">${ds.map(([go,t,n,u,issue])=>`<button class="tile ds" data-go="${go}"><span class="t-lab">${esc(t)}</span><span class="t-val num">${fmtInt(n)}<small> ${esc(u)}</small></span><span class="t-sub">${!n?pill("none",L("No data","لا توجد بيانات")):issue?pill("bad",issue):pill("ok",L("Looks complete","مكتمل"))}</span></button>`).join("")}</div>
+  ${card(L("Import","الاستيراد"),`<div class="drop" id="drop">${icon("upl","lg")}<div><b>${esc(L("Import the VAT Inspection Pack workbook (Arabic or English)","استيراد ملف حزمة الفحص (عربي أو إنجليزي)"))}</b><p>${esc(L("Drop the .xlsx here or choose it. It replaces the data in every table.","أفلت ملف ‎.xlsx هنا أو اختره. سيستبدل البيانات في جميع الجداول."))}</p></div><button class="btn primary" data-act="import">${esc(L("Choose file","اختيار ملف"))}</button></div>
+   <p class="note">${esc(L("You can also paste straight from Excel into any table, or import one table at a time from its own page.","يمكنك أيضاً اللصق مباشرة من Excel في أي جدول، أو استيراد كل جدول من صفحته."))}</p>`)}
+  ${card(L("Storage","التخزين"),REMOTE?`<p>${esc(L("Every change is saved to your Google Sheet, one tab per dataset, with an audit log tab.","يُحفظ كل تغيير في جدول Google الخاص بك، بورقة لكل مجموعة بيانات، مع ورقة لسجل التدقيق."))}</p>${sync.sheetUrl?`<a class="btn" href="${esc(sync.sheetUrl)}" target="_blank" rel="noopener">${icon("ext")}${esc(L("Open the Google Sheet","فتح جدول Google"))}</a>`:""}`:`<p>${esc(L("This copy saves in this browser only. Deploy the Google Apps Script version to save everything in a Google Sheet your team can share.","هذه النسخة تحفظ في هذا المتصفح فقط. انشر نسخة Google Apps Script لحفظ كل شيء في جدول Google يمكن لفريقك مشاركته."))}</p>`)}
+  <div class="row"><button class="btn" id="loadEx">${esc("Load example data")}</button><button class="btn danger" data-act="clear">${esc("Clear all tables")}</button></div>`};
+AFTER.hub=()=>{$("#loadEx").onclick=()=>confirmBox("Replace everything with the example data?","Load example",()=>{S=exampleState();save();render()});
+  const d=$("#drop");d.addEventListener("dragover",e=>{e.preventDefault();d.classList.add("over")});d.addEventListener("dragleave",()=>d.classList.remove("over"));
+  d.addEventListener("drop",e=>{e.preventDefault();d.classList.remove("over");const f=e.dataTransfer.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{importWorkbook(XLSX.read(new Uint8Array(rd.result),{type:"array",cellDates:false}))}catch(err){toast("That file couldn't be read. Save it as .xlsx and try again.")}};rd.readAsArrayBuffer(f)})};
+
+// ================================================================ test library
+R.tests=C=>{const f=UI.tests.f, T=C.tests, cnt=s=>T.filter(t=>t.status===s).length;
+  const list=T.filter(t=>f==="all"||(f==="fail"?t.status==="fail":t.area===f));
+  const chip=(k,lab,n)=>`<button class="chip" data-tf="${k}" aria-pressed="${f===k}">${esc(lab)}${n!=null?` <span class="cnt">${n}</span>`:""}</button>`;
+  const bf=(b,name)=>b&&b.n?`<div class="bf"><div class="row"><b>${esc(name)}</b><span class="note">${esc(L(`${b.n} amounts · MAD ${b.mad.toFixed(4)}`,`${b.n} مبلغ · متوسط الانحراف ${b.mad.toFixed(4)}`))}</span>${pill(b.level==="na"?"none":b.level==="nonconforming"?"bad":b.level==="marginal"?"warn":"ok",{na:L("Too few amounts (need 50+)","عدد المبالغ قليل (يلزم 50 فأكثر)"),close:L("Close conformity","مطابقة قوية"),acceptable:L("Acceptable conformity","مطابقة مقبولة"),marginal:L("Marginal","حدّية"),nonconforming:L("Nonconformity","عدم مطابقة")}[b.level])}</div>${columnChart(["1","2","3","4","5","6","7","8","9"],[{name:L("Actual share","النسبة الفعلية"),c:"s1",values:b.obs.slice(1)},{name:L("Benford expected","المتوقع حسب بنفورد"),c:"s2",type:"line",values:BENFORD.slice(1)}],{h:200,pct:true})}</div>`:"";
+  return `<p class="lead">${esc(L(`${T.length} automated tests run on 100% of your data, modelled on the checks used by the Big Four VAT analytics tools and on ZATCA's own risk indicators.`,`${T.length} اختباراً آلياً تُطبق على 100% من بياناتك، مبنية على فحوصات أدوات تحليل الضريبة لدى الشركات الأربع الكبرى ومؤشرات المخاطر لدى الهيئة.`))}</p>
+  <div class="tiles four">${tile(L("Tests run","الاختبارات المطبقة"),T.length)}${tile(L("Passed","ناجحة"),cnt("pass"),"","okv")}${tile(L("Failed","فاشلة"),cnt("fail"),"","badv")}${tile(L("Not applicable (no data)","غير منطبقة (لا توجد بيانات)"),cnt("na"))}</div>
+  <div class="chips">${chip("fail",L("Failed","فاشلة"),cnt("fail"))}${chip("all",L("All","الكل"),T.length)}${Object.entries(AREAS).map(([k,v])=>chip(k,v,T.filter(t=>t.area===k).length)).join("")}</div>
+  <div class="tests">${list.map(t=>{const open=!!UI.tests.open[t.id];return `<article class="test ${t.status}" id="t-${t.id}"><button class="test-h" data-to="${t.id}" aria-expanded="${open}"><span class="st ${t.status}">${icon(STI[t.status])}</span><span class="mono tid">${t.id}</span><span class="tt">${esc(t.title)}</span>${sevPill(t.sev)}<span class="area">${esc(AREAS[t.area])}</span><span class="grow"></span><span class="tm num">${t.status==="na"?esc(L("No data","لا توجد بيانات")):t.status==="pass"?esc(L("Passed","ناجح")):esc(L(`${t.count} items`,`${t.count} بند`))}</span><span class="tm num">${t.tax?fmt(t.tax):""}</span></button>
+   ${open?`<div class="test-b"><p class="note"><span>${esc(L("Reference","المرجع"))}</span>: <span>${esc(t.ref)}</span></p>${t.id==="A01"?bf(C.bfS,L("Sales amounts","مبالغ المبيعات")):""}${t.id==="A02"?bf(C.bfP,L("Purchase amounts","مبالغ المشتريات")):""}
+    ${t.hits.length?`<div class="frame"><table class="tbl" id="tt-${t.id}"><thead><tr><th>${esc(L("Reference","المرجع"))}</th><th>${esc(L("Date","التاريخ"))}</th><th>${esc(L("Party","الطرف"))}</th><th class="n">${esc(L("Amount","المبلغ"))}</th><th class="n">${esc(L("Tax at risk","الضريبة المعرضة"))}</th></tr></thead><tbody>${t.hits.slice(0,300).map(h=>`<tr><td class="mono">${esc(h.ref)}</td><td>${esc(showDate(h.date))}</td><td data-notr>${esc(h.party)}</td>${nc(h.amount)}${nc(h.tax)}</tr>`).join("")}</tbody></table></div>${t.hits.length>300?`<p class="note">${esc(L(`Showing 300 of ${t.hits.length}.`,`عرض 300 من ${t.hits.length}.`))}</p>`:""}<div class="row"><button class="btn sm" data-copy="tt-${t.id}">${esc("Copy table")}</button><button class="btn sm ghost" data-go="${t.go}">${esc(L("Open the data","فتح البيانات"))}</button></div>`:`<p class="empty">${icon("check")}${esc(t.status==="na"?L("Not enough data to run this test.","لا توجد بيانات كافية لتطبيق هذا الاختبار."):L("No exceptions found.","لا توجد استثناءات."))}</p>`}</div>`:""}</article>`}).join("")||`<p class="empty">${icon("check")}${esc(L("No failed tests.","لا توجد اختبارات فاشلة."))}</p>`}</div>`};
+AFTER.tests=()=>{document.querySelectorAll("[data-tf]").forEach(b=>b.onclick=()=>{UI.tests.f=b.dataset.tf;render()});document.querySelectorAll("[data-to]").forEach(b=>b.onclick=()=>{UI.tests.open[b.dataset.to]=!UI.tests.open[b.dataset.to];render();document.getElementById("t-"+b.dataset.to)?.scrollIntoView({block:"nearest"})})};
+
+// ================================================================ findings & exposure
+const DEC_AR={"":"—","Correct and disclose":"تصحيح وإفصاح طوعي","Defend with evidence":"الدفاع بالمستندات","Accept assessment":"قبول التقييم","Not an issue":"ليست ملاحظة"};
+R.find=C=>{const E=C.exposure, fails=C.tests.filter(t=>t.status==="fail");
+  const row=(lab,a,b,cls="")=>`<tr class="${cls}"><td>${esc(lab)}</td>${nc(a)}${nc(b)}</tr>`;
+  return `<div class="callout ${E.active?"ok":""}">${icon(E.active?"check":"alert")}<div><b>${esc(L("ZATCA fines cancellation initiative","مبادرة إلغاء الغرامات والإعفاء من العقوبات المالية"))}</b><p>${esc(E.active?L(`Active until ${showDate(C.c.initEnd)} (${E.daysLeft} days left). It covers late registration, late filing, late payment and VAT return correction penalties for returns due on or before ${showDate(C.c.initCut)}, if all returns are filed and the principal tax is paid. It does not cover evasion penalties.`,`سارية حتى ${dAr(showDate(C.c.initEnd))} (متبقي ${E.daysLeft} يوم). تشمل غرامات التأخر في التسجيل والتقديم والسداد وتصحيح الإقرارات للإقرارات المستحقة حتى ${dAr(showDate(C.c.initCut))}، بشرط تقديم جميع الإقرارات وسداد أصل الضريبة. لا تشمل غرامات التهرب.`):L("Not active under your settings. Check ZATCA's announcements for the current position.","غير سارية حسب إعداداتك. راجع إعلانات الهيئة للوضع الحالي."))}</p></div></div>
+  <div class="grid2">${card(L("Exposure by scenario (SAR)","التعرض حسب السيناريو (ريال)"),`<div class="frame"><table class="tbl" id="t-exp"><thead><tr><th></th><th class="n">${esc(L("A: no action","أ: دون إجراء"))}</th><th class="n">${esc(L("B: correct under the initiative","ب: التصحيح ضمن المبادرة"))}</th></tr></thead><tbody>
+   ${row(L("Under-declared output VAT","ضريبة مخرجات غير مُقر بها"),E.out,E.out)}${row(L("Over-claimed input VAT","ضريبة مدخلات مخصومة بالزيادة"),E.inp,E.inp)}${row(L("Tax to pay","الضريبة المستحقة"),E.tax,E.tax,"total")}
+   ${row(L("Incorrect-return penalty (50%)","غرامة الإقرار الخاطئ (50%)"),E.pen,E.pen-E.rows.filter(r=>r.eligible).reduce((s,r)=>s+r.pen,0)*(E.active?1:0))}${row(L("Late payment penalties","غرامات التأخر في السداد"),E.latePay,E.latePay-E.rows.filter(r=>r.eligible).reduce((s,r)=>s+r.latePay,0)*(E.active?1:0))}${row(L("Late filing penalty (minimum 5%)","غرامة التأخر في التقديم (5% كحد أدنى)"),E.lateFile,E.lateFile-E.rows.filter(r=>r.eligible).reduce((s,r)=>s+r.lateFile,0)*(E.active?1:0))}
+   ${row(L("Total","الإجمالي"),E.A,E.B,"total")}</tbody></table></div><p class="note">${esc(L("Output exposure takes the higher of under-declared VAT and unexplained revenue × rate, so one error is never counted twice. Late filing can reach 25%; 5% is shown.","يؤخذ تعرض المخرجات بالأعلى بين الضريبة غير المُقر بها والإيرادات غير المفسرة × النسبة، فلا يُحتسب الخطأ مرتين. قد تصل غرامة التأخر في التقديم إلى 25%، والمعروض 5%."))}</p><div class="row"><button class="btn sm" data-copy="t-exp">${esc("Copy table")}</button></div>`)}
+   ${card(L("Exposure by period (SAR)","التعرض حسب الفترة (ريال)"),(()=>{const rs=E.rows.filter(r=>r.tax||r.allPen);return rs.length?`<div class="frame"><table class="tbl"><thead><tr><th>${esc("Period")}</th><th class="n">${esc(L("Tax","الضريبة"))}</th><th class="n">${esc(L("Penalties","الغرامات"))}</th><th>${esc(L("Initiative","المبادرة"))}</th></tr></thead><tbody>${rs.map(r=>`<tr><td>${esc(r.p.label)}</td>${nc(r.tax)}${nc(r.allPen)}<td>${r.eligible&&E.active?pill("ok",L("Eligible","مؤهلة")):pill("none",L("Not eligible","غير مؤهلة"))}</td></tr>`).join("")}</tbody></table></div>`:`<p class="empty">${icon("check")}${esc(L("No exposure in any period.","لا يوجد تعرض في أي فترة."))}</p>`})())}</div>
+  ${card(L("Findings register","سجل الملاحظات"),fails.length?`<div class="frame"><table class="tbl edit" id="t-find"><thead><tr><th>ID</th><th>${esc(L("Finding","الملاحظة"))}</th><th>${esc(L("Severity","الخطورة"))}</th><th class="n">${esc(L("Items","البنود"))}</th><th class="n">${esc(L("Tax at risk","الضريبة المعرضة"))}</th><th>${esc(L("Decision","القرار"))}</th><th>${esc(L("Explanation for ZATCA","التفسير للهيئة"))}</th></tr></thead><tbody>
+   ${fails.map(t=>{const d=S.decisions[t.id]||{};return `<tr><td class="mono"><button class="link" data-test="${t.id}">${t.id}</button></td><td style="min-width:220px">${esc(t.title)}</td><td>${sevPill(t.sev)}</td><td class="n">${t.count}</td>${nc(t.tax)}<td><select data-dec="${t.id}" data-f="d">${DECISIONS.map(o=>`<option value="${o}"${o===(d.d||"")?" selected":""}>${esc(LANG==="ar"?DEC_AR[o]:(o||"—"))}</option>`).join("")}</select></td><td><input data-dec="${t.id}" data-f="n" value="${esc(d.n||"")}" style="min-width:240px" placeholder="${esc(L("Why, and what evidence supports it","السبب، وما المستندات المؤيدة"))}"></td></tr>`}).join("")}</tbody></table></div>
+   <div class="row"><button class="btn sm" data-copy="t-find">${esc("Copy table")}</button><span class="note">${esc(L(`${fails.filter(t=>(S.decisions[t.id]||{}).d).length} of ${fails.length} findings have a decision.`,`${fails.filter(t=>(S.decisions[t.id]||{}).d).length} من ${fails.length} ملاحظة لها قرار.`))}</span></div>`:`<p class="empty">${icon("check")}${esc(L("No findings.","لا توجد ملاحظات."))}</p>`)}`};
+AFTER.find=()=>{document.querySelectorAll("[data-dec]").forEach(el=>{const h=()=>{const k=el.dataset.dec;S.decisions[k]=S.decisions[k]||{d:"",n:""};S.decisions[k][el.dataset.f]=el.value;save()};el.addEventListener("input",h);el.addEventListener("change",h)});AFTER.dash()};
+
+// ================================================================ sampling
+R.samp=C=>{const sm=sampleItems(C), s=S.sample, it=sm.items;const vs=it.map(o=>S.vouch[o.key]||{s:"Not tested",n:""});
+  const tested=vs.filter(v=>v.s&&v.s!=="Not tested").length, exc=vs.filter(v=>v.s==="Exception").length;
+  return `<p class="lead">${esc(L("Monetary-unit sampling: larger invoices are more likely to be picked. Use it to vouch invoices to source documents before ZATCA does. The same seed always gives the same sample.","العينة بالوحدة النقدية: الفواتير الأكبر أكثر احتمالاً للاختيار. استخدمها لمطابقة الفواتير مع مستنداتها قبل الهيئة. نفس الرقم الأولي يعطي نفس العينة دائماً."))}</p>
+  ${card("",`<div class="form-grid four"><label class="fld"><span>${esc(L("Population","المجتمع"))}</span><select id="s-pop"><option value="sales"${s.pop!=="purchases"?" selected":""}>${esc("Sales register")}</option><option value="purchases"${s.pop==="purchases"?" selected":""}>${esc("Purchase register")}</option></select></label><label class="fld"><span>${esc(L("Sample size","حجم العينة"))}</span><input id="s-size" inputmode="numeric" value="${esc(s.size)}"></label><label class="fld"><span>${esc(L("Seed","الرقم الأولي"))}</span><input id="s-seed" value="${esc(s.seed)}"></label></div>`)}
+  <div class="tiles four">${tile(L("Population value (SAR)","قيمة المجتمع (ريال)"),`<span class="num">${fmt0(sm.total)}</span>`)}${tile(L("Sampling interval","فترة المعاينة"),`<span class="num">${fmt0(sm.interval)}</span>`)}${tile(L("Tested","تم فحصها"),`${tested} / ${it.length}`)}${tile(L("Exceptions","الاستثناءات"),exc,"",exc?"badv":"")}</div>
+  ${card(L("Sample","العينة"),it.length?`<div class="frame"><table class="tbl edit" id="t-samp"><thead><tr><th>#</th><th>${esc(L("Reference","المرجع"))}</th><th>${esc(L("Date","التاريخ"))}</th><th>${esc(L("Party","الطرف"))}</th><th class="n">${esc(L("Net (SAR)","الصافي (ريال)"))}</th><th class="n">${esc(L("VAT (SAR)","الضريبة (ريال)"))}</th><th>${esc(L("Result","النتيجة"))}</th><th>${esc("Notes")}</th></tr></thead><tbody>
+   ${it.map((o,k)=>{const v=S.vouch[o.key]||{s:"Not tested",n:""};return `<tr><td class="rowno">${k+1}</td><td class="mono">${esc(o.r.no)}</td><td>${esc(showDate(o.r.date))}</td><td data-notr>${esc(o.r.cust||o.r.sup||"")}</td>${nc(o.x.net)}${nc(o.x.vat)}<td><select data-vk="${esc(o.key)}" data-f="s">${VOUCH.map(x=>`<option value="${x}"${x===v.s?" selected":""}>${esc(L(x,{"Not tested":"لم يُفحص","Agreed":"مطابق","Exception":"استثناء"}[x]))}</option>`).join("")}</select></td><td><input data-vk="${esc(o.key)}" data-f="n" value="${esc(v.n)}" style="min-width:200px"></td></tr>`}).join("")}</tbody></table></div><div class="row"><button class="btn sm" data-copy="t-samp">${esc("Copy table")}</button></div>`:`<p class="empty">${esc(L("No invoices in this register yet.","لا توجد فواتير في هذا السجل بعد."))}</p>`)}`};
+AFTER.samp=()=>{[["s-pop","pop"],["s-size","size"],["s-seed","seed"]].forEach(([id,k])=>$("#"+id).addEventListener("change",e=>{S.sample[k]=e.target.value;save();render()}));
+  document.querySelectorAll("[data-vk]").forEach(el=>{const h=()=>{const k=el.dataset.vk;S.vouch[k]=S.vouch[k]||{s:"Not tested",n:""};S.vouch[k][el.dataset.f]=el.value;save()};el.addEventListener("input",h);el.addEventListener("change",()=>{h();if(el.dataset.f==="s")render()})})};
+
+// ================================================================ settings
+R.setup=C=>{const s=S.setup;const f=(id,lab,inp,hint)=>`<label class="fld"><span>${esc(lab)}</span>${inp}${hint?`<small>${hint}</small>`:""}</label>`;
+  const I=(id,type="text",extra="")=>`<input id="s-${id}" data-s="${id}" type="${type}" value="${esc(s[id])}" ${extra}>`;
+  const yn=id=>`<select id="s-${id}" data-s="${id}">${YN.map(o=>`<option value="${o}"${o===s[id]?" selected":""}>${o}</option>`).join("")}</select>`;
+  return `${card(L("Company","المنشأة"),`<div class="form-grid">${f("company","Company name",I("company"))}${f("vat","VAT registration number",I("vat","text",'inputmode="numeric" maxlength="15"'),`<span id="vatchk">${vatOk(s.vat)?pill("ok","Valid format"):pill("bad","Invalid format")}</span>`)}${f("cr","Commercial registration no",I("cr"))}</div>`)}
+  ${card(L("Year under inspection","السنة محل الفحص"),`<div class="form-grid">${f("fy","Start of the year under inspection",I("fy","date"))}${f("freq","Filing frequency",`<select id="s-freq" data-s="freq"><option value="Monthly"${s.freq==="Monthly"?" selected":""}>Monthly</option><option value="Quarterly"${s.freq==="Quarterly"?" selected":""}>Quarterly</option></select>`)}${f("rate","Standard VAT rate (%)",I("rate","text",'inputmode="decimal"'))}${f("tol","Rounding tolerance (SAR)",I("tol","text",'inputmode="decimal"'))}</div>
+   <div class="frame"><table class="tbl"><thead><tr><th>#</th><th>${esc("Period")}</th><th>${esc("Start")}</th><th>${esc("End")}</th><th>${esc("Return & payment due")}</th></tr></thead><tbody>${C.ps.map(p=>`<tr><td>${p.no}</td><td>${p.label}</td><td>${showDate(p.st)}</td><td>${showDate(p.en)}</td><td>${showDate(p.due)}</td></tr>`).join("")}</tbody></table></div>`)}
+  ${card(L("Penalties and the fines initiative","الغرامات ومبادرة الإعفاء"),`<div class="form-grid">${f("asof","Penalty calculation date",I("asof","date"))}${f("lpp","Late payment penalty (% per month or part)",I("lpp","text",'inputmode="decimal"'))}${f("irp","Incorrect return penalty (% of the difference)",I("irp","text",'inputmode="decimal"'))}${f("init",L("Apply the fines initiative","تطبيق مبادرة الإعفاء من الغرامات"),yn("init"))}${f("initEnd",L("Initiative ends","نهاية المبادرة"),I("initEnd","date"))}${f("initCut",L("Covers returns due on or before","تشمل الإقرارات المستحقة حتى"),I("initCut","date"))}</div><p class="note">${esc(L("Defaults reflect ZATCA's extension to 31 December 2026 for returns due by 30 June 2026. Check ZATCA's announcements before relying on them.","القيم الافتراضية تعكس تمديد الهيئة حتى 31 ديسمبر 2026 للإقرارات المستحقة حتى 30 يونيو 2026. راجع إعلانات الهيئة قبل الاعتماد عليها."))}</p>`)}`};
+AFTER.setup=()=>{document.querySelectorAll("[data-s]").forEach(el=>{el.addEventListener("change",()=>{S.setup[el.dataset.s]=el.value;save();render()});el.addEventListener("input",()=>{S.setup[el.dataset.s]=el.value;save();if(el.dataset.s==="vat")$("#vatchk").innerHTML=vatOk(el.value)?pill("ok","Valid format"):pill("bad","Invalid format")})})};
+
+// ================================================================ response pack (checklist)
+R.chk=C=>{const rq=openReq();return `<p class="lead">${esc("What ZATCA usually asks for in a VAT inspection. Track who owns each item and where the file is.")}</p>
+ <div class="tiles four">${tile("Readiness",`${Math.round(C.ready*100)}%`,`<div class="meter"><span style="width:${Math.round(C.ready*100)}%"></span></div>`)}${tile(L("Findings with a decision","ملاحظات لها قرار"),`${C.tests.filter(t=>t.status==="fail"&&(S.decisions[t.id]||{}).d).length} / ${C.tests.filter(t=>t.status==="fail").length}`)}${tile(L("ZATCA requests answered","طلبات الهيئة المجابة"),`${rq.filter(r=>r.status==="Submitted"||r.status==="Closed").length} / ${rq.length}`)}${tile(L("Sample items tested","بنود العينة المفحوصة"),`${Object.values(S.vouch).filter(v=>v.s&&v.s!=="Not tested").length}`)}</div>
+ ${card(L("Document checklist","قائمة المستندات"),`<div class="frame"><table class="tbl edit" id="t-chk"><thead><tr><th>#</th><th>${esc("Area")}</th><th>${esc("Document or analysis")}</th><th>${esc("Prepared in this app")}</th><th>${esc("Status")}</th><th>${esc("Owner")}</th><th>${esc("File reference")}</th><th>${esc("Notes")}</th></tr></thead><tbody>
+ ${CHECKLIST.map((c,i)=>{const x=S.checklist[i];return `<tr><td class="rowno">${i+1}</td><td><b>${esc(c[0])}</b></td><td style="min-width:280px">${esc(c[1])}</td><td class="note">${esc(c[2]||"")}</td><td><select data-ck="${i}" data-f="status">${STATUS.map(s=>`<option value="${s}"${s===x.status?" selected":""}>${s}</option>`).join("")}</select></td><td><input data-ck="${i}" data-f="owner" value="${esc(x.owner)}"></td><td><input data-ck="${i}" data-f="ref" value="${esc(x.ref)}"></td><td><input data-ck="${i}" data-f="notes" value="${esc(x.notes)}"></td></tr>`}).join("")}</tbody></table></div><div class="row"><button class="btn sm" data-copy="t-chk">${esc("Copy table")}</button></div>`)}`};
+AFTER.chk=()=>{document.querySelectorAll("[data-ck]").forEach(el=>{const h=()=>{S.checklist[+el.dataset.ck][el.dataset.f]=el.value;save()};el.addEventListener("input",h);el.addEventListener("change",()=>{h();if(el.dataset.f==="status")render()})})};
+
+// ================================================================ methodology
+R.method=C=>{const firms=[["KPMG","AVA / Tax Intelligence Solution",L("Tests the whole invoice population, predicts mis-booked invoices with machine learning, then an expert validates every hit.","يختبر جميع الفواتير، ويتنبأ بالفواتير المسجلة خطأً بالتعلم الآلي، ثم يتحقق خبير من كل نتيجة."),L("100% testing + human decision on every finding","اختبار 100% + قرار بشري لكل ملاحظة")],
+  ["Deloitte","Global VAT/GST Radar · myInsight",L("Predefined checks and balances on VAT data, one dashboard, and an issue log with management reporting.","فحوصات محددة مسبقاً على بيانات الضريبة، ولوحة واحدة، وسجل ملاحظات مع تقارير للإدارة."),L("Numbered test library + findings register","مكتبة اختبارات مرقمة + سجل ملاحظات")],
+  ["EY","Global VAT Reporting Tool",L("Uploads data from many systems, parameter tests, anomaly detection, tax calendar and an audit trail for returns.","رفع البيانات من عدة أنظمة، واختبارات معيارية، وكشف الأنماط غير الطبيعية، وتقويم ضريبي، وسجل تدقيق للإقرارات."),L("Data hub, anomaly analytics, deadlines, audit log","مركز بيانات، وتحليلات الأنماط، والمواعيد، وسجل التدقيق")],
+  ["PwC","Indirect Tax Edge · VAT Data Check",L("Controls testing over 100% of transactions with 200+ compliance and data-quality checks.","اختبار الضوابط على 100% من المعاملات بأكثر من 200 فحص للالتزام وجودة البيانات."),L("Data-quality tests separated from tax tests","فصل اختبارات جودة البيانات عن الاختبارات الضريبية")],
+  ["BDO","ONESOURCE Fast VAT (KSA/UAE)",L("Automated return preparation and periodic VAT health checks for GCC clients.","إعداد آلي للإقرارات وفحوصات دورية لسلامة الضريبة لعملاء الخليج."),L("Return-level controls and tie-outs","ضوابط على مستوى الإقرار ومطابقاته")],
+  ["ZATCA",L("Risk engine and audit process","محرك المخاطر وإجراءات الفحص"),L("Selects cases by analytics (mismatches, frequent amendments, large refunds, e-invoice inconsistencies), then document requests, queries, assessment, objection.","تختار الحالات بالتحليلات (الفروق، التعديلات المتكررة، الاستردادات الكبيرة، تعارضات الفوترة الإلكترونية)، ثم طلب المستندات، والاستفسارات، والتقييم، والاعتراض."),L("Tests mirror ZATCA's risk triggers; case file tracks every request","الاختبارات تحاكي مؤشرات الهيئة؛ وملف الفحص يتابع كل طلب")]];
+  return `<p class="lead">${esc(L("How this system was designed: what the leading VAT review tools do, and what was taken from each.","كيف صُمم هذا النظام: ماذا تفعل أفضل أدوات مراجعة الضريبة، وماذا أُخذ من كل منها."))}</p>
+  ${card(L("Research","البحث"),`<div class="frame"><table class="tbl"><thead><tr><th>${esc(L("Firm","الجهة"))}</th><th>${esc(L("System","النظام"))}</th><th>${esc(L("What it does","ماذا يفعل"))}</th><th>${esc(L("Built into this system","ما أُدرج في هذا النظام"))}</th></tr></thead><tbody>${firms.map(f=>`<tr><td><b>${f[0]}</b></td><td>${esc(f[1])}</td><td style="min-width:280px">${esc(f[2])}</td><td>${esc(f[3])}</td></tr>`).join("")}</tbody></table></div><p class="note">${esc(L("Based on the firms' public product pages and ZATCA publications. The firms' internal tools are not public; this system reproduces the approach, not their software.","استناداً إلى صفحات المنتجات العامة للشركات ومنشورات الهيئة. الأدوات الداخلية للشركات غير منشورة؛ هذا النظام يحاكي المنهجية وليس برمجياتها."))}</p>`)}
+  ${card(L("Workflow","سير العمل"),`<ol class="steps">${[[L("Load","التحميل"),L("Trial balance, returns, registers, payments.","ميزان المراجعة والإقرارات والسجلات والمدفوعات.")],[L("Detect","الاكتشاف"),L(`${TESTS.length} tests on 100% of the data, plus five reconciliations.`,`${TESTS.length} اختباراً على 100% من البيانات، وخمس مطابقات.`)],[L("Quantify","التقدير"),L("Tax and penalties per finding, with and without the fines initiative.","الضريبة والغرامات لكل ملاحظة، مع المبادرة ودونها.")],[L("Decide","القرار"),L("Correct and disclose, defend with evidence, or accept.","التصحيح والإفصاح، أو الدفاع بالمستندات، أو القبول.")],[L("Respond","الرد"),L("Checklist, request log and copy-ready tables for ZATCA.","قائمة المستندات وسجل الطلبات وجداول جاهزة للنسخ.")]].map(([a,b])=>`<li><b>${esc(a)}</b><span>${esc(b)}</span></li>`).join("")}</ol>`)}
+  ${card(L("Test catalogue","دليل الاختبارات"),`<div class="frame"><table class="tbl" id="t-cat"><thead><tr><th>ID</th><th>${esc(L("Area","المجال"))}</th><th>${esc(L("Test","الاختبار"))}</th><th>${esc(L("Severity","الخطورة"))}</th><th>${esc(L("Reference","المرجع"))}</th></tr></thead><tbody>${TESTS.map(t=>`<tr><td class="mono">${t.id}</td><td>${esc(AREAS[t.area])}</td><td>${esc(t.title)}</td><td>${sevPill(t.sev)}</td><td class="note">${esc(t.ref)}</td></tr>`).join("")}</tbody></table></div><div class="row"><button class="btn sm" data-copy="t-cat">${esc("Copy table")}</button></div>`)}`};
+
+// ================================================================ data grids
+const COL={
+ tb:()=>{const ml=monthLabels();return[{k:"code",h:"Account code",t:"text",w:90},{k:"name",h:"Account name",t:"text",w:200},{k:"fs",h:"FS class",t:"sel",o:FS,w:110},{k:"map",h:"VAT mapping",t:"sel",o:TB_MAPS,w:230},{k:"open",h:"Opening balance",t:"num",w:120},...ml.map((l,m)=>({k:"m"+m,h:l,t:"num",w:110}))]},
+ sales:()=>[{k:"date",h:"Invoice date",t:"date"},{k:"no",h:"Invoice no",t:"text"},{k:"type",h:"Document type",t:"sel",o:DOC_TYPES},{k:"cust",h:"Customer",t:"text",w:170},{k:"cvat",h:"Customer VAT no",t:"text",w:150},{k:"ctype",h:"Customer type",t:"sel",o:CUST_TYPES},{k:"cat",h:"VAT category",t:"sel",o:SALES_CATS,w:220},{k:"net",h:"Net (SAR)",t:"num"},{k:"vat",h:"VAT (SAR)",t:"num"},{k:"uuid",h:"E-invoice UUID",t:"text"},{k:"fat",h:"On FATOORA?",t:"sel",o:YN,w:80},{k:"gl",h:"GL account",t:"text",w:80},{k:"ev",h:"Export / zero-rate evidence",t:"text",w:200}],
+ pur:()=>[{k:"date",h:"Invoice date",t:"date"},{k:"no",h:"Supplier invoice no",t:"text"},{k:"sup",h:"Supplier",t:"text",w:170},{k:"svat",h:"Supplier VAT no",t:"text",w:150},{k:"country",h:"Country",t:"text"},{k:"cat",h:"VAT category",t:"sel",o:PUR_CATS,w:230},{k:"nature",h:"Expense nature",t:"sel",o:NATURE,w:220},{k:"net",h:"Net (SAR)",t:"num"},{k:"vat",h:"VAT (SAR)",t:"num"},{k:"valid",h:"Valid tax invoice?",t:"sel",o:YN,w:80},{k:"claimed",h:"Claimed in return?",t:"sel",o:YN,w:80},{k:"bayan",h:"Customs decl. (Bayan)",t:"text"},{k:"gl",h:"GL account",t:"text",w:80}],
+ pay:()=>[{k:"p",h:"Period # (0 = prior)",t:"num",w:80},{k:"date",h:"Payment date",t:"date"},{k:"ref",h:"SADAD / reference",t:"text"},{k:"amt",h:"Amount (SAR, refunds −)",t:"num"},{k:"notes",h:"Notes",t:"text",w:200}]};
+const COMP={
+ tb:[{h:"Total movements",n:1,f:r=>r.m.reduce((s,v)=>s+num(v),0)},{h:"Closing balance",n:1,f:r=>num(r.open)+r.m.reduce((s,v)=>s+num(v),0)}],
+ sales:[{h:"Period",f:(r,x)=>x?(x.p||"—"):""},{h:"Expected VAT",n:1,f:(r,x)=>x?x.exp:""},{h:"VAT difference",n:1,f:(r,x)=>x?x.diff:""},{h:"Exceptions",flags:1,f:(r,x)=>x?x.flags.join("; "):""}],
+ pur:[{h:"Period",f:(r,x)=>x?(x.p||"—"):""},{h:"Expected VAT",n:1,f:(r,x)=>x?x.exp:""},{h:"VAT claimed",n:1,f:(r,x)=>x?x.claimed:""},{h:"Defensible VAT",n:1,f:(r,x)=>x?x.defensible:""},{h:"VAT at risk",n:1,f:(r,x)=>x?x.risk:""},{h:"Exceptions",flags:1,f:(r,x)=>x?x.flags.join("; "):""}],
+ pay:[{h:"Period",f:(r,x)=>x.label},{h:"Due date",f:(r,x)=>x.due?showDate(x.due):""},{h:"Days late",n:1,f:(r,x)=>x.days||""},{h:"Months late",n:1,f:(r,x)=>x.ml||""},{h:"Est. penalty",n:1,f:(r,x)=>x.pen}]};
+L("Duplicate supplier invoice","فاتورة مورد مكررة");L("Foreign supplier without reverse charge","مورد أجنبي دون احتساب عكسي");
+const DATA={tb:()=>S.tb,sales:()=>S.sales,pur:()=>S.purchases,pay:()=>S.payments};
+const NEWROW={tb:()=>({code:"",name:"",fs:"",map:"",open:"",m:Array(12).fill("")}),sales:()=>({}),pur:()=>({}),pay:()=>({})};
+function getV(key,row,k){if(key==="tb"&&/^m\d+$/.test(k))return row.m[+k.slice(1)]??"";return row[k]??""}
+function setV(key,row,k,v){if(key==="tb"&&/^m\d+$/.test(k)){row.m[+k.slice(1)]=v;return}row[k]=v}
+function rowCalc(key,i,C){if(key==="sales")return C.sales[i];if(key==="pur")return C.pur[i];if(key==="pay")return C.pays[i];return null}
+const PAGE=100;
+function gridHTML(key,C){
+  const cols=COL[key](), comp=COMP[key], data=DATA[key](), ui=UI[key]||(UI[key]={page:0,flagged:false});
+  let idx=data.map((_,i)=>i);if(ui.flagged)idx=idx.filter(i=>{const x=rowCalc(key,i,C);return x&&x.flags&&x.flags.length});
+  const pages=Math.max(1,Math.ceil(idx.length/PAGE));if(ui.page>=pages)ui.page=pages-1;const slice=idx.slice(ui.page*PAGE,(ui.page+1)*PAGE);
+  const flagBtn=(key==="sales"||key==="pur")?`<button class="btn sm" data-g="flag" aria-pressed="${ui.flagged}">${esc(ui.flagged?"Show all rows":"Show only rows with exceptions")}</button>`:"";
+  const tools=`<div class="toolbar"><button class="btn sm primary" data-g="add">${esc("Add row")}</button><button class="btn sm" data-g="import">${icon("upl")}${esc("Import from Excel / CSV")}</button>${flagBtn}<button class="btn sm" data-g="copy">${esc("Copy table")}</button><button class="btn sm danger" data-g="clearall">${esc("Clear this table")}</button><span class="grow"></span><span class="note">${fmtInt(data.length)} rows${ui.flagged?` · ${fmtInt(idx.length)} with exceptions`:""}</span>${pages>1?`<button class="btn sm" data-g="prev" ${ui.page?"":"disabled"}>‹</button><span class="note">Page ${ui.page+1} of ${pages}</span><button class="btn sm" data-g="next" ${ui.page<pages-1?"":"disabled"}>›</button>`:""}</div>
+  <p class="note tip-line">${esc("Tip: copy a block of cells from Excel and paste into any cell here. Rows are added automatically. Dates can be dd/mm/yyyy or yyyy-mm-dd.")}</p>`;
+  const head=`<tr><th></th>${cols.map(c=>`<th class="${c.t==="num"?"n":""}">${esc(c.h)}</th>`).join("")}${comp.map(c=>`<th class="${c.n?"n":""} calc">${esc(c.h)}</th>`).join("")}<th></th></tr>`;
+  const body=slice.map(i=>{const row=data[i],x=rowCalc(key,i,C);return `<tr data-i="${i}"><td class="rowno">${i+1}</td>${cols.map((c,ci)=>`<td>${cellInput(c,getV(key,row,c.k),ci)}</td>`).join("")}${comp.map((c,j)=>compCell(c,row,x,j)).join("")}<td><button class="del" data-g="del" aria-label="Delete row ${i+1}">×</button></td></tr>`}).join("")
+    ||`<tr><td colspan="${cols.length+comp.length+2}" class="empty">${esc(ui.flagged?"No rows with exceptions.":"No rows yet. Paste from Excel, import a file, or add a row.")}</td></tr>`;
+  return tools+`<div class="frame grid" data-grid="${key}"><table class="tbl edit" id="t-${key}"><thead>${head}</thead><tbody>${body}</tbody></table></div>`;
+}
+function cellInput(c,v,ci){const st=c.w?` style="min-width:${c.w}px"`:"";
+  if(c.t==="sel"){const opts=[...c.o];if(v&&!opts.includes(v))opts.push(v);return `<select data-k="${c.k}" data-ci="${ci}"${st}><option value=""></option>${opts.map(o=>`<option value="${esc(o)}"${o===v?" selected":""}>${esc(o)}</option>`).join("")}</select>`}
+  if(c.t==="date")return `<input type="date" data-k="${c.k}" data-ci="${ci}" value="${esc(v)}"${st}>`;
+  return `<input type="text" ${c.t==="num"?'inputmode="decimal" class="num"':""} data-k="${c.k}" data-ci="${ci}" value="${esc(v)}"${st}>`}
+function compCell(c,row,x,j){const v=c.f(row,x);if(c.flags)return `<td class="calc flags" data-c="${j}">${esc(v)}</td>`;return `<td class="calc ${c.n?"n":""}" data-c="${j}">${c.n&&v!==""?fmt(v):esc(v)}</td>`}
+function bindGrid(key){
+  const wrap=document.querySelector(`[data-grid="${key}"]`);if(!wrap)return;const tb=wrap.querySelector("tbody"),cols=COL[key](),data=DATA[key];
+  const upd=e=>{const el=e.target;if(!el.dataset.k)return;const tr=el.closest("tr"),i=+tr.dataset.i;setV(key,data()[i],el.dataset.k,el.value);S.example=false;save();
+    const C=compute(),x=rowCalc(key,i,C);tr.querySelectorAll("[data-c]").forEach(td=>{const c=COMP[key][+td.dataset.c],v=c.f(data()[i],x);td.textContent=c.n&&v!==""?fmt(v):v});renderNav(C);if(key==="tb")refreshTbCheck(C)};
+  tb.addEventListener("input",upd);tb.addEventListener("change",upd);
+  tb.addEventListener("paste",e=>{const el=e.target;if(!el.dataset||el.dataset.ci==null)return;const txt=(e.clipboardData||window.clipboardData).getData("text");if(!/[\t\n]/.test(txt.replace(/\s+$/,"")))return;e.preventDefault();
+    const lines=txt.replace(/\r/g,"").replace(/\n+$/,"").split("\n").map(l=>l.split("\t"));const start=+el.closest("tr").dataset.i,ci=+el.dataset.ci;
+    lines.forEach((cells,ri)=>{let row=data()[start+ri];if(!row){row=NEWROW[key]();data().push(row)}cells.forEach((v,k)=>{const c=cols[ci+k];if(c)setV(key,row,c.k,normCell(c,v))})});
+    S.example=false;save();render();toast(`Pasted ${lines.length} row${lines.length>1?"s":""}`)});
+  tb.addEventListener("click",e=>{const b=e.target.closest('[data-g="del"]');if(!b)return;data().splice(+b.closest("tr").dataset.i,1);save();render()});
+  wrap.parentElement.querySelector(".toolbar").addEventListener("click",e=>{const b=e.target.closest("[data-g]");if(!b)return;const ui=UI[key];
+    if(b.dataset.g==="add"){data().push(NEWROW[key]());ui.flagged=false;ui.page=Math.floor((data().length-1)/PAGE);save();render();document.querySelector(`[data-grid="${key}"] tbody tr:last-child input`)?.focus()}
+    if(b.dataset.g==="flag"){ui.flagged=!ui.flagged;ui.page=0;render()}
+    if(b.dataset.g==="prev"){ui.page--;render()}if(b.dataset.g==="next"){ui.page++;render()}
+    if(b.dataset.g==="copy")copyText(tableTSV(document.getElementById("t-"+key)));
+    if(b.dataset.g==="clearall")confirmBox("Delete every row in this table?","Delete rows",()=>{data().length=0;save();render()});
+    if(b.dataset.g==="import")pickFile(wb=>importTable(key,wb))});
+}
+function normCell(c,v){v=v==null?"":v;if(c.t==="date")return normDate(v);if(c.t==="sel")return normSel(v,c.o);if(c.t==="num"){if(v===""||v==null)return "";return String(num(v))}return String(v).trim()}
+function rowsInto(key,rows,colCount){const cols=COL[key]();let n=0;for(const r of rows){if(!r.slice(0,colCount).some(v=>String(v).trim()!==""))continue;const row=NEWROW[key]();cols.forEach((c,k)=>setV(key,row,c.k,normCell(c,r[k])));DATA[key]().push(row);n++}return n}
+const SHEET_AR={Setup:"الإعدادات",Checklist:"قائمة_المستندات",TB_Monthly:"ميزان_المراجعة",VAT_Returns:"الإقرارات",Sales_Register:"سجل_المبيعات",Purchase_Register:"سجل_المشتريات",ZATCA_Payments:"المدفوعات"};
+function importTable(key,wb){
+  const tmpl={tb:"TB_Monthly",sales:"Sales_Register",pur:"Purchase_Register",pay:"ZATCA_Payments"}[key];let rows,ws=wb.Sheets[tmpl]||wb.Sheets[SHEET_AR[tmpl]];
+  if(ws){rows=sheetRows(ws).slice(5);if(key==="sales"||key==="pur")rows=rows.map(dropTotal)}
+  else{rows=sheetRows(wb.Sheets[wb.SheetNames[0]]);const ni={tb:4,sales:7,pur:7,pay:3}[key];if(rows.length&&typeof rows[0][ni]==="string"&&rows[0][ni]!==""&&!/^[\d,.()\-\s]+$/.test(rows[0][ni]))rows=rows.slice(1)}
+  if(key==="tb")rows=rows.filter(r=>String(r[0]).trim()!==""||String(r[1]).trim()!=="");
+  const n=rowsInto(key,rows,COL[key]().length);S.example=false;save();render();toast(`Imported ${fmtInt(n)} rows`)}
+function importWorkbook(wb){
+  const sh=n=>wb.Sheets[n]||wb.Sheets[SHEET_AR[n]],has=n=>!!sh(n);
+  if(!has("TB_Monthly")&&!has("Sales_Register")&&!has("VAT_Returns")){toast("This isn't the VAT Inspection Pack workbook. Use the Import button on each table instead.");return}
+  const keep={setup:S.setup,case:S.case,requests:S.requests};S=exampleState();Object.assign(S,keep);S.example=false;S.tb=[];S.sales=[];S.purchases=[];S.payments=[];S.decisions={};S.vouch={};S.returns=Array.from({length:12},blankReturn);
+  if(has("Setup")){const r=sheetRows(sh("Setup"));const g=i=>(r[i]||[])[1];const pc=v=>{const n=num(v);return String(n<=1?r2(n*100):n)};Object.assign(S.setup,{company:String(g(3)||""),vat:String(g(4)||""),cr:String(g(5)||""),fy:normDate(g(6))||"2025-01-01",freq:(g(7)==="Quarterly"||g(7)==="ربع سنوي")?"Quarterly":"Monthly",rate:pc(g(8)),tol:String(num(g(9))),asof:normDate(g(10))||S.setup.asof,lpp:pc(g(11)),irp:pc(g(12))})}
+  if(has("TB_Monthly"))rowsInto("tb",sheetRows(sh("TB_Monthly")).slice(5).filter(r=>String(r[0]).trim()||String(r[1]).trim()),17);
+  if(has("Sales_Register"))rowsInto("sales",sheetRows(sh("Sales_Register")).slice(5).map(dropTotal),13);
+  if(has("Purchase_Register"))rowsInto("pur",sheetRows(sh("Purchase_Register")).slice(5).map(dropTotal),13);
+  if(has("ZATCA_Payments"))rowsInto("pay",sheetRows(sh("ZATCA_Payments")).slice(5),5);
+  if(has("VAT_Returns")){const rr=sheetRows(sh("VAT_Returns"));for(let i=0;i<12;i++){const r=rr[5+i]||[],t=S.returns[i];const sv=v=>v===""||v==null?"":String(num(v));t.filed=normDate(r[3]);t.ref=String(r[4]||"");BOX_IDS.forEach((b,k)=>{const c=5+3*k;t.b[b]={a:sv(r[c]),j:sv(r[c+1]),v:sv(r[c+2])}});t.b14=sv(r[35]);t.b15=sv(r[36]);t.b16=sv(r[37])}}
+  if(has("Checklist")){const rr=sheetRows(sh("Checklist"));S.checklist.forEach((c,i)=>{const r=rr[4+i]||[];if(r[6])c.status=normSel(r[6],STATUS);c.owner=String(r[4]||"");c.ref=String(r[7]||"");c.notes=String(r[8]||"")})}
+  save();render();toast("Workbook imported")}
+
+// ================================================================ data pages
+R.tb=C=>`<p class="lead">${esc("Opening balance plus the net movement for each month. Debits positive, credits negative. Give every account a VAT mapping: that's how the app finds revenue by VAT box and the VAT accounts.")}</p>
+ ${card("Balance check",`<div class="frame"><table class="tbl"><thead><tr><th></th><th class="n">${esc("Opening")}</th>${monthLabels().map(l=>`<th class="n">${l}</th>`).join("")}</tr></thead><tbody><tr id="tbcheck"></tr></tbody></table></div>`)}${gridHTML("tb",C)}`;
+function refreshTbCheck(C){const tr=$("#tbcheck");if(!tr)return;tr.innerHTML=`<td>${esc("Must be zero")}</td>`+C.tbCheck.map(v=>`<td class="n">${Math.abs(v)>0.005?pill("bad",fmt(v)):pill("ok","✓")}</td>`).join("")}
+AFTER.tb=C=>{refreshTbCheck(C);bindGrid("tb")};
+R.sales=C=>`<p class="lead">${esc("Every invoice, simplified invoice, credit and debit note. For high-volume point-of-sale, use one summary line per day and VAT category. Credit notes are negative.")}</p>`+gridHTML("sales",C);AFTER.sales=()=>bindGrid("sales");
+R.pur=C=>`<p class="lead">${esc("Every supplier invoice and customs declaration with VAT. The app tests whether the input VAT you claimed would survive an inspection.")}</p>`+gridHTML("pur",C);AFTER.pur=()=>bindGrid("pur");
+R.pay=C=>`<p class="lead">${esc("One row per SADAD payment. Enter refunds received as negative amounts. Use period 0 for payments of periods before this year.")}</p>`+gridHTML("pay",C);AFTER.pay=()=>bindGrid("pay");
+
+// ================================================================ VAT returns form
+R.ret=C=>{const ps=C.ps,k=Math.min(UI.ret.p,ps.length-1),p=ps[k],r=S.returns[k];
+  const chip=(pp,i)=>{const X=C.rets[i];const st=X.arith==="bad"||X.late==="bad"?"bad":X.entered?"ok":"none";return `<button class="chip" data-rp="${i}" aria-pressed="${i===k}"><i class="dotc ${st}"></i>${esc(pp.label)}</button>`};
+  const inp=(b,f)=>`<input class="num" inputmode="decimal" data-b="${b}" data-f="${f}" value="${esc(r.b[b][f])}" aria-label="Box ${b} ${f}">`;
+  const boxRow=x=>`<tr><td class="boxno">Box ${x.b}</td><td><div class="boxname"><span>${esc(x.en)}</span><span class="ar">${esc(x.ar)}</span></div></td><td>${inp(x.b,"a")}</td><td>${inp(x.b,"j")}</td><td>${x.b===2?`<small class="note">${esc("Borne by the State")}</small>`:""}${inp(x.b,"v")}</td></tr>`;
+  const tot=(no,en,id1,id2)=>`<tr class="total"><td class="boxno">Box ${no}</td><td>${esc(en)}</td><td class="n" colspan="2" id="${id1}"></td><td class="n" id="${id2}"></td></tr>`;
+  return `<p class="lead">${esc("Copy each return exactly as it appears on the ZATCA portal. Enter credit-note adjustments as negative amounts. The app recalculates each return and checks it.")}</p>
+  <div class="chips">${ps.map(chip).join("")}</div>
+  <section class="card form"><div class="toolbar"><b class="h3">${esc(p.label)}</b><span class="note">${esc("Due "+showDate(p.due))}</span><span class="grow"></span><label class="fld inline"><span>${esc("Date filed")}</span><input type="date" data-top="filed" value="${esc(r.filed)}"></label><label class="fld inline"><span>${esc("Return ref")}</span><input data-top="ref" value="${esc(r.ref)}"></label></div>
+   <div class="frame"><table class="tbl ret"><thead><tr><th></th><th>${esc("Sales")}</th><th class="n">${esc("Amount (SAR)")}</th><th class="n">${esc("Adjustment")}</th><th class="n">${esc("VAT amount")}</th></tr></thead><tbody>
+    ${BOXES.slice(0,5).map(boxRow).join("")}${tot(6,"Total sales","t6a","t6v")}<tr class="sub"><th></th><th colspan="4">${esc("Purchases")}</th></tr>${BOXES.slice(5).map(boxRow).join("")}${tot(12,"Total purchases","t12a","t12v")}
+    <tr><td class="boxno">Box 13</td><td>${esc("Total VAT due for the period")}</td><td colspan="2"></td><td class="n" id="t13"></td></tr>
+    <tr><td class="boxno">Box 14</td><td>${esc("Corrections from previous periods (max ±5,000)")} <span id="b14chk"></span></td><td colspan="2"></td><td><input class="num" inputmode="decimal" data-top="b14" value="${esc(r.b14)}" aria-label="Box 14"></td></tr>
+    <tr><td class="boxno">Box 15</td><td>${esc("VAT credit carried forward from previous periods")}</td><td colspan="2"></td><td><input class="num" inputmode="decimal" data-top="b15" value="${esc(r.b15)}" aria-label="Box 15"></td></tr>
+    <tr class="total"><td class="boxno">Box 16</td><td><span>${esc("Net VAT due (or claimed)")}</span> · <span>${esc("as filed")}</span></td><td colspan="2" class="n" id="t16c"></td><td><input class="num" inputmode="decimal" data-top="b16" value="${esc(r.b16)}" aria-label="Box 16 as filed"></td></tr></tbody></table></div>
+   <p class="note">${esc("VAT on reverse-charge imports (Box 9) counts as both output and input VAT on the return, so it is added to total output VAT here. Check this against your filed return.")}</p></section>
+  ${card("All periods",`<div id="retsum"></div>`,`<button class="btn sm" data-copy="t-retsum">${esc("Copy table")}</button>`)}`};
+function retSummary(C){return `<div class="frame"><table class="tbl" id="t-retsum"><thead><tr><th>${esc("Period")}</th><th>${esc("Filed")}</th><th class="n">${esc("Total sales")}</th><th class="n">${esc("Output VAT")}</th><th class="n">${esc("Total purchases")}</th><th class="n">${esc("Input VAT")}</th><th class="n">Box 13</th><th class="n">${esc("Box 16 recalculated")}</th><th class="n">${esc("Box 16 filed")}</th><th>${esc("Arithmetic")}</th><th>${esc("On time")}</th><th>Box 14</th></tr></thead><tbody>
+  ${C.ps.map((p,i)=>{const X=C.rets[i];return `<tr><td>${esc(p.label)}</td><td>${esc(showDate(S.returns[i].filed))}</td>${nc(X.box6)}${nc(X.out)}${nc(X.box12)}${nc(X.inp)}${nc(X.box13)}${nc(X.b16c)}${nc(X.b16)}<td>${X.arith==="ok"?pill("ok","Agrees"):X.arith==="bad"?pill("bad","Filed ≠ recalculated"):pill("none","Not entered")}</td><td>${X.late==="ok"?pill("ok","On time"):X.late==="bad"?pill("bad",L(`${X.lateDays} days late`,`متأخر ${X.lateDays} يوم`)):pill("none","—")}</td><td>${X.b14ok?pill("ok","✓"):pill("bad","Over 5,000")}</td></tr>`}).join("")}
+  <tr class="total"><td>${esc("Year")}</td><td></td>${["box6","out","box12","inp","box13","b16c","b16"].map(f=>nc(C.rets.reduce((s,x)=>s+x[f],0))).join("")}<td colspan="3"></td></tr></tbody></table></div>`}
+L("Agrees","مطابق");L("Filed ≠ recalculated","المقدم ≠ المعاد احتسابه");L("On time","في الموعد");L("Over 5,000","يتجاوز 5,000");L("Not entered","لم يُدخل");
+AFTER.ret=C=>{const k=Math.min(UI.ret.p,C.ps.length-1);
+  const refresh=()=>{const C2=compute(),X=C2.rets[k];$("#t6a").textContent=fmt(X.box6);$("#t6v").textContent=fmt([1,2,3,4,5].reduce((s,b)=>s+X.v(b),0));$("#t12a").textContent=fmt(X.box12);$("#t12v").textContent=fmt(X.inp);
+    $("#t13").textContent=fmt(X.box13);$("#t16c").innerHTML=`${esc(L("Recalculated","بعد إعادة الاحتساب"))}: ${fmt(X.b16c)} ${X.arith==="ok"?pill("ok","✓"):X.arith==="bad"?pill("bad",L("differs","مختلف")):""}`;$("#b14chk").innerHTML=X.b14ok?"":pill("bad","over limit");$("#retsum").innerHTML=retSummary(C2);renderNav(C2)};
+  refresh();document.querySelectorAll("[data-rp]").forEach(b=>b.onclick=()=>{UI.ret.p=+b.dataset.rp;render()});
+  const form=document.querySelector(".form");
+  form.addEventListener("input",e=>{const el=e.target,r=S.returns[k];if(el.dataset.b)r.b[el.dataset.b][el.dataset.f]=el.value;else if(el.dataset.top)r[el.dataset.top]=el.value;else return;S.example=false;save();refresh()});
+  form.addEventListener("paste",e=>{const el=e.target;if(!el.dataset.b)return;const t=e.clipboardData.getData("text");if(!/[\t\n]/.test(t.trim()))return;e.preventDefault();const lines=t.replace(/\r/g,"").trim().split("\n").map(l=>l.split("\t"));
+    const fields=["a","j","v"],bi=BOX_IDS.indexOf(+el.dataset.b),fi=fields.indexOf(el.dataset.f);lines.forEach((cells,ri)=>{const b=BOX_IDS[bi+ri];if(!b)return;cells.forEach((v,ci)=>{const f=fields[fi+ci];if(f)S.returns[k].b[b][f]=v===""?"":String(num(v))})});save();render()})};
+
+// ================================================================ reconciliations
+R.rsales=C=>`<p class="lead">${esc("For each box: what you declared, what you invoiced, and what you booked in the ledger. ZATCA usually starts here.")}</p>`+C.salesRec.map(x=>{const t=x.rows.reduce((a,r)=>({ret:a.ret+r.ret,reg:a.reg+r.reg,tb:a.tb+r.tb}),{ret:0,reg:0,tb:0}),id="t-rs"+x.b,bad=x.rows.filter(r=>r.s==="bad").length;
+ return card(`Box ${x.b} · ${x.cat.replace(/ \(Box \d\)/,"")}`,`<div class="frame"><table class="tbl" id="${id}"><thead><tr><th>${esc("Period")}</th><th class="n">${esc("VAT return")}</th><th class="n">${esc("Sales register")}</th><th class="n">${esc("Trial balance")}</th><th class="n">${esc("Return − register")}</th><th class="n">${esc("Return − TB")}</th><th>${esc("Status")}</th></tr></thead><tbody>
+ ${x.rows.map(r=>`<tr><td>${esc(r.p.label)}</td>${nc(r.ret)}${nc(r.reg)}${nc(r.tb)}${dc(r.d1,C.c.tol)}${dc(r.d2,C.c.tol)}<td>${sp(r.s)}</td></tr>`).join("")}
+ <tr class="total"><td>${esc("Year")}</td>${nc(t.ret)}${nc(t.reg)}${nc(t.tb)}${dc(t.ret-t.reg,C.c.tol)}${dc(t.ret-t.tb,C.c.tol)}<td></td></tr></tbody></table></div>`,`${bad?pill("bad",L(`${bad} periods`,`${bad} فترة`)):""}<button class="btn sm" data-copy="${id}">${esc("Copy table")}</button>`)}).join("");
+R.rrev=C=>{const v=C.rev;return `<p class="lead">${esc("Revenue in the financial statements against total sales declared for the year. ZATCA treats any unexplained excess as undeclared taxable sales.")}</p>
+ <div class="grid2">${card("",`<div class="frame"><table class="tbl" id="t-rev"><tbody><tr><td>${esc("Total revenue per trial balance (FS class = Revenue)")}</td>${nc(v.tbRev)}</tr><tr><td>${esc("Less: revenue mapped as out of scope / other income")}</td>${nc(-v.oos)}</tr><tr class="total"><td>${esc("Revenue subject to VAT reporting")}</td>${nc(v.subj)}</tr><tr><td>${esc("Total sales per VAT returns (Box 6, full year)")}</td>${nc(v.retSales)}</tr><tr class="total"><td>${esc("Difference before reconciling items")}</td>${dc(v.rdiff,C.c.tol)}</tr></tbody></table></div>`)}
+ <div class="tile hero ${Math.abs(v.unexpl)>C.c.tol?"bad":"ok"}"><span class="t-lab">${esc("Unexplained difference")}</span><span class="t-val big num" id="unexpl">${fmt(v.unexpl)}</span><span class="t-sub">${esc(Math.abs(v.unexpl)>C.c.tol?"Explain or correct before submitting":"Fully reconciled")}</span></div></div>
+ ${card("Explained reconciling items",`<p class="note">${esc("Enter each item with the sign that reduces the difference.")}</p><div class="frame"><table class="tbl edit"><thead><tr><th>${esc("Description")}</th><th class="n">${esc("Amount (SAR)")}</th><th></th></tr></thead><tbody>
+ ${S.recItems.map((x,i)=>`<tr><td><input class="ri" data-i="${i}" data-f="d" value="${esc(x.d)}" style="min-width:260px"></td><td><input class="ri num" data-i="${i}" data-f="a" inputmode="decimal" value="${esc(x.a)}"></td><td><button class="del" data-ri="${i}" aria-label="Delete item">×</button></td></tr>`).join("")}</tbody></table></div><div class="row"><button class="btn sm" id="addri">${esc("Add item")}</button></div>`)}`};
+AFTER.rrev=()=>{document.querySelectorAll(".ri").forEach(el=>el.addEventListener("input",()=>{S.recItems[+el.dataset.i][el.dataset.f]=el.value;save();const C=compute();$("#unexpl").textContent=fmt(C.rev.unexpl);renderNav(C)}));
+ document.querySelectorAll("[data-ri]").forEach(b=>b.onclick=()=>{S.recItems.splice(+b.dataset.ri,1);save();render()});$("#addri").onclick=()=>{S.recItems.push({d:"",a:""});save();render()}};
+const activeIdx=C=>{const a=C.ps.filter((p,i)=>C.rets[i].entered||C.outRec[i].gl||C.inRec[i].gl||C.outRec[i].reg);return(a.length?a:C.ps.slice(0,3))};
+R.rout=C=>{const T=f=>C.outRec.reduce((s,x)=>s+x[f],0),A=activeIdx(C);return `<p class="lead">${esc("Output VAT declared against invoices, the ledger and a 15% recomputation. Box 2 VAT is borne by the State and is left out of the recomputation.")}</p>
+ ${card(L("Declared vs invoiced vs ledger","المُقر به مقابل الفواتير مقابل الدفاتر"),columnChart(A.map(p=>p.short),[{name:L("Declared in return","المُقر بها في الإقرار"),c:"s1",values:A.map(p=>C.outRec[p.i].ret)},{name:L("Invoiced (register)","الفواتير (السجل)"),c:"s3",values:A.map(p=>C.outRec[p.i].reg)},{name:L("Booked in ledger","المسجلة في الدفاتر"),c:"s2",values:A.map(p=>C.outRec[p.i].gl)}]))}
+ ${card("",`<div class="frame"><table class="tbl" id="t-out"><thead><tr><th>${esc("Period")}</th><th class="n">${esc("Return (incl. RCM)")}</th><th class="n">${esc("Register sales VAT")}</th><th class="n">${esc("Register RCM VAT")}</th><th class="n">${esc("15% × (Box 1 + Box 9)")}</th><th class="n">${esc("GL output VAT")}</th><th class="n">${esc("Return − register")}</th><th class="n">${esc("Return − 15%")}</th><th class="n">${esc("Return − GL")}</th><th>${esc("Status")}</th><th class="n">${esc("Possible under-declaration")}</th></tr></thead><tbody>
+ ${C.outRec.map(r=>`<tr><td>${esc(r.p.label)}</td>${nc(r.ret)}${nc(r.rs)}${nc(r.rr)}${nc(r.rc)}${nc(r.gl)}${dc(r.d1,C.c.tol)}${dc(r.d2,C.c.tol)}${dc(r.d3,C.c.tol)}<td>${sp(r.s)}</td>${nc(r.under,r.under>C.c.tol)}</tr>`).join("")}
+ <tr class="total"><td>${esc("Year")}</td>${["ret","rs","rr","rc","gl","d1","d2","d3"].map(f=>nc(T(f))).join("")}<td></td>${nc(T("under"),T("under")>C.c.tol)}</tr></tbody></table></div>`,"",)}<div class="row"><button class="btn sm" data-copy="t-out">${esc("Copy table")}</button></div>`};
+R.rin=C=>{const T=f=>C.inRec.reduce((s,x)=>s+x[f],0),A=activeIdx(C);return `<p class="lead">${esc("Input VAT claimed against the register and the ledger, and the part ZATCA is likely to disallow (no valid invoice, blocked expense, invalid supplier VAT number).")}</p>
+ ${card(L("Claimed vs defensible vs ledger","المخصوم مقابل القابل للدفاع مقابل الدفاتر"),columnChart(A.map(p=>p.short),[{name:L("Claimed in return","المخصومة في الإقرار"),c:"s1",values:A.map(p=>C.inRec[p.i].ret)},{name:L("Defensible","القابلة للدفاع عنها"),c:"s3",values:A.map(p=>C.inRec[p.i].df)},{name:L("Booked in ledger","المسجلة في الدفاتر"),c:"s2",values:A.map(p=>C.inRec[p.i].gl)}]))}
+ ${card("",`<div class="frame"><table class="tbl" id="t-in"><thead><tr><th>${esc("Period")}</th><th class="n">${esc("Return (Box 12)")}</th><th class="n">${esc("Register claimed")}</th><th class="n">${esc("Defensible")}</th><th class="n">${esc("At risk")}</th><th class="n">${esc("GL input VAT")}</th><th class="n">${esc("Return − register")}</th><th class="n">${esc("Return − GL")}</th><th>${esc("Status")}</th><th class="n">${esc("Possible over-claim")}</th></tr></thead><tbody>
+ ${C.inRec.map(r=>`<tr><td>${esc(r.p.label)}</td>${nc(r.ret)}${nc(r.cl)}${nc(r.df)}${nc(r.rk,r.rk>0)}${nc(r.gl)}${dc(r.d1,C.c.tol)}${dc(r.d2,C.c.tol)}<td>${sp(r.s)}</td>${nc(r.over,r.over>C.c.tol)}</tr>`).join("")}
+ <tr class="total"><td>${esc("Year")}</td>${["ret","cl","df","rk","gl","d1","d2"].map(f=>nc(T(f))).join("")}<td></td>${nc(T("over"),T("over")>C.c.tol)}</tr></tbody></table></div><div class="row"><button class="btn sm" data-copy="t-in">${esc("Copy table")}</button></div>`)}
+ ${card("Imports: Box 8 and Box 9",`<div class="frame"><table class="tbl" id="t-imp"><thead><tr><th>${esc("Period")}</th><th class="n">${esc("Box 8 VAT (return)")}</th><th class="n">${esc("Customs VAT (register)")}</th><th class="n">${esc("Difference")}</th><th class="n">${esc("Box 9 VAT (return)")}</th><th class="n">${esc("RCM VAT (register)")}</th><th class="n">${esc("Difference")}</th></tr></thead><tbody>
+ ${C.inRec.map(r=>`<tr><td>${esc(r.p.label)}</td>${nc(r.b8)}${nc(r.c8)}${dc(r.d8,C.c.tol)}${nc(r.b9)}${nc(r.c9)}${dc(r.d9,C.c.tol)}</tr>`).join("")}</tbody></table></div><p class="note">${esc("Also match Box 8 to ZATCA's customs import data. Customs VAT is deductible only when your company is the importer of record on the Bayan.")}</p>`)}`};
+R.rvat=C=>{const T=f=>C.vatRec.reduce((s,x)=>s+x[f],0);return `<p class="lead">${esc(`Proves the ledger VAT liability equals returns filed less payments made, and estimates late-payment penalties up to ${showDate(S.setup.asof)}.`)}</p>
+ <div class="tiles four">${tile("Opening VAT liability per ledger:".replace(":",""),`<span class="num">${fmt(C.openLiab)}</span>`)}${tile(L("Paid to ZATCA","المسدد للهيئة"),`<span class="num">${fmt(T("paid"))}</span>`)}${tile(L("Still unpaid","غير مسدد"),`<span class="num">${fmt(Math.max(0,T("outst")))}</span>`,"",T("outst")>C.c.tol?"badv":"")}${tile(L("Late payment penalties","غرامات التأخر في السداد"),`<span class="num">${fmt(T("latePen")+T("unpaidPen"))}</span>`)}</div>
+ ${card("",`<div class="frame"><table class="tbl" id="t-vat"><thead><tr><th>${esc("Period")}</th><th class="n">${esc("Net VAT (Box 13 + 14)")}</th><th class="n">${esc("Box 16 filed")}</th><th class="n">${esc("Paid / (refunded)")}</th><th class="n">${esc("Outstanding")}</th><th>${esc("Due")}</th><th>${esc("Filed")}</th><th class="n">${esc("Penalty: paid late")}</th><th class="n">${esc("Penalty: still unpaid")}</th><th class="n">${esc("GL liability")}</th><th class="n">${esc("Expected liability")}</th><th class="n">${esc("Difference")}</th><th>${esc("Status")}</th></tr></thead><tbody>
+ ${C.vatRec.map(r=>`<tr><td>${esc(r.p.label)}</td>${nc(r.net)}${nc(r.b16)}${nc(r.paid)}${nc(r.outst,r.outst>C.c.tol)}<td>${esc(showDate(r.p.due))}</td><td>${r.late==="ok"?pill("ok","✓"):r.late==="bad"?pill("bad",L(`${r.lateDays} days late`,`متأخر ${r.lateDays} يوم`)):pill("none","—")}</td>${nc(r.latePen,r.latePen>0)}${nc(r.unpaidPen,r.unpaidPen>0)}${nc(r.gl)}${nc(r.exp)}${dc(r.diff,C.c.tol)}<td>${r.s==="ok"?pill("ok","Agrees"):r.s==="bad"?pill("bad","Investigate"):r.carried?pill("warn",L("Earlier difference carried forward","فرق سابق مُرحّل")):pill("none","No activity")}</td></tr>`).join("")}
+ <tr class="total"><td>${esc("Year")}</td>${["net","b16","paid","outst"].map(f=>nc(T(f))).join("")}<td></td><td></td>${nc(T("latePen"))}${nc(T("unpaidPen"))}<td colspan="4"></td></tr></tbody></table></div><p class="note">${esc("Expected liability = opening liability + cumulative (Box 13 + Box 14) − payments dated on or before period end. Late filing (5% to 25% of the tax) and incorrect return (50% of the difference) penalties may also apply.")}</p><div class="row"><button class="btn sm" data-copy="t-vat">${esc("Copy table")}</button></div>`)}`};
+L("Paid to ZATCA","المسدد للهيئة");L("Opening VAT liability per ledger","التزام الضريبة الافتتاحي حسب الدفاتر");
+
+// ================================================================ start
+window.addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(VIEWS.some(v=>v.id===h))go(h)});
+applyLang();$("#nav").setAttribute("aria-label",tr("Sections"));langObserver.observe(document.body,{childList:true,subtree:true,characterData:true});
+if(REMOTE)loadRemote();render();
+
+</script>
+</body>
+</html>
