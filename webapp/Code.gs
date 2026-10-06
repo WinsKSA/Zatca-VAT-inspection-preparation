@@ -31,8 +31,7 @@ function setup() {
     log.setFrozenRows(1);
     log.getRange(1, 1, 1, 4).setFontWeight('bold');
   }
-  var first = ss.getSheetByName('Sheet1');
-  if (first && ss.getSheets().length > 1 && first.getLastRow() === 0) ss.deleteSheet(first);
+  removeDefaultSheet_(ss);
   return 'Setup complete: ' + ss.getUrl();
 }
 
@@ -71,6 +70,7 @@ function saveCollections(payload) {
       rowsWritten += t.rows.length;
     });
     if (saved.length) {
+      removeDefaultSheet_(ss);
       var log = ss.getSheetByName(LOG_TAB) || ss.insertSheet(LOG_TAB);
       if (log.getLastRow() === 0) log.appendRow(['Timestamp', 'User', 'Datasets saved', 'Rows written']);
       log.appendRow([new Date(), currentUser_(), saved.join(', '), rowsWritten]);
@@ -98,6 +98,19 @@ function writeTable_(ss, name, headers, rows) {
   sh.setFrozenRows(1);
   var extra = sh.getMaxRows() - values.length;
   if (extra > 200) sh.deleteRows(values.length + 1, extra - 100);
+}
+
+/** Deletes Google's empty starter tab (named "Sheet1" or its translation, e.g. "الورقة1"). */
+function removeDefaultSheet_(ss) {
+  var known = {};
+  Object.keys(TABS).forEach(function (k) { known[TABS[k]] = true; });
+  known[LOG_TAB] = true;
+  ss.getSheets().forEach(function (sh) {
+    var name = sh.getName();
+    if (!known[name] && /^(Sheet|الورقة|Hoja|Feuille|Blatt)\s?1$/.test(name) && sh.getLastRow() === 0 && ss.getSheets().length > 1) {
+      ss.deleteSheet(sh);
+    }
+  });
 }
 
 function currentUser_() {
