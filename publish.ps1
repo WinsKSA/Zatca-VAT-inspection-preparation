@@ -19,7 +19,11 @@ if ($LASTEXITCODE -ne 0) {
 git push -q origin main 2>&1 | Out-Null; Check "git push"
 Pop-Location
 
-Push-Location (Join-Path $root "webapp")
+# clasp refuses linked folders, so upload from a plain staging folder
+$stage = Join-Path $env:LOCALAPPDATA "fahs-clasp"
+New-Item -ItemType Directory -Force $stage | Out-Null
+foreach ($f in "Code.gs", "Index.html", "appsscript.json", ".clasp.json", ".claspignore") { Copy-Item -Force (Join-Path $root "webapp\$f") (Join-Path $stage $f) }
+Push-Location $stage
 clasp push -f; Check "clasp push"
 clasp update-deployment $deployment --description $Message; Check "clasp update-deployment"
 Pop-Location
