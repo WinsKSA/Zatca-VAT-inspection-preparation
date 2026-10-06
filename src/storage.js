@@ -27,7 +27,7 @@ function setSync(state,msg){sync.state=state;sync.msg=msg||"";if(state==="saved"
 function snapshotAll(){const o={};for(const k of Object.keys(SCHEMA))o[k]=JSON.stringify(toTable(k));return o}
 function save(){
   try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){if(!REMOTE&&!saveWarned){saveWarned=true;toast("This data is too large to keep in the browser. It stays here until you close the page.")}}
-  if(!REMOTE||sync.state==="loading"||sync.state==="choose")return;
+  if(!REMOTE||sync.state==="loading"||sync.state==="choose"||sync.state==="refreshing")return;
   clearTimeout(saveTimer);setSync("pending");saveTimer=setTimeout(pushRemote,1200);
 }
 function pushRemote(){
@@ -39,13 +39,14 @@ function pushRemote(){
     .withFailureHandler(err=>{sending=false;setSync("error",err&&err.message||String(err))}).saveCollections(payload);
 }
 function loadRemote(){
-  google.script.run.withSuccessHandler(res=>{
+  const t0=Date.now();
+  google.script.run.withSuccessHandler(res=>{console.info("Fahs: Google Sheet loaded in "+(Date.now()-t0)+" ms (server "+(res.ms||"?")+" ms)");
     sync.sheetUrl=res.sheetUrl;sync.user=res.user;
     if(res.empty){sync.state="choose";render();return}
     S=exampleState();S.example=false;S.tb=[];S.sales=[];S.purchases=[];S.payments=[];S.requests=[];S.decisions={};S.vouch={};
     for(const k of Object.keys(SCHEMA))if(res.data[k])fromTable(k,res.data[k]);
-    S=migrate(S);lastSent=snapshotAll();setSync("saved");render();
+    S=migrate(S);lastSent=snapshotAll();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}setSync("saved");render();
   }).withFailureHandler(err=>{sync.state="error";sync.msg=err&&err.message||String(err);render()}).loadState();
 }
 function startRemote(withExample){S=exampleState();if(!withExample){S.example=false;S.tb=[];S.sales=[];S.purchases=[];S.payments=[];S.requests=[];S.returns=Array.from({length:12},blankReturn);S.decisions={};S.vouch={};S.case={notice:"",type:"Field audit",received:"",due:"",auditor:"",scope:"",notes:""}}
-  lastSent={};sync.state="saving";render();pushRemote()}
+  lastSent={};try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}sync.state="saving";render();pushRemote()}

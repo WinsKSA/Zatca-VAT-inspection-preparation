@@ -5,9 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Fahs – VAT Inspection Command Center</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" media="print" onload="this.media='all'">
 <style>
+body.syncing .content input,body.syncing .content select,body.syncing .content textarea,body.syncing .content button{pointer-events:none;opacity:.75}
 /* Layout: dark command-center rail + light working canvas; content in cards on a 12px rhythm. */
 :root{
   --bg:#f2f5f4; --surface:#ffffff; --surface-2:#f6f8f7; --line:#dfe6e3; --line-2:#cbd5d1;
@@ -356,7 +357,11 @@ function exampleState(){
 }
 let S;
 function migrate(x){const e=exampleState();for(const k of Object.keys(e))if(x[k]==null)x[k]=e[k];for(const k of Object.keys(e.setup))if(x.setup[k]==null)x.setup[k]=e.setup[k];if(!x.returns||x.returns.length!==12)x.returns=e.returns;return x}
-try{const raw=localStorage.getItem(KEY);S=raw?migrate(JSON.parse(raw)):exampleState()}catch(e){S=exampleState()}
+let HAD_CACHE=false;
+try{const raw=localStorage.getItem(KEY);if(raw){S=migrate(JSON.parse(raw));HAD_CACHE=true}else S=exampleState()}catch(e){S=exampleState()}
+// The Excel reader (~900 KB) is only needed for imports, so it loads on first use.
+let xlsxPromise=null;
+function ensureXLSX(){if(typeof XLSX!=="undefined")return Promise.resolve();if(!xlsxPromise)xlsxPromise=new Promise((res,rej)=>{const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";s.onload=()=>res();s.onerror=()=>{xlsxPromise=null;rej(new Error("lib"))};document.head.appendChild(s)});return xlsxPromise}
 let saveTimer=null,saveWarned=false;
 
 // ================================================================ helpers
@@ -721,7 +726,7 @@ function setSync(state,msg){sync.state=state;sync.msg=msg||"";if(state==="saved"
 function snapshotAll(){const o={};for(const k of Object.keys(SCHEMA))o[k]=JSON.stringify(toTable(k));return o}
 function save(){
   try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){if(!REMOTE&&!saveWarned){saveWarned=true;toast("This data is too large to keep in the browser. It stays here until you close the page.")}}
-  if(!REMOTE||sync.state==="loading"||sync.state==="choose")return;
+  if(!REMOTE||sync.state==="loading"||sync.state==="choose"||sync.state==="refreshing")return;
   clearTimeout(saveTimer);setSync("pending");saveTimer=setTimeout(pushRemote,1200);
 }
 function pushRemote(){
@@ -733,16 +738,17 @@ function pushRemote(){
     .withFailureHandler(err=>{sending=false;setSync("error",err&&err.message||String(err))}).saveCollections(payload);
 }
 function loadRemote(){
-  google.script.run.withSuccessHandler(res=>{
+  const t0=Date.now();
+  google.script.run.withSuccessHandler(res=>{console.info("Fahs: Google Sheet loaded in "+(Date.now()-t0)+" ms (server "+(res.ms||"?")+" ms)");
     sync.sheetUrl=res.sheetUrl;sync.user=res.user;
     if(res.empty){sync.state="choose";render();return}
     S=exampleState();S.example=false;S.tb=[];S.sales=[];S.purchases=[];S.payments=[];S.requests=[];S.decisions={};S.vouch={};
     for(const k of Object.keys(SCHEMA))if(res.data[k])fromTable(k,res.data[k]);
-    S=migrate(S);lastSent=snapshotAll();setSync("saved");render();
+    S=migrate(S);lastSent=snapshotAll();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}setSync("saved");render();
   }).withFailureHandler(err=>{sync.state="error";sync.msg=err&&err.message||String(err);render()}).loadState();
 }
 function startRemote(withExample){S=exampleState();if(!withExample){S.example=false;S.tb=[];S.sales=[];S.purchases=[];S.payments=[];S.requests=[];S.returns=Array.from({length:12},blankReturn);S.decisions={};S.vouch={};S.case={notice:"",type:"Field audit",received:"",due:"",auditor:"",scope:"",notes:""}}
-  lastSent={};sync.state="saving";render();pushRemote()}
+  lastSent={};try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}sync.state="saving";render();pushRemote()}
 
 // ================================================================ charts (SVG, single axis, thin marks, hover tooltips)
 function niceMax(v){if(!(v>0))return 1;const e=Math.pow(10,Math.floor(Math.log10(v))),f=v/e;return (f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*e}
@@ -824,7 +830,7 @@ function renderNav(C){const n=navCounts(C);
 }
 $("#nav").addEventListener("click",e=>{const b=e.target.closest("[data-v]");if(b)go(b.dataset.v)});
 function go(v){cur=v;try{localStorage.setItem(KEY+"-view",v)}catch(e){}render();$("#main").scrollTo?.(0,0);window.scrollTo(0,0)}
-function syncChip(){const m={local:[L("Saved in this browser","محفوظ في هذا المتصفح"),"none"],loading:[L("Connecting to Google Sheets…","جارٍ الاتصال بجداول Google…"),"warn"],choose:[L("Google Sheet connected","تم الاتصال بجدول Google"),"ok"],pending:[L("Unsaved changes","تغييرات غير محفوظة"),"warn"],saving:[L("Saving to Google Sheets…","جارٍ الحفظ في جداول Google…"),"warn"],saved:[L("Saved to Google Sheets","تم الحفظ في جداول Google"),"ok"],error:[L("Not saved – retrying on next change","لم يُحفظ – ستتم إعادة المحاولة عند التغيير التالي"),"bad"]}[sync.state]||["",""];
+function syncChip(){const m={local:[L("Saved in this browser","محفوظ في هذا المتصفح"),"none"],refreshing:[L("Syncing with Google Sheets…","جارٍ المزامنة مع جداول Google…"),"warn"],loading:[L("Connecting to Google Sheets…","جارٍ الاتصال بجداول Google…"),"warn"],choose:[L("Google Sheet connected","تم الاتصال بجدول Google"),"ok"],pending:[L("Unsaved changes","تغييرات غير محفوظة"),"warn"],saving:[L("Saving to Google Sheets…","جارٍ الحفظ في جداول Google…"),"warn"],saved:[L("Saved to Google Sheets","تم الحفظ في جداول Google"),"ok"],error:[L("Not saved – retrying on next change","لم يُحفظ – ستتم إعادة المحاولة عند التغيير التالي"),"bad"]}[sync.state]||["",""];
   return `<span id="sync" class="chip-s ${m[1]}" title="${esc(sync.msg)}">${icon(m[1]==="ok"?"check":m[1]==="bad"?"alert":"sheet")}${esc(m[0])}</span>`}
 function topbar(){const v=VIEWS.find(x=>x.id===cur)||{t:""};const due=D(S.case.due);let dl="";
   if(due){const d=daysBetween(todayD(),due);dl=`<span class="chip-s ${d<0?"bad":d<=7?"warn":"none"}">${icon("clock")}${esc(d<0?L(`Response overdue by ${-d} days`,`الرد متأخر ${-d} يوم`):L(`Response due in ${d} days`,`موعد الرد خلال ${d} يوم`))}</span>`}
@@ -833,6 +839,7 @@ function render(){
   const m=$("#main");
   if(sync.state==="loading"){m.innerHTML=`<div class="splash"><div class="spinner"></div><p>${esc(L("Connecting to your Google Sheet…","جارٍ الاتصال بجدول Google الخاص بك…"))}</p></div>`;$("#nav").innerHTML="";return}
   if(sync.state==="choose"){m.innerHTML=`<div class="splash"><h2>${esc(L("Your Google Sheet is connected","تم ربط جدول Google الخاص بك"))}</h2><p>${esc(L("The sheet is empty. How do you want to start?","الجدول فارغ. كيف تريد أن تبدأ؟"))}</p><div class="row center"><button class="btn primary" id="stEx">${esc(L("Start with example data","البدء ببيانات توضيحية"))}</button><button class="btn" id="stEmpty">${esc(L("Start empty","البدء بجداول فارغة"))}</button></div></div>`;$("#nav").innerHTML="";$("#stEx").onclick=()=>startRemote(true);$("#stEmpty").onclick=()=>startRemote(false);return}
+  document.body.classList.toggle("syncing",sync.state==="refreshing");
   const C=compute();renderNav(C);
   m.innerHTML=topbar()+`<div class="content">${S.example?exampleBanner():""}${(R[cur]||R.dash)(C)}</div>`;
   (AFTER[cur]||(()=>{}))(C);bindCommon();
@@ -846,7 +853,8 @@ function bindCommon(){
   const lb=$("#langBtn");if(lb)lb.onclick=()=>{LANG=LANG==="ar"?"en":"ar";try{localStorage.setItem(KEY+"-lang",LANG)}catch(e){}applyLang();render()};
 }
 function tableTSV(t){return [...t.querySelectorAll("tr")].map(tr=>[...tr.children].map(td=>{const i=td.querySelector("input,select");return (i?(i.tagName==="SELECT"?(i.options[i.selectedIndex]||{text:""}).text:i.value):td.innerText).replace(/[\t\n]+/g," ").trim()}).join("\t")).join("\n")}
-function pickFile(cb){const i=document.createElement("input");i.type="file";i.accept=".xlsx,.xls,.xlsm,.csv";i.onchange=()=>{const f=i.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{if(typeof XLSX==="undefined")throw new Error("lib");cb(XLSX.read(new Uint8Array(rd.result),{type:"array",cellDates:false}))}catch(e){toast(e.message==="lib"?"The Excel reader didn't load. Check your connection and reload, or paste the data instead.":"That file couldn't be read. Save it as .xlsx and try again.")}};rd.readAsArrayBuffer(f)};i.click()}
+function readWorkbookFile(f,cb){ensureXLSX().then(()=>{const rd=new FileReader();rd.onload=()=>{try{cb(XLSX.read(new Uint8Array(rd.result),{type:"array",cellDates:false}))}catch(e){toast("That file couldn't be read. Save it as .xlsx and try again.")}};rd.readAsArrayBuffer(f)},()=>toast("The Excel reader didn't load. Check your connection and reload, or paste the data instead."))}
+function pickFile(cb){ensureXLSX().catch(()=>{});const i=document.createElement("input");i.type="file";i.accept=".xlsx,.xls,.xlsm,.csv";i.onchange=()=>{const f=i.files[0];if(f)readWorkbookFile(f,cb)};i.click()}
 const dropTotal=r=>[...r.slice(0,9),...r.slice(10)]; // workbook column J is a calculated total
 const sheetRows=ws=>XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:""});
 const card=(title,body,extra="",cls="")=>`<section class="card ${cls}">${title?`<div class="card-h"><h2>${esc(title)}</h2>${extra}</div>`:""}${body}</section>`;
@@ -914,7 +922,7 @@ R.hub=C=>{const ds=[["tb","Trial balance",S.tb.length,L("accounts","حساب"),C
   <div class="row"><button class="btn" id="loadEx">${esc("Load example data")}</button><button class="btn danger" data-act="clear">${esc("Clear all tables")}</button></div>`};
 AFTER.hub=()=>{$("#loadEx").onclick=()=>confirmBox("Replace everything with the example data?","Load example",()=>{S=exampleState();save();render()});
   const d=$("#drop");d.addEventListener("dragover",e=>{e.preventDefault();d.classList.add("over")});d.addEventListener("dragleave",()=>d.classList.remove("over"));
-  d.addEventListener("drop",e=>{e.preventDefault();d.classList.remove("over");const f=e.dataTransfer.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{importWorkbook(XLSX.read(new Uint8Array(rd.result),{type:"array",cellDates:false}))}catch(err){toast("That file couldn't be read. Save it as .xlsx and try again.")}};rd.readAsArrayBuffer(f)})};
+  d.addEventListener("drop",e=>{e.preventDefault();d.classList.remove("over");const f=e.dataTransfer.files[0];if(f)readWorkbookFile(f,importWorkbook)})};
 
 // ================================================================ test library
 R.tests=C=>{const f=UI.tests.f, T=C.tests, cnt=s=>T.filter(t=>t.status===s).length;
@@ -1133,7 +1141,7 @@ L("Paid to ZATCA","المسدد للهيئة");L("Opening VAT liability per ledg
 // ================================================================ start
 window.addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(VIEWS.some(v=>v.id===h))go(h)});
 applyLang();$("#nav").setAttribute("aria-label",tr("Sections"));langObserver.observe(document.body,{childList:true,subtree:true,characterData:true});
-if(REMOTE)loadRemote();render();
+if(REMOTE){if(HAD_CACHE)sync.state="refreshing";loadRemote()}render();
 
 </script>
 </body>

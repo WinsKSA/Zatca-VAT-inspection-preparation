@@ -48,7 +48,7 @@ function renderNav(C){const n=navCounts(C);
 }
 $("#nav").addEventListener("click",e=>{const b=e.target.closest("[data-v]");if(b)go(b.dataset.v)});
 function go(v){cur=v;try{localStorage.setItem(KEY+"-view",v)}catch(e){}render();$("#main").scrollTo?.(0,0);window.scrollTo(0,0)}
-function syncChip(){const m={local:[L("Saved in this browser","محفوظ في هذا المتصفح"),"none"],loading:[L("Connecting to Google Sheets…","جارٍ الاتصال بجداول Google…"),"warn"],choose:[L("Google Sheet connected","تم الاتصال بجدول Google"),"ok"],pending:[L("Unsaved changes","تغييرات غير محفوظة"),"warn"],saving:[L("Saving to Google Sheets…","جارٍ الحفظ في جداول Google…"),"warn"],saved:[L("Saved to Google Sheets","تم الحفظ في جداول Google"),"ok"],error:[L("Not saved – retrying on next change","لم يُحفظ – ستتم إعادة المحاولة عند التغيير التالي"),"bad"]}[sync.state]||["",""];
+function syncChip(){const m={local:[L("Saved in this browser","محفوظ في هذا المتصفح"),"none"],refreshing:[L("Syncing with Google Sheets…","جارٍ المزامنة مع جداول Google…"),"warn"],loading:[L("Connecting to Google Sheets…","جارٍ الاتصال بجداول Google…"),"warn"],choose:[L("Google Sheet connected","تم الاتصال بجدول Google"),"ok"],pending:[L("Unsaved changes","تغييرات غير محفوظة"),"warn"],saving:[L("Saving to Google Sheets…","جارٍ الحفظ في جداول Google…"),"warn"],saved:[L("Saved to Google Sheets","تم الحفظ في جداول Google"),"ok"],error:[L("Not saved – retrying on next change","لم يُحفظ – ستتم إعادة المحاولة عند التغيير التالي"),"bad"]}[sync.state]||["",""];
   return `<span id="sync" class="chip-s ${m[1]}" title="${esc(sync.msg)}">${icon(m[1]==="ok"?"check":m[1]==="bad"?"alert":"sheet")}${esc(m[0])}</span>`}
 function topbar(){const v=VIEWS.find(x=>x.id===cur)||{t:""};const due=D(S.case.due);let dl="";
   if(due){const d=daysBetween(todayD(),due);dl=`<span class="chip-s ${d<0?"bad":d<=7?"warn":"none"}">${icon("clock")}${esc(d<0?L(`Response overdue by ${-d} days`,`الرد متأخر ${-d} يوم`):L(`Response due in ${d} days`,`موعد الرد خلال ${d} يوم`))}</span>`}
@@ -57,6 +57,7 @@ function render(){
   const m=$("#main");
   if(sync.state==="loading"){m.innerHTML=`<div class="splash"><div class="spinner"></div><p>${esc(L("Connecting to your Google Sheet…","جارٍ الاتصال بجدول Google الخاص بك…"))}</p></div>`;$("#nav").innerHTML="";return}
   if(sync.state==="choose"){m.innerHTML=`<div class="splash"><h2>${esc(L("Your Google Sheet is connected","تم ربط جدول Google الخاص بك"))}</h2><p>${esc(L("The sheet is empty. How do you want to start?","الجدول فارغ. كيف تريد أن تبدأ؟"))}</p><div class="row center"><button class="btn primary" id="stEx">${esc(L("Start with example data","البدء ببيانات توضيحية"))}</button><button class="btn" id="stEmpty">${esc(L("Start empty","البدء بجداول فارغة"))}</button></div></div>`;$("#nav").innerHTML="";$("#stEx").onclick=()=>startRemote(true);$("#stEmpty").onclick=()=>startRemote(false);return}
+  document.body.classList.toggle("syncing",sync.state==="refreshing");
   const C=compute();renderNav(C);
   m.innerHTML=topbar()+`<div class="content">${S.example?exampleBanner():""}${(R[cur]||R.dash)(C)}</div>`;
   (AFTER[cur]||(()=>{}))(C);bindCommon();
@@ -70,7 +71,8 @@ function bindCommon(){
   const lb=$("#langBtn");if(lb)lb.onclick=()=>{LANG=LANG==="ar"?"en":"ar";try{localStorage.setItem(KEY+"-lang",LANG)}catch(e){}applyLang();render()};
 }
 function tableTSV(t){return [...t.querySelectorAll("tr")].map(tr=>[...tr.children].map(td=>{const i=td.querySelector("input,select");return (i?(i.tagName==="SELECT"?(i.options[i.selectedIndex]||{text:""}).text:i.value):td.innerText).replace(/[\t\n]+/g," ").trim()}).join("\t")).join("\n")}
-function pickFile(cb){const i=document.createElement("input");i.type="file";i.accept=".xlsx,.xls,.xlsm,.csv";i.onchange=()=>{const f=i.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{if(typeof XLSX==="undefined")throw new Error("lib");cb(XLSX.read(new Uint8Array(rd.result),{type:"array",cellDates:false}))}catch(e){toast(e.message==="lib"?"The Excel reader didn't load. Check your connection and reload, or paste the data instead.":"That file couldn't be read. Save it as .xlsx and try again.")}};rd.readAsArrayBuffer(f)};i.click()}
+function readWorkbookFile(f,cb){ensureXLSX().then(()=>{const rd=new FileReader();rd.onload=()=>{try{cb(XLSX.read(new Uint8Array(rd.result),{type:"array",cellDates:false}))}catch(e){toast("That file couldn't be read. Save it as .xlsx and try again.")}};rd.readAsArrayBuffer(f)},()=>toast("The Excel reader didn't load. Check your connection and reload, or paste the data instead."))}
+function pickFile(cb){ensureXLSX().catch(()=>{});const i=document.createElement("input");i.type="file";i.accept=".xlsx,.xls,.xlsm,.csv";i.onchange=()=>{const f=i.files[0];if(f)readWorkbookFile(f,cb)};i.click()}
 const dropTotal=r=>[...r.slice(0,9),...r.slice(10)]; // workbook column J is a calculated total
 const sheetRows=ws=>XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:""});
 const card=(title,body,extra="",cls="")=>`<section class="card ${cls}">${title?`<div class="card-h"><h2>${esc(title)}</h2>${extra}</div>`:""}${body}</section>`;
@@ -138,4 +140,4 @@ R.hub=C=>{const ds=[["tb","Trial balance",S.tb.length,L("accounts","حساب"),C
   <div class="row"><button class="btn" id="loadEx">${esc("Load example data")}</button><button class="btn danger" data-act="clear">${esc("Clear all tables")}</button></div>`};
 AFTER.hub=()=>{$("#loadEx").onclick=()=>confirmBox("Replace everything with the example data?","Load example",()=>{S=exampleState();save();render()});
   const d=$("#drop");d.addEventListener("dragover",e=>{e.preventDefault();d.classList.add("over")});d.addEventListener("dragleave",()=>d.classList.remove("over"));
-  d.addEventListener("drop",e=>{e.preventDefault();d.classList.remove("over");const f=e.dataTransfer.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{importWorkbook(XLSX.read(new Uint8Array(rd.result),{type:"array",cellDates:false}))}catch(err){toast("That file couldn't be read. Save it as .xlsx and try again.")}};rd.readAsArrayBuffer(f)})};
+  d.addEventListener("drop",e=>{e.preventDefault();d.classList.remove("over");const f=e.dataTransfer.files[0];if(f)readWorkbookFile(f,importWorkbook)})};

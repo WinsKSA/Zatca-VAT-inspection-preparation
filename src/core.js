@@ -115,7 +115,11 @@ function exampleState(){
 }
 let S;
 function migrate(x){const e=exampleState();for(const k of Object.keys(e))if(x[k]==null)x[k]=e[k];for(const k of Object.keys(e.setup))if(x.setup[k]==null)x.setup[k]=e.setup[k];if(!x.returns||x.returns.length!==12)x.returns=e.returns;return x}
-try{const raw=localStorage.getItem(KEY);S=raw?migrate(JSON.parse(raw)):exampleState()}catch(e){S=exampleState()}
+let HAD_CACHE=false;
+try{const raw=localStorage.getItem(KEY);if(raw){S=migrate(JSON.parse(raw));HAD_CACHE=true}else S=exampleState()}catch(e){S=exampleState()}
+// The Excel reader (~900 KB) is only needed for imports, so it loads on first use.
+let xlsxPromise=null;
+function ensureXLSX(){if(typeof XLSX!=="undefined")return Promise.resolve();if(!xlsxPromise)xlsxPromise=new Promise((res,rej)=>{const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";s.onload=()=>res();s.onerror=()=>{xlsxPromise=null;rej(new Error("lib"))};document.head.appendChild(s)});return xlsxPromise}
 let saveTimer=null,saveWarned=false;
 
 // ================================================================ helpers

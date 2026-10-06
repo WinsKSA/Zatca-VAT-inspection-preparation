@@ -42,17 +42,33 @@ function sheet_() {
 
 /** Returns every dataset as {headers, rows} of strings. */
 function loadState() {
-  var ss = sheet_(), data = {};
-  Object.keys(TABS).forEach(function (k) {
-    var sh = ss.getSheetByName(TABS[k]);
-    if (!sh || sh.getLastRow() === 0) return;
-    var v = sh.getDataRange().getDisplayValues();
-    data[k] = {
-      headers: v[0],
-      rows: v.slice(1).filter(function (r) { return r.some(function (c) { return c !== ''; }); })
-    };
-  });
-  return { empty: !data.meta, data: data, sheetUrl: ss.getUrl(), user: currentUser_() };
+  var t0 = Date.now(), ss = sheet_(), data = {};
+  var present = {};
+  ss.getSheets().forEach(function (sh) { present[sh.getName()] = true; });
+  var keys = Object.keys(TABS).filter(function (k) { return present[TABS[k]]; });
+  var nonEmpty = function (r) { return r.some(function (c) { return c !== '' && c != null; }); };
+  var put = function (k, v) {
+    if (!v || !v.length) return;
+    data[k] = { headers: v[0].map(String), rows: v.slice(1).filter(nonEmpty).map(function (r) { return r.map(function (c) { return c == null ? '' : String(c); }); }) };
+  };
+  var fast = false;
+  if (keys.length && typeof Sheets !== 'undefined') {
+    try { // one API call for every tab
+      var res = Sheets.Spreadsheets.Values.batchGet(ss.getId(), {
+        ranges: keys.map(function (k) { return "'" + TABS[k] + "'"; }),
+        valueRenderOption: 'FORMATTED_VALUE'
+      });
+      (res.valueRanges || []).forEach(function (vr, i) { put(keys[i], vr.values); });
+      fast = true;
+    } catch (e) { data = {}; }
+  }
+  if (!fast) { // fallback: read tab by tab
+    keys.forEach(function (k) {
+      var sh = ss.getSheetByName(TABS[k]);
+      if (sh && sh.getLastRow() > 0) put(k, sh.getDataRange().getDisplayValues());
+    });
+  }
+  return { empty: !data.meta, data: data, sheetUrl: ss.getUrl(), user: currentUser_(), ms: Date.now() - t0, fast: fast };
 }
 
 /** Saves the datasets that changed. payload = {key: {headers: [...], rows: [[...]]}} */
