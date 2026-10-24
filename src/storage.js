@@ -45,7 +45,7 @@ function setSync(state,msg){sync.state=state;sync.msg=msg||"";if(state==="saved"
 function snapshotAll(){const o={};for(const k of Object.keys(SCHEMA))o[k]=JSON.stringify(toTable(k));return o}
 function save(){if(typeof relabelActive==="function")relabelActive();
   try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){if(!REMOTE&&!saveWarned){saveWarned=true;toast("This data is too large to keep in the browser. It stays here until you close the page.")}}
-  if(!REMOTE||!canEdit()||["loading","choose","refreshing","login","setup","otp"].includes(sync.state))return;
+  if(!REMOTE||!canEdit()||["loading","choose","refreshing","login","setup","otp","signup","forgot","reset"].includes(sync.state))return;
   clearTimeout(saveTimer);setSync("pending");saveTimer=setTimeout(pushRemote,1200);
 }
 async function pushRemote(){

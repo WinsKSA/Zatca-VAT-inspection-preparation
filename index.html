@@ -270,7 +270,7 @@ body.signed-out .app{grid-template-columns:minmax(0,1fr)}body.signed-out nav.rai
 .auth-card h1{font:600 22px var(--f-display);margin:4px 0 0}
 .auth-brand{display:flex;gap:10px;align-items:center}.auth-brand .wordmark{color:var(--ink)}.auth-brand .tagline{color:var(--muted)}
 .auth-err{color:var(--crit-ink);min-height:1.2em;margin:0;font-size:13px}
-.auth-foot{margin-top:4px}.btn.switch{align-self:center;text-decoration:underline}
+.auth-foot{margin-top:4px}.auth-tabs{display:grid;grid-template-columns:1fr 1fr;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:4px;gap:4px}.auth-tabs button{border:0;background:none;color:var(--ink-2);font:600 14px var(--f-body);padding:9px;border-radius:7px;cursor:pointer}.auth-tabs button[aria-selected="true"]{background:var(--surface);color:var(--brand);box-shadow:0 1px 3px rgba(0,0,0,.12)}.btn.switch{align-self:center;text-decoration:underline}
 .chk{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--ink-2)}.chk input{width:auto;min-width:0}
 .btn.busy{opacity:.6;pointer-events:none}
 .umenu{position:relative}.umenu .role{font-size:11px;color:var(--muted);border:1px solid var(--line-2);border-radius:999px;padding:0 7px}
@@ -810,7 +810,7 @@ function setSync(state,msg){sync.state=state;sync.msg=msg||"";if(state==="saved"
 function snapshotAll(){const o={};for(const k of Object.keys(SCHEMA))o[k]=JSON.stringify(toTable(k));return o}
 function save(){if(typeof relabelActive==="function")relabelActive();
   try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){if(!REMOTE&&!saveWarned){saveWarned=true;toast("This data is too large to keep in the browser. It stays here until you close the page.")}}
-  if(!REMOTE||!canEdit()||["loading","choose","refreshing","login","setup","otp"].includes(sync.state))return;
+  if(!REMOTE||!canEdit()||["loading","choose","refreshing","login","setup","otp","signup","forgot","reset"].includes(sync.state))return;
   clearTimeout(saveTimer);setSync("pending");saveTimer=setTimeout(pushRemote,1200);
 }
 async function pushRemote(){
@@ -1234,10 +1234,57 @@ const ERR={invalid:L("Wrong username or password.","اسم المستخدم أو
   code:L("The setup code is not correct. Copy it from the Users tab of the Google Sheet.","رمز الإعداد غير صحيح. انسخه من ورقة Users في جدول Google."),username:L("Username: 3–32 characters, lowercase letters, numbers, dot, dash or underscore.","اسم المستخدم: من 3 إلى 32 حرفاً إنجليزياً صغيراً أو أرقاماً أو نقطة أو شرطة."),
   weak:L("Password: at least 8 characters with letters and numbers.","كلمة المرور: 8 أحرف على الأقل تتضمن حروفاً وأرقاماً."),exists:L("An administrator already exists. Sign in instead.","يوجد مدير بالفعل. سجّل الدخول بدلاً من ذلك."),
   self:L("You can't remove or demote your own account.","لا يمكنك حذف حسابك أو تخفيض صلاحيتك."),lastAdmin:L("At least one active administrator is required.","يلزم وجود مدير نشط واحد على الأقل."),forbidden:L("You don't have permission for this.","ليست لديك صلاحية لهذا الإجراء."),
-  mismatch:L("The two passwords don't match.","كلمتا المرور غير متطابقتين."),noemail:L("This account has no email address for sign-in codes. Ask an administrator to add one.","لا يوجد بريد إلكتروني لهذا الحساب لإرسال رموز الدخول. اطلب من المدير إضافته."),mail:L("The sign-in code could not be sent. Try again in a minute.","تعذر إرسال رمز الدخول. حاول مرة أخرى بعد دقيقة."),expired:L("The code expired or was used too many times. Sign in again to get a new one.","انتهت صلاحية الرمز أو تجاوز عدد المحاولات. سجّل الدخول مرة أخرى للحصول على رمز جديد."),email:L("Enter a valid email address. Sign-in codes are sent to it.","أدخل بريداً إلكترونياً صحيحاً، فإليه تُرسل رموز الدخول."),net:L("Cannot reach the server. Check your internet connection.","تعذر الوصول إلى الخادم. تحقق من اتصالك بالإنترنت.")};
+  mismatch:L("The two passwords don't match.","كلمتا المرور غير متطابقتين."),pending:L("Your account is waiting for an administrator to approve it.","حسابك بانتظار موافقة المدير."),taken:L("That username is already taken.","اسم المستخدم مستخدم بالفعل."),nosetup:L("The administrator account has not been created yet.","لم يتم إنشاء حساب المدير بعد."),noemail:L("This account has no email address for sign-in codes. Ask an administrator to add one.","لا يوجد بريد إلكتروني لهذا الحساب لإرسال رموز الدخول. اطلب من المدير إضافته."),mail:L("The sign-in code could not be sent. Try again in a minute.","تعذر إرسال رمز الدخول. حاول مرة أخرى بعد دقيقة."),expired:L("The code expired or was used too many times. Sign in again to get a new one.","انتهت صلاحية الرمز أو تجاوز عدد المحاولات. سجّل الدخول مرة أخرى للحصول على رمز جديد."),email:L("Enter a valid email address. Sign-in codes are sent to it.","أدخل بريداً إلكترونياً صحيحاً، فإليه تُرسل رموز الدخول."),net:L("Cannot reach the server. Check your internet connection.","تعذر الوصول إلى الخادم. تحقق من اتصالك بالإنترنت.")};
 const errText=e=>ERR[e]||String(e||"");
 
 // ---------------------------------------------------------------- auth screens
+// ---------------------------------------------------------------- sign up and forgotten password screens
+function authTabs(){const a=sync.state;return `<div class="auth-tabs" role="tablist"><button type="button" role="tab" data-as="login" aria-selected="${a==="login"}">${esc(L("Sign in","تسجيل الدخول"))}</button><button type="button" role="tab" data-as="signup" aria-selected="${a==="signup"}">${esc(L("Sign up","إنشاء حساب"))}</button></div>`}
+function authExtraScreen(brand,foot){
+  const st=sync.state;
+  if(st==="signup")return `<div class="auth">${welcomePanel()}<form class="auth-card" id="authForm" autocomplete="on">${brand}${authTabs()}
+   <p class="note">${esc(L("Request access. An administrator approves new accounts before they can sign in.","اطلب الوصول. يوافق المدير على الحسابات الجديدة قبل أن تتمكن من تسجيل الدخول."))}</p>
+   <label class="fld"><span>${esc(L("Full name","الاسم الكامل"))}</span><input id="sName" required autocomplete="name"></label>
+   <label class="fld"><span>${esc(L("Email (sign-in codes are sent here)","البريد الإلكتروني (تُرسل إليه رموز الدخول)"))}</span><input id="sMail" type="email" required autocomplete="email" dir="ltr"></label>
+   <label class="fld"><span>${esc(L("Username","اسم المستخدم"))}</span><input id="sUser" required autocomplete="username" autocapitalize="none" spellcheck="false" dir="ltr"></label>
+   <label class="fld"><span>${esc(L("Password","كلمة المرور"))}</span><input id="sPass" type="password" required autocomplete="new-password" dir="ltr"></label>
+   <label class="fld"><span>${esc(L("Confirm password","تأكيد كلمة المرور"))}</span><input id="sPass2" type="password" required autocomplete="new-password" dir="ltr"></label>
+   <p class="note">${esc(ERR.weak)}</p><p class="auth-err" id="aErr" role="alert">${esc(sync.msg||"")}</p>
+   <button class="btn primary" type="submit" id="aGo">${icon("users")}${esc(L("Request access","طلب الوصول"))}</button>${foot}</form></div>`;
+  if(st==="forgot"||st==="reset")return `<div class="auth">${welcomePanel()}<form class="auth-card" id="authForm" autocomplete="off">${brand}
+   <h1>${esc(L("Reset your password","إعادة تعيين كلمة المرور"))}</h1>
+   ${st==="forgot"?`<p class="note">${esc(L("Enter your username. We'll email a 6-digit code to the address on your account.","أدخل اسم المستخدم، وسنرسل رمزاً من 6 أرقام إلى بريدك المسجل."))}</p>
+    <label class="fld"><span>${esc(L("Username","اسم المستخدم"))}</span><input id="fUser" required autocomplete="username" autocapitalize="none" spellcheck="false" dir="ltr"></label>`
+   :`<p class="note"><span>${esc(L("If the username exists, we sent a code to","إذا كان اسم المستخدم موجوداً فقد أرسلنا رمزاً إلى"))}</span> <b dir="ltr" data-notr>${esc(AUTH.otpTo||"***")}</b>.</p>
+    <label class="fld"><span>${esc(L("Code from the email","الرمز من البريد الإلكتروني"))}</span><input id="fCode" class="num otp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required dir="ltr"></label>
+    <label class="fld"><span>${esc(L("New password","كلمة المرور الجديدة"))}</span><input id="fPass" type="password" required autocomplete="new-password" dir="ltr"></label>
+    <label class="fld"><span>${esc(L("Confirm new password","تأكيد كلمة المرور الجديدة"))}</span><input id="fPass2" type="password" required autocomplete="new-password" dir="ltr"></label><p class="note">${esc(ERR.weak)}</p>`}
+   <p class="auth-err" id="aErr" role="alert">${esc(sync.msg||"")}</p>
+   <button class="btn primary" type="submit" id="aGo">${icon(st==="forgot"?"dl":"lock")}${esc(st==="forgot"?L("Email me a code","أرسل لي رمزاً"):L("Set new password","تعيين كلمة المرور الجديدة"))}</button>
+   <button type="button" class="btn ghost sm switch" data-as="login">${esc(L("Back to sign in","العودة لتسجيل الدخول"))}</button>${foot}</form></div>`;
+  return null;
+}
+function bindAuthExtra(){
+  document.querySelectorAll("[data-as]").forEach(b=>b.onclick=()=>{sync.msg="";sync.state=b.dataset.as;render()});
+  const st=sync.state,f=$("#authForm"),err=$("#aErr"),go=$("#aGo");if(!["signup","forgot","reset"].includes(st))return false;
+  const busy=on=>{go.disabled=on;go.classList.toggle("busy",on)};
+  ($("#sName")||$("#fUser")||$("#fCode"))?.focus();
+  f.onsubmit=async e=>{e.preventDefault();err.textContent="";busy(true);
+    try{
+      if(st==="signup"){if($("#sPass").value!==$("#sPass2").value){err.textContent=ERR.mismatch;return}
+        const r=await api("signup",{name:$("#sName").value,email:$("#sMail").value.trim(),username:$("#sUser").value.trim().toLowerCase(),password:$("#sPass").value});
+        if(!r.ok){err.textContent=errText(r.error);return}
+        sync.state="login";sync.msg=L("Request sent. You can sign in once an administrator approves your account.","تم إرسال الطلب. يمكنك تسجيل الدخول بعد موافقة المدير على حسابك.");render();return}
+      if(st==="forgot"){const r=await api("forgot",{username:$("#fUser").value.trim().toLowerCase()});if(!r.ok){err.textContent=errText(r.error);return}AUTH.challenge=r.challenge;AUTH.otpTo=r.to;sync.msg="";sync.state="reset";render();return}
+      if(st==="reset"){if($("#fPass").value!==$("#fPass2").value){err.textContent=ERR.mismatch;return}
+        const r=await api("resetPassword",{challenge:AUTH.challenge,code:$("#fCode").value.trim(),password:$("#fPass").value});
+        if(!r.ok){err.textContent=r.error==="badcode"?L(`Wrong code. ${r.left} attempt(s) left.`,`رمز غير صحيح. متبقٍ ${r.left} محاولة.`):errText(r.error);if(r.error==="expired"){sync.state="forgot";sync.msg=ERR.expired;render()}return}
+        sync.state="login";sync.msg=L("Password changed. Sign in with your new password.","تم تغيير كلمة المرور. سجّل الدخول بكلمة المرور الجديدة.");render();return}
+    }catch(x){err.textContent=ERR.net}finally{busy(false)}};
+  $("#authLang").onclick=()=>{LANG=LANG==="ar"?"en":"ar";try{localStorage.setItem(KEY+"-lang",LANG)}catch(e){}applyLang();render()};
+  return true;
+}
+
 function welcomePanel(){const f=[["test",L("39 automated tests on 100% of your data","39 اختباراً آلياً على 100% من بياناتك")],["cal",L("Up to 5 years, monthly or quarterly","حتى 5 سنوات، شهرياً أو ربع سنوي")],["scale",L("Reconciliations, exposure and the fines initiative","المطابقات والتعرض ومبادرة الإعفاء من الغرامات")],["lock",L("Secure sign-in with an email code","دخول آمن برمز عبر البريد الإلكتروني")]];
   return `<aside class="welcome"><span class="w-eyebrow">${esc(L("Welcome to Fahs","مرحباً بك في فحص"))}</span><h2>${esc(L("Your ZATCA VAT inspection, under control.","فحص هيئة الزكاة والضريبة والجمارك، تحت السيطرة."))}</h2>
    <p>${esc(L("Prepare every reconciliation, find issues before ZATCA does, and answer every request on time.","جهّز كل المطابقات، واكتشف الملاحظات قبل الهيئة، وأجب على كل طلب في موعده."))}</p>
@@ -1246,6 +1293,7 @@ function welcomePanel(){const f=[["test",L("39 automated tests on 100% of your d
   const setup=sync.state==="setup",otp=sync.state==="otp";
   const brand=`<div class="auth-brand"><svg viewBox="0 0 40 40" class="logo" aria-hidden="true"><rect x="2" y="2" width="36" height="36" rx="10" fill="var(--brand)"/><circle cx="18" cy="18" r="8" fill="none" stroke="#fff" stroke-width="3"/><path d="M24 24l7 7" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/><path d="M14.5 18.5l2.5 2.5 4.5-5" fill="none" stroke="var(--gold-2)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><div><div class="wordmark">${LANG==="ar"?"فحص":"Fahs"}</div><div class="tagline">${esc(L("VAT inspection command center","مركز قيادة فحص ضريبة القيمة المضافة"))}</div></div></div>`;
   const foot=`<div class="row auth-foot"><button type="button" class="btn ghost sm" id="authLang" data-notr>${icon("lang")}${LANG==="ar"?"English":"العربية"}</button><span class="grow"></span><span class="note">${esc(L("Data is stored in your company's Google Sheet.","تُحفظ البيانات في جدول Google الخاص بالمنشأة."))}</span></div>`;
+  const ex=authExtraScreen(brand,foot);if(ex)return ex;
   if(otp)return `<div class="auth">${welcomePanel()}<form class="auth-card" id="authForm" autocomplete="off">${brand}
    <h1>${esc(L("Check your email","تحقق من بريدك الإلكتروني"))}</h1>
    <p class="note"><span>${esc(L("We sent a 6-digit sign-in code to","أرسلنا رمز دخول من 6 أرقام إلى"))}</span> <b dir="ltr" data-notr>${esc(AUTH.otpTo||"")}</b>. <span>${esc(L("It expires in 10 minutes.","ينتهي خلال 10 دقائق."))}</span></p>
@@ -1254,7 +1302,7 @@ function welcomePanel(){const f=[["test",L("39 automated tests on 100% of your d
    <button class="btn primary" type="submit" id="aGo">${icon("check")}${esc(L("Verify and sign in","تحقق وسجّل الدخول"))}</button>
    <div class="row"><button type="button" class="btn ghost sm" id="aResend">${esc(L("Send a new code","إرسال رمز جديد"))}</button><button type="button" class="btn ghost sm" id="aBack">${esc(L("Back","رجوع"))}</button></div>${foot}</form></div>`;
   return `<div class="auth">${welcomePanel()}<form class="auth-card" id="authForm" autocomplete="on">${brand}
-   <h1>${esc(setup?L("Create the administrator account","إنشاء حساب المدير"):L("Sign in","تسجيل الدخول"))}</h1>
+   ${setup?`<h1>${esc(L("Create the administrator account","إنشاء حساب المدير"))}</h1>`:authTabs()}
    ${setup?`<p class="note">${esc(L("First time only. Open your Google Sheet, go to the Users tab and copy the one-time setup code shown at the top.","لمرة واحدة فقط. افتح جدول Google، ثم ورقة Users، وانسخ رمز الإعداد المؤقت الظاهر في الأعلى."))}</p>
     <label class="fld"><span>${esc(L("Setup code","رمز الإعداد"))}</span><input id="aCode" required autocomplete="off" class="num" dir="ltr"></label>
     <label class="fld"><span>${esc(L("Your full name","اسمك الكامل"))}</span><input id="aName" required autocomplete="name"></label>
@@ -1265,9 +1313,10 @@ function welcomePanel(){const f=[["test",L("39 automated tests on 100% of your d
    <p class="auth-err" id="aErr" role="alert">${esc(sync.msg||"")}</p>
    <button class="btn primary" type="submit" id="aGo">${icon(setup?"users":"lock")}${esc(setup?L("Create account and continue","إنشاء الحساب والمتابعة"):L("Continue","متابعة"))}</button>
    <p class="note">${esc(L("After your password we email you a 6-digit code.","بعد كلمة المرور نرسل إليك رمزاً من 6 أرقام بالبريد الإلكتروني."))}</p>
-   <button type="button" class="btn ghost sm switch" id="aSwitch">${esc(setup?L("I already have an account – sign in","لدي حساب بالفعل – تسجيل الدخول"):L("First time? Create the administrator account","أول مرة؟ أنشئ حساب المدير"))}</button>${foot}</form></div>`;
+   <button type="button" class="btn ghost sm switch" data-as="${setup?"login":"forgot"}">${esc(setup?L("I already have an account – sign in","لدي حساب بالفعل – تسجيل الدخول"):L("Forgot password?","نسيت كلمة المرور؟"))}</button>${foot}</form></div>`;
 }
 function bindAuth(){
+  if(bindAuthExtra())return;
   const f=$("#authForm"),err=$("#aErr"),go=$("#aGo");($("#aOtp")||$("#aCode")||$("#aUser"))?.focus();
   $("#authLang").onclick=()=>{LANG=LANG==="ar"?"en":"ar";try{localStorage.setItem(KEY+"-lang",LANG)}catch(e){}applyLang();render()};
   const busy=on=>{go.disabled=on;go.classList.toggle("busy",on)};
@@ -1303,7 +1352,7 @@ function addEyes(root){root.querySelectorAll('input[type="password"]').forEach(i
   b.onclick=()=>{const show=inp.type==="password";inp.type=show?"text":"password";b.innerHTML=icon(show?"eyeOff":"eye");b.setAttribute("aria-label",tr(show?L("Hide password","إخفاء كلمة المرور"):L("Show password","إظهار كلمة المرور")));inp.focus()};w.appendChild(b)})}
 const _render0=render;
 render=function(){
-  if(REMOTE&&["login","setup","otp"].includes(sync.state)){$("#nav").innerHTML="";$("#main").innerHTML=authScreen();addEyes(document);document.body.classList.add("signed-out");bindAuth();return}
+  if(REMOTE&&["login","setup","otp","signup","forgot","reset"].includes(sync.state)){$("#nav").innerHTML="";$("#main").innerHTML=authScreen();addEyes(document);document.body.classList.add("signed-out");bindAuth();return}
   document.body.classList.remove("signed-out");document.body.classList.toggle("readonly",REMOTE&&!!AUTH.user&&!canEdit());
   const v=VIEWS.find(x=>x.id===cur);if(v&&v.admin&&!isAdmin())cur="dash"; // admin-only pages
   _render0();
@@ -1350,7 +1399,7 @@ R.users=C=>{if(!isAdmin())return `<p class="empty">${esc(ERR.forbidden)}</p>`;
   return `<p class="lead">${esc(L("Who can open the system and what they can do. Admins manage users; Editors enter and change data; Viewers can only look.","من يمكنه فتح النظام وماذا يمكنه أن يفعل. المدير يدير المستخدمين، والمحرر يُدخل البيانات ويعدّلها، والمشاهد يطّلع فقط."))}</p>
   ${card(L("Users","المستخدمون"),`<div class="frame"><table class="tbl edit"><thead><tr><th>${esc(L("Username","اسم المستخدم"))}</th><th>${esc(L("Name","الاسم"))}</th><th>${esc(L("Email","البريد الإلكتروني"))}</th><th>${esc(L("Role","الصلاحية"))}</th><th>${esc(L("Active","نشط"))}</th><th>${esc(L("Last sign-in","آخر دخول"))}</th><th></th></tr></thead><tbody>
    ${USERS.map((u,i)=>`<tr><td class="mono" data-notr>${esc(u.username)}</td><td><input data-uf="name" data-ui="${i}" value="${esc(u.name)}"></td><td><input data-uf="email" data-ui="${i}" value="${esc(u.email)}" dir="ltr"></td><td>${roleSel(u,i)}</td>
-    <td><input type="checkbox" data-uf="active" data-ui="${i}" ${u.active?"checked":""} ${u.username===AUTH.user.username?"disabled":""} style="min-width:0;width:auto"></td><td class="note">${esc(u.lastLogin?showDate(u.lastLogin.slice(0,10)):"—")}</td>
+    <td><label class="chk"><input type="checkbox" data-uf="active" data-ui="${i}" ${u.active?"checked":""} ${u.username===AUTH.user.username?"disabled":""} style="min-width:0;width:auto">${u.pending?pill("warn",L("Waiting for approval – tick and Save","بانتظار الموافقة – حدّد ثم احفظ")):""}</label></td><td class="note">${esc(u.lastLogin?showDate(u.lastLogin.slice(0,10)):"—")}</td>
     <td class="row"><button class="btn sm" data-usave="${i}">${esc(L("Save","حفظ"))}</button><button class="btn sm" data-ureset="${i}">${esc(L("Reset password","إعادة تعيين كلمة المرور"))}</button>${u.username!==AUTH.user.username?`<button class="btn sm danger" data-udel="${i}">${esc(L("Remove","حذف"))}</button>`:""}</td></tr>`).join("")}
   </tbody></table></div><div class="row"><button class="btn primary sm" id="uAdd">${icon("users")}${esc(L("Add user","إضافة مستخدم"))}</button></div>`)}
   ${card(L("Roles","الصلاحيات"),`<div class="frame"><table class="tbl"><thead><tr><th>${esc(L("Role","الصلاحية"))}</th><th>${esc(L("Can do","الصلاحيات المتاحة"))}</th></tr></thead><tbody>

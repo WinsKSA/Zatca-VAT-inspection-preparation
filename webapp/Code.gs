@@ -48,6 +48,9 @@ function route_(req) {
   if (a === 'login') return login_(req);
   if (a === 'verifyOtp') return verifyOtp_(req);
   if (a === 'resendOtp') return resendOtp_(req);
+  if (a === 'signup') return signup_(req);
+  if (a === 'forgot') return forgot_(req);
+  if (a === 'resetPassword') return resetPassword_(req);
   var s = session_(req.token);
   if (!s) return { ok: false, error: 'auth' };
   if (a === 'logout') { CacheService.getScriptCache().remove('s:' + req.token); return { ok: true }; }
@@ -109,7 +112,7 @@ function findUser_(username) {
 }
 function publicUser_(u) {
   if (!u) return null;
-  return { username: u.username, name: u.name, email: u.email, role: u.role, active: String(u.active) !== 'no', lastLogin: String(u.lastLogin || '') };
+  return { username: u.username, name: u.name, email: u.email, role: u.role, active: String(u.active) === 'yes', pending: String(u.active) === 'pending', lastLogin: String(u.lastLogin || '') };
 }
 function hash_(password, salt) {
   var h = salt + '|' + password;
@@ -163,7 +166,9 @@ function login_(req) {
     var users = readUsers_(), username = String(req.username || '').trim().toLowerCase();
     var u = users.filter(function (x) { return x.username === username; })[0];
     var now = Date.now();
-    if (!u || String(u.active) === 'no') { Utilities.sleep(400); return { ok: false, error: 'invalid' }; }
+    if (!u) { Utilities.sleep(400); return { ok: false, error: 'invalid' }; }
+    if (String(u.active) === 'pending') return { ok: false, error: 'pending' };
+    if (String(u.active) !== 'yes') { Utilities.sleep(400); return { ok: false, error: 'invalid' }; }
     if (u.lockedUntil && now < Number(u.lockedUntil)) return { ok: false, error: 'locked', minutes: Math.ceil((Number(u.lockedUntil) - now) / 60000) };
     if (hash_(String(req.password || ''), u.salt) !== u.hash) {
       u.failed = String(Number(u.failed || 0) + 1);
@@ -226,7 +231,7 @@ function verifyOtp_(req) {
   cache.remove('c:' + req.challenge);
   return withLock_(function () {
     var users = readUsers_(), u = users.filter(function (x) { return x.username === c.u; })[0];
-    if (!u || String(u.active) === 'no') return { ok: false, error: 'invalid' };
+    if (!u || String(u.active) !== 'yes') return { ok: false, error: 'invalid' };
     u.lastLogin = new Date().toISOString(); writeUsers_(users);
     var token = Utilities.getUuid() + Utilities.getUuid();
     cache.put('s:' + token, JSON.stringify({ u: u.username, r: u.role }), SESSION_HOURS * 3600);
@@ -244,6 +249,59 @@ function resendOtp_(req) {
   var s = sendOtp_(u, req.challenge);
   return s.ok ? { ok: true, to: maskEmail_(u.email) } : s;
 }
+// ---------------------------------------------------------------- sign up (needs admin approval) and forgotten password
+function signup_(req) {
+  return withLock_(function () {
+    var users = readUsers_(), username = String(req.username || '').trim().toLowerCase();
+    if (!users.length) return { ok: false, error: 'nosetup' };
+    if (!validUsername_(username)) return { ok: false, error: 'username' };
+    if (!validEmail_(req.email)) return { ok: false, error: 'email' };
+    if (!validPassword_(req.password)) return { ok: false, error: 'weak' };
+    if (users.some(function (x) { return x.username === username; })) return { ok: false, error: 'taken' };
+    var salt = newSalt_();
+    users.push({ username: username, name: req.name || username, email: String(req.email).trim(), role: 'Viewer', active: 'pending', salt: salt, hash: hash_(req.password, salt), created: new Date().toISOString(), lastLogin: '', failed: '0', lockedUntil: '' });
+    writeUsers_(users);
+    log_(sheet_(), username, 'Requested access (waiting for admin approval)', 0);
+    try { // tell the administrators
+      users.filter(function (x) { return x.role === 'Admin' && String(x.active) === 'yes' && validEmail_(x.email); }).forEach(function (a) {
+        MailApp.sendEmail({ to: a.email, name: 'Fahs VAT Inspection', subject: 'Fahs: ' + username + ' asked for access | طلب وصول جديد',
+          body: (req.name || username) + ' (' + username + ', ' + req.email + ') asked for access to Fahs. Approve or remove them in Users & access: ' + APP_URL +
+                '\n\nطلب ' + (req.name || username) + ' الوصول إلى نظام فحص. يمكنك الموافقة أو الحذف من صفحة المستخدمين والصلاحيات.' });
+      });
+    } catch (e) {}
+    return { ok: true, pending: true };
+  });
+}
+function forgot_(req) {
+  var u = findUser_(req.username);
+  // same answer whether or not the user exists, so usernames can't be probed
+  if (!u || String(u.active) !== 'yes' || !validEmail_(u.email)) { Utilities.sleep(500); return { ok: true, challenge: Utilities.getUuid(), to: '' }; }
+  var challenge = Utilities.getUuid(), sent = sendOtp_(u, challenge);
+  if (!sent.ok) return sent;
+  CacheService.getScriptCache().put('r:' + challenge, u.username, OTP_MINUTES * 60);
+  return { ok: true, challenge: challenge, to: maskEmail_(u.email) };
+}
+function resetPassword_(req) {
+  var cache = CacheService.getScriptCache(), who = cache.get('r:' + req.challenge), raw = cache.get('c:' + req.challenge);
+  if (!who || !raw) return { ok: false, error: 'expired' };
+  var c = JSON.parse(raw);
+  if (hash_(String(req.code || '').trim(), c.s) !== c.h) {
+    c.tries++;
+    if (c.tries >= OTP_TRIES) { cache.remove('c:' + req.challenge); cache.remove('r:' + req.challenge); return { ok: false, error: 'expired' }; }
+    cache.put('c:' + req.challenge, JSON.stringify(c), OTP_MINUTES * 60);
+    return { ok: false, error: 'badcode', left: OTP_TRIES - c.tries };
+  }
+  if (!validPassword_(req.password)) return { ok: false, error: 'weak' };
+  cache.remove('c:' + req.challenge); cache.remove('r:' + req.challenge);
+  return withLock_(function () {
+    var users = readUsers_(), u = users.filter(function (x) { return x.username === who; })[0];
+    if (!u) return { ok: false, error: 'invalid' };
+    u.salt = newSalt_(); u.hash = hash_(req.password, u.salt); u.failed = '0'; u.lockedUntil = '';
+    writeUsers_(users); log_(sheet_(), u.username, 'Reset own password with an email code', 0);
+    return { ok: true };
+  });
+}
+
 /** Run once from the Apps Script editor to approve sending email (sends nothing). */
 function authorize() { MailApp.getRemainingDailyQuota(); return 'Email sending is authorised.'; }
 function session_(token) {
@@ -251,7 +309,7 @@ function session_(token) {
   var cache = CacheService.getScriptCache(), raw = cache.get('s:' + token);
   if (!raw) return null;
   var s = JSON.parse(raw), u = findUser_(s.u);
-  if (!u || String(u.active) === 'no') { cache.remove('s:' + token); return null; }
+  if (!u || String(u.active) !== 'yes') { cache.remove('s:' + token); return null; }
   s.r = u.role; // roles changed by an admin take effect immediately
   cache.put('s:' + token, JSON.stringify(s), SESSION_HOURS * 3600); // sliding expiry
   return s;
@@ -287,7 +345,7 @@ function saveUser_(s, user) {
       if (!validPassword_(user.password)) return { ok: false, error: 'weak' };
       u.salt = newSalt_(); u.hash = hash_(user.password, u.salt); u.failed = '0'; u.lockedUntil = '';
     }
-    if (!users.some(function (x) { return x.role === 'Admin' && String(x.active) !== 'no'; })) return { ok: false, error: 'lastAdmin' };
+    if (!users.some(function (x) { return x.role === 'Admin' && String(x.active) === 'yes'; })) return { ok: false, error: 'lastAdmin' };
     writeUsers_(users);
     log_(sheet_(), s.u, (isNew ? 'Added user ' : 'Updated user ') + username + ' (' + u.role + ')' + (user.password && !isNew ? ', password reset' : ''), 0);
     return { ok: true, users: users.map(publicUser_) };
@@ -298,7 +356,7 @@ function deleteUser_(s, username) {
     username = String(username || '').toLowerCase();
     if (username === s.u) return { ok: false, error: 'self' };
     var users = readUsers_().filter(function (x) { return x.username !== username; });
-    if (!users.some(function (x) { return x.role === 'Admin' && String(x.active) !== 'no'; })) return { ok: false, error: 'lastAdmin' };
+    if (!users.some(function (x) { return x.role === 'Admin' && String(x.active) === 'yes'; })) return { ok: false, error: 'lastAdmin' };
     writeUsers_(users); log_(sheet_(), s.u, 'Removed user ' + username, 0);
     return { ok: true, users: users.map(publicUser_) };
   });
