@@ -1,5 +1,7 @@
 // ================================================================ storage: Google Sheets (Apps Script) or browser
-const REMOTE=!!(window.google&&google.script&&google.script.run);
+// demo.html sets window.FAHS_MODE="demo" (browser only); the main app talks to the Google Sheet through the Apps Script API.
+const API_URL="https://script.google.com/macros/s/AKfycbygC_bY9QKQBoLKMhXA2Yvo_vQ9Vsgdvjo30PThWUxY7YsPv-mo8Z4yNRzEAjkAbyG9Lg/exec";
+const REMOTE=window.FAHS_MODE!=="demo";
 const SALES_F=["date","no","type","cust","cvat","ctype","cat","net","vat","uuid","fat","gl","ev"];
 const PUR_F=["date","no","sup","svat","country","cat","nature","net","vat","valid","claimed","bayan","gl"];
 const SCHEMA={
@@ -20,33 +22,54 @@ const SCHEMA={
  recItems:{kind:"rows",headers:["description","amount"],get:()=>S.recItems.map(x=>[x.d,x.a].map(v=>v??"")),set:rows=>{S.recItems=rows.map(a=>({d:a[0]||"",a:a[1]||""}))}},
  decisions:{kind:"rows",headers:["test","decision","explanation"],get:()=>Object.entries(S.decisions).map(([k,v])=>[k,v.d||"",v.n||""]),set:rows=>{S.decisions={};rows.forEach(a=>{if(a[0])S.decisions[a[0]]={d:a[1]||"",n:a[2]||""}})}},
  vouch:{kind:"rows",headers:["item","status","note"],get:()=>Object.entries(S.vouch).map(([k,v])=>[k,v.s||"",v.n||""]),set:rows=>{S.vouch={};rows.forEach(a=>{if(a[0])S.vouch[a[0]]={s:a[1]||"",n:a[2]||""}})}}};
-function toTable(k){const s=SCHEMA[k];if(s.kind==="kv"){const o=s.get();return{headers:["key","value"],rows:Object.entries(o).map(([a,b])=>[a,String(b??"")])}}return{headers:s.headers,rows:s.get().map(r=>r.map(v=>String(v??"")))}}
-function fromTable(k,t){const s=SCHEMA[k];if(!t||!t.rows)return;if(s.kind==="kv"){const o={};t.rows.forEach(r=>{if(r[0])o[r[0]]=r[1]??""});s.set(o)}else s.set(t.rows)}
-let lastSent={}, sync={state:REMOTE?"loading":"local",at:null,msg:""}, sending=false, pending=false;
+function toTableRaw(k){const s=SCHEMA[k];if(s.kind==="kv"){const o=s.get();return{headers:["key","value"],rows:Object.entries(o).map(([a,b])=>[a,String(b??"")])}}return{headers:s.headers,rows:s.get().map(r=>r.map(v=>String(v??"")))}}
+function fromTableRaw(k,t){const s=SCHEMA[k];if(!t||!t.rows)return;if(s.kind==="kv"){const o={};t.rows.forEach(r=>{if(r[0])o[r[0]]=r[1]??""});s.set(o)}else s.set(t.rows)}
+// ---------------------------------------------------------------- API client and session
+const TOKEN_KEY=KEY+"-token";
+let AUTH={token:null,user:null};
+try{AUTH.token=localStorage.getItem(TOKEN_KEY)||sessionStorage.getItem(TOKEN_KEY)}catch(e){}
+let lastSent={}, sync={state:!REMOTE?"local":(AUTH.token?"loading":"login"),at:null,msg:""}, sending=false, pending=false;
+async function api(action,body={}){
+  const res=await fetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action,token:AUTH.token,...body})});
+  if(!res.ok)throw new Error("HTTP "+res.status);
+  const j=await res.json();
+  if(j&&j.error==="auth"&&action!=="login"){signedOut(L("Your session has ended. Please sign in again.","انتهت الجلسة. يرجى تسجيل الدخول مرة أخرى."));throw new Error("auth")}
+  return j;
+}
+function setToken(t,remember){AUTH.token=t;try{localStorage.removeItem(TOKEN_KEY);sessionStorage.removeItem(TOKEN_KEY);if(t)(remember?localStorage:sessionStorage).setItem(TOKEN_KEY,t)}catch(e){}}
+function signedOut(msg){clearTimeout(saveTimer);pending=false;sending=false;setToken(null);AUTH.user=null;try{localStorage.removeItem(KEY)}catch(e){}S=exampleState();S.example=false;S.tb=[];S.sales=[];S.purchases=[];S.payments=[];S.requests=[];S.returns=Array.from({length:12},blankReturn);
+  lastSent={};if(typeof USERS!=="undefined")USERS=null;cur="dash";try{localStorage.removeItem(KEY+"-view")}catch(e){}sync.state="login";sync.msg=msg||"";render()}
+const canEdit=()=>!REMOTE||(AUTH.user&&AUTH.user.role!=="Viewer");
+const isAdmin=()=>REMOTE&&AUTH.user&&AUTH.user.role==="Admin";
 function setSync(state,msg){sync.state=state;sync.msg=msg||"";if(state==="saved")sync.at=new Date();const el=document.getElementById("sync");if(el)el.outerHTML=syncChip()}
 function snapshotAll(){const o={};for(const k of Object.keys(SCHEMA))o[k]=JSON.stringify(toTable(k));return o}
-function save(){
+function save(){if(typeof relabelActive==="function")relabelActive();
   try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){if(!REMOTE&&!saveWarned){saveWarned=true;toast("This data is too large to keep in the browser. It stays here until you close the page.")}}
-  if(!REMOTE||sync.state==="loading"||sync.state==="choose"||sync.state==="refreshing")return;
+  if(!REMOTE||!canEdit()||["loading","choose","refreshing","login","setup","otp"].includes(sync.state))return;
   clearTimeout(saveTimer);setSync("pending");saveTimer=setTimeout(pushRemote,1200);
 }
-function pushRemote(){
+async function pushRemote(){
+  if(!AUTH.token||!canEdit())return;
   if(sending){pending=true;return}
   const snap=snapshotAll(), payload={};for(const k of Object.keys(snap))if(snap[k]!==lastSent[k])payload[k]=JSON.parse(snap[k]);
   if(!Object.keys(payload).length){setSync("saved");return}
   sending=true;setSync("saving");
-  google.script.run.withSuccessHandler(()=>{Object.assign(lastSent,Object.fromEntries(Object.keys(payload).map(k=>[k,snap[k]])));sending=false;setSync("saved");if(pending){pending=false;pushRemote()}})
-    .withFailureHandler(err=>{sending=false;setSync("error",err&&err.message||String(err))}).saveCollections(payload);
+  try{const r=await api("save",{payload});sending=false;
+    if(!r.ok){setSync("error",r.error==="forbidden"?L("Your role can view but not edit.","صلاحيتك للعرض فقط دون التعديل."):(r.message||r.error));return}
+    Object.assign(lastSent,Object.fromEntries(Object.keys(payload).map(k=>[k,snap[k]])));setSync("saved");if(pending){pending=false;pushRemote()}}
+  catch(e){sending=false;if(e.message!=="auth")setSync("error",e.message)}
 }
-function loadRemote(){
+async function loadRemote(){
   const t0=Date.now();
-  google.script.run.withSuccessHandler(res=>{console.info("Fahs: Google Sheet loaded in "+(Date.now()-t0)+" ms (server "+(res.ms||"?")+" ms)");
-    sync.sheetUrl=res.sheetUrl;sync.user=res.user;
+  try{const res=await api("load");if(!res.ok){sync.state="error";sync.msg=res.message||res.error;render();return}
+    console.info("Fahs: Google Sheet loaded in "+(Date.now()-t0)+" ms (server "+(res.ms||"?")+" ms)");
+    sync.sheetUrl=res.sheetUrl;AUTH.user=res.user;
     if(res.empty){sync.state="choose";render();return}
     S=exampleState();S.example=false;S.tb=[];S.sales=[];S.purchases=[];S.payments=[];S.requests=[];S.decisions={};S.vouch={};
-    for(const k of Object.keys(SCHEMA))if(res.data[k])fromTable(k,res.data[k]);
+    window.__yearRows=null;pendingYears=null;for(const k of Object.keys(SCHEMA))if(res.data[k])fromTable(k,res.data[k]);finishYears(S.year);
     S=migrate(S);lastSent=snapshotAll();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}setSync("saved");render();
-  }).withFailureHandler(err=>{sync.state="error";sync.msg=err&&err.message||String(err);render()}).loadState();
+  }catch(e){if(e.message!=="auth"){sync.state="error";sync.msg=e.message;render()}}
 }
 function startRemote(withExample){S=exampleState();if(!withExample){S.example=false;S.tb=[];S.sales=[];S.purchases=[];S.payments=[];S.requests=[];S.returns=Array.from({length:12},blankReturn);S.decisions={};S.vouch={};S.case={notice:"",type:"Field audit",received:"",due:"",auditor:"",scope:"",notes:""}}
   lastSent={};try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}sync.state="saving";render();pushRemote()}
+async function checkSetup(){try{const r=await api("status");if(r.ok&&r.needsSetup){sync.state="setup";render()}}catch(e){sync.msg=L("Cannot reach the server. Check your internet connection.","تعذر الوصول إلى الخادم. تحقق من اتصالك بالإنترنت.");render()}}

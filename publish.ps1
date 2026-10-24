@@ -22,7 +22,8 @@ Pop-Location
 # clasp refuses linked folders, so upload from a plain staging folder
 $stage = Join-Path $env:TEMP "zv\gas"
 New-Item -ItemType Directory -Force $stage | Out-Null
-foreach ($f in "Code.gs", "Index.html", "appsscript.json", ".clasp.json", ".claspignore") { Copy-Item -Force (Join-Path $root "webapp\$f") (Join-Path $stage $f) }
+Remove-Item -Force (Join-Path $stage "Index.html") -ErrorAction SilentlyContinue
+foreach ($f in "Code.gs", "appsscript.json", ".clasp.json", ".claspignore") { Copy-Item -Force (Join-Path $root "webapp\$f") (Join-Path $stage $f) }
 Push-Location $stage
 clasp push -f; Check "clasp push"
 clasp update-deployment $deployment --description $Message; Check "clasp update-deployment"

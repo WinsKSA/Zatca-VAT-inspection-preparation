@@ -43,7 +43,7 @@ function openReq(){const t=todayD();return S.requests.map(r=>{const d=D(r.due);r
 function renderNav(C){const n=navCounts(C);
   $("#nav").innerHTML=`<div class="brand"><svg viewBox="0 0 40 40" class="logo" aria-hidden="true"><rect x="2" y="2" width="36" height="36" rx="10" fill="var(--brand)"/><circle cx="18" cy="18" r="8" fill="none" stroke="#fff" stroke-width="3"/><path d="M24 24l7 7" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/><path d="M14.5 18.5l2.5 2.5 4.5-5" fill="none" stroke="var(--gold-2)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><div><div class="wordmark">${LANG==="ar"?"فحص":"Fahs"}</div><div class="tagline">${esc(L("VAT inspection command center","مركز قيادة فحص ضريبة القيمة المضافة"))}</div></div></div>
   <div class="entity"><div class="ename" data-notr>${esc(S.setup.company||"—")}</div><div class="evat num">${esc(S.setup.vat||"")}</div></div>
-  ${VIEWS.map(v=>v.g?`<div class="nav-group">${esc(v.g)}</div>`:`<button class="nav-btn" data-v="${v.id}" aria-current="${v.id===cur}">${icon(v.i)}<span class="nl">${esc(v.t)}</span>${n[v.id]?`<span class="badge">${n[v.id]}</span>`:""}</button>`).join("")}
+  ${VIEWS.filter(v=>!v.admin||isAdmin()).map(v=>v.g?`<div class="nav-group">${esc(v.g)}</div>`:`<button class="nav-btn" data-v="${v.id}" aria-current="${v.id===cur}">${icon(v.i)}<span class="nl">${esc(v.t)}</span>${n[v.id]?`<span class="badge">${n[v.id]}</span>`:""}</button>`).join("")}
   <div class="nav-foot">${icon("sheet")}<span>${esc(REMOTE?L("Data saved in your Google Sheet","البيانات محفوظة في جدول Google الخاص بك"):L("Data stays in this browser","البيانات تبقى في هذا المتصفح"))}</span></div>`;
 }
 $("#nav").addEventListener("click",e=>{const b=e.target.closest("[data-v]");if(b)go(b.dataset.v)});
@@ -52,7 +52,7 @@ function syncChip(){const m={local:[L("Saved in this browser","محفوظ في �
   return `<span id="sync" class="chip-s ${m[1]}" title="${esc(sync.msg)}">${icon(m[1]==="ok"?"check":m[1]==="bad"?"alert":"sheet")}${esc(m[0])}</span>`}
 function topbar(){const v=VIEWS.find(x=>x.id===cur)||{t:""};const due=D(S.case.due);let dl="";
   if(due){const d=daysBetween(todayD(),due);dl=`<span class="chip-s ${d<0?"bad":d<=7?"warn":"none"}">${icon("clock")}${esc(d<0?L(`Response overdue by ${-d} days`,`الرد متأخر ${-d} يوم`):L(`Response due in ${d} days`,`موعد الرد خلال ${d} يوم`))}</span>`}
-  return `<header class="topbar"><div class="tb-title"><h1>${esc(v.t)}</h1></div><div class="tb-actions">${dl}${syncChip()}<button class="btn ghost" id="presentBtn">${icon("play")}${esc(L("Present","عرض تقديمي"))}</button><button class="btn ghost" id="langBtn" data-notr lang="${LANG==="ar"?"en":"ar"}">${icon("lang")}${LANG==="ar"?"English":"العربية"}</button></div></header>`}
+  return `<header class="topbar"><div class="tb-title"><h1>${esc(v.t)}</h1></div><div class="tb-actions">${REMOTE||S.years?yearPicker():""}${dl}${syncChip()}<button class="btn ghost" id="installBtn" hidden>${icon("dl")}${esc(L("Install app","تثبيت التطبيق"))}</button><button class="btn ghost" id="presentBtn">${icon("play")}${esc(L("Present","عرض تقديمي"))}</button><button class="btn ghost" id="langBtn" data-notr lang="${LANG==="ar"?"en":"ar"}">${icon("lang")}${LANG==="ar"?"English":"العربية"}</button>${userChip()}</div></header>`}
 function render(){
   const m=$("#main");
   if(sync.state==="loading"){m.innerHTML=`<div class="splash"><div class="spinner"></div><p>${esc(L("Connecting to your Google Sheet…","جارٍ الاتصال بجدول Google الخاص بك…"))}</p></div>`;$("#nav").innerHTML="";return}

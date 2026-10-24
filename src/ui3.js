@@ -147,4 +147,6 @@ L("Paid to ZATCA","المسدد للهيئة");L("Opening VAT liability per ledg
 // ================================================================ start
 window.addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(VIEWS.some(v=>v.id===h))go(h)});
 applyLang();$("#nav").setAttribute("aria-label",tr("Sections"));langObserver.observe(document.body,{childList:true,subtree:true,characterData:true});
-if(REMOTE){if(HAD_CACHE)sync.state="refreshing";loadRemote()}render();
+if(!REMOTE){ensureYears();try{const y=localStorage.getItem(KEY+"-year");if(y&&S.years&&S.years[y])switchYear(y)}catch(e){}}
+if(REMOTE&&AUTH.token){if(HAD_CACHE)sync.state="refreshing";loadRemote()}else if(REMOTE){checkSetup()}
+render();
