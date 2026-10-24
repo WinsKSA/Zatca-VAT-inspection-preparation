@@ -47,20 +47,20 @@ function renderNav(C){const n=navCounts(C);
   <div class="nav-foot">${icon("sheet")}<span>${esc(REMOTE?L("Data saved in your Google Sheet","البيانات محفوظة في جدول Google الخاص بك"):L("Data stays in this browser","البيانات تبقى في هذا المتصفح"))}</span></div>`;
 }
 $("#nav").addEventListener("click",e=>{const b=e.target.closest("[data-v]");if(b)go(b.dataset.v)});
-function go(v){cur=v;try{localStorage.setItem(KEY+"-view",v)}catch(e){}render();$("#main").scrollTo?.(0,0);window.scrollTo(0,0)}
+function go(v){cur=v;UI.anim=true;try{localStorage.setItem(KEY+"-view",v)}catch(e){}render();$("#main").scrollTo?.(0,0);window.scrollTo(0,0)}
 function syncChip(){const m={local:[L("Saved in this browser","محفوظ في هذا المتصفح"),"none"],refreshing:[L("Syncing with Google Sheets…","جارٍ المزامنة مع جداول Google…"),"warn"],loading:[L("Connecting to Google Sheets…","جارٍ الاتصال بجداول Google…"),"warn"],choose:[L("Google Sheet connected","تم الاتصال بجدول Google"),"ok"],pending:[L("Unsaved changes","تغييرات غير محفوظة"),"warn"],saving:[L("Saving to Google Sheets…","جارٍ الحفظ في جداول Google…"),"warn"],saved:[L("Saved to Google Sheets","تم الحفظ في جداول Google"),"ok"],error:[L("Not saved – retrying on next change","لم يُحفظ – ستتم إعادة المحاولة عند التغيير التالي"),"bad"]}[sync.state]||["",""];
   return `<span id="sync" class="chip-s ${m[1]}" title="${esc(sync.msg)}">${icon(m[1]==="ok"?"check":m[1]==="bad"?"alert":"sheet")}${esc(m[0])}</span>`}
 function topbar(){const v=VIEWS.find(x=>x.id===cur)||{t:""};const due=D(S.case.due);let dl="";
   if(due){const d=daysBetween(todayD(),due);dl=`<span class="chip-s ${d<0?"bad":d<=7?"warn":"none"}">${icon("clock")}${esc(d<0?L(`Response overdue by ${-d} days`,`الرد متأخر ${-d} يوم`):L(`Response due in ${d} days`,`موعد الرد خلال ${d} يوم`))}</span>`}
-  return `<header class="topbar"><div class="tb-title"><h1>${esc(v.t)}</h1></div><div class="tb-actions">${dl}${syncChip()}<button class="btn ghost" id="langBtn" data-notr lang="${LANG==="ar"?"en":"ar"}">${icon("lang")}${LANG==="ar"?"English":"العربية"}</button></div></header>`}
+  return `<header class="topbar"><div class="tb-title"><h1>${esc(v.t)}</h1></div><div class="tb-actions">${dl}${syncChip()}<button class="btn ghost" id="presentBtn">${icon("play")}${esc(L("Present","عرض تقديمي"))}</button><button class="btn ghost" id="langBtn" data-notr lang="${LANG==="ar"?"en":"ar"}">${icon("lang")}${LANG==="ar"?"English":"العربية"}</button></div></header>`}
 function render(){
   const m=$("#main");
   if(sync.state==="loading"){m.innerHTML=`<div class="splash"><div class="spinner"></div><p>${esc(L("Connecting to your Google Sheet…","جارٍ الاتصال بجدول Google الخاص بك…"))}</p></div>`;$("#nav").innerHTML="";return}
   if(sync.state==="choose"){m.innerHTML=`<div class="splash"><h2>${esc(L("Your Google Sheet is connected","تم ربط جدول Google الخاص بك"))}</h2><p>${esc(L("The sheet is empty. How do you want to start?","الجدول فارغ. كيف تريد أن تبدأ؟"))}</p><div class="row center"><button class="btn primary" id="stEx">${esc(L("Start with example data","البدء ببيانات توضيحية"))}</button><button class="btn" id="stEmpty">${esc(L("Start empty","البدء بجداول فارغة"))}</button></div></div>`;$("#nav").innerHTML="";$("#stEx").onclick=()=>startRemote(true);$("#stEmpty").onclick=()=>startRemote(false);return}
   document.body.classList.toggle("syncing",sync.state==="refreshing");
   const C=compute();renderNav(C);
-  m.innerHTML=topbar()+`<div class="content">${S.example?exampleBanner():""}${(R[cur]||R.dash)(C)}</div>`;
-  (AFTER[cur]||(()=>{}))(C);bindCommon();
+  m.innerHTML=topbar()+`<div class="content${UI.anim&&!REDUCED?" anim":""}">${!REMOTE?localBanner():""}${S.example?exampleBanner():""}${(R[cur]||R.dash)(C)}</div>`;
+  (AFTER[cur]||(()=>{}))(C);bindCommon();if(UI.anim&&!REDUCED)countUp();UI.anim=false;
 }
 function exampleBanner(){return `<div class="banner">${icon("alert")}<span><b>${esc(L("Example data.","بيانات توضيحية."))}</b> ${esc(L("January–February 2025 contain sample figures with deliberate errors so you can see what the system catches.","يناير وفبراير 2025 يحتويان على أرقام تجريبية بها أخطاء متعمدة لتوضيح ما يكتشفه النظام."))}</span><span class="grow"></span><button class="btn sm" data-act="import">${icon("upl")}${esc("Import my Excel workbook")}</button><button class="btn sm danger" data-act="clear">${esc("Clear example data")}</button></div>`}
 function bindCommon(){
@@ -68,6 +68,7 @@ function bindCommon(){
   document.querySelectorAll('[data-act="import"]').forEach(b=>b.onclick=()=>pickFile(importWorkbook));
   document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>go(b.dataset.go));
   document.querySelectorAll("[data-copy]").forEach(b=>b.onclick=()=>copyText(tableTSV(document.getElementById(b.dataset.copy))));
+  const pb=$("#presentBtn");if(pb)pb.onclick=()=>openDeck(compute());
   const lb=$("#langBtn");if(lb)lb.onclick=()=>{LANG=LANG==="ar"?"en":"ar";try{localStorage.setItem(KEY+"-lang",LANG)}catch(e){}applyLang();render()};
 }
 function tableTSV(t){return [...t.querySelectorAll("tr")].map(tr=>[...tr.children].map(td=>{const i=td.querySelector("input,select");return (i?(i.tagName==="SELECT"?(i.options[i.selectedIndex]||{text:""}).text:i.value):td.innerText).replace(/[\t\n]+/g," ").trim()}).join("\t")).join("\n")}
@@ -92,10 +93,10 @@ R.dash=C=>{
   const activeP=C.ps.filter((p,i)=>C.rets[i].entered||C.outRec[i].gl||C.outRec[i].reg);
   const cats=(activeP.length?activeP:C.ps.slice(0,3)).map(p=>p.short), idx=(activeP.length?activeP:C.ps.slice(0,3)).map(p=>p.i);
   return `<div class="tiles">
-   <div class="tile hero ${scCls}"><span class="t-lab">${esc(L("Compliance score","مؤشر الالتزام"))}</span><span class="t-val big">${sc==null?"–":sc}<small>/100</small></span><div class="meter"><span style="width:${sc||0}%"></span></div><span class="t-sub">${pill(scCls==="warn"?"warn":scCls,scLab)}<span>${esc(L(`${C.tests.filter(t=>t.status!=="na").length} tests applied`,`${C.tests.filter(t=>t.status!=="na").length} اختبار مطبق`))}</span></span></div>
-   <div class="tile hero"><span class="t-lab">${esc(L("Indicative exposure","التعرض التقديري"))}</span><span class="t-val big num">${fmt0(E.A)}<small> SAR</small></span><span class="t-sub"><span>${esc(L("With fines initiative","مع مبادرة الإعفاء من الغرامات"))}</span><b class="num">${fmt0(E.B)} SAR</b>${E.active?pill("ok",L(`${E.daysLeft} days left`,`متبقي ${E.daysLeft} يوم`)):pill("none",L("Not active","غير سارية"))}</span></div>
+   <div class="tile hero ${scCls}"><span class="t-lab">${esc(L("Compliance score","مؤشر الالتزام"))}</span><span class="t-val big">${sc==null?"–":`<span data-count="${sc}">${sc}</span>`}<small>/100</small></span><div class="meter"><span style="width:${sc||0}%"></span></div><span class="t-sub">${pill(scCls==="warn"?"warn":scCls,scLab)}<span>${esc(L(`${C.tests.filter(t=>t.status!=="na").length} tests applied`,`${C.tests.filter(t=>t.status!=="na").length} اختبار مطبق`))}</span></span></div>
+   <div class="tile hero"><span class="t-lab">${esc(L("Indicative exposure","التعرض التقديري"))}</span><span class="t-val big num"><span data-count="${Math.round(E.A)}">${fmt0(E.A)}</span><small> SAR</small></span><span class="t-sub"><span>${esc(L("With fines initiative","مع مبادرة الإعفاء من الغرامات"))}</span><b class="num">${fmt0(E.B)} SAR</b>${E.active?pill("ok",L(`${E.daysLeft} days left`,`متبقي ${E.daysLeft} يوم`)):pill("none",L("Not active","غير سارية"))}</span></div>
    <div class="tile hero ${days!=null&&days<=7?"bad":""}"><span class="t-lab">${esc(L("Response deadline","موعد الرد"))}</span><span class="t-val big num">${days==null?"–":days<0?-days:days}<small> ${esc(days!=null&&days<0?L("days overdue","يوم تأخير"):L("days","يوم"))}</small></span><span class="t-sub">${due?`<span>${esc(showDate(due))}</span><span>·</span>`:""}<span>${esc(L(`${openN} ZATCA requests open`,`${openN} طلب مفتوح من الهيئة`))}</span></span></div>
-   <div class="tile hero"><span class="t-lab">${esc(L("Open findings","الملاحظات المفتوحة"))}</span><span class="t-val big num">${fails.length}</span><span class="t-sub sevrow">${sevPill("high")}<b class="num">${bySev("high")}</b>${sevPill("medium")}<b class="num">${bySev("medium")}</b>${sevPill("low")}<b class="num">${bySev("low")}</b></span></div>
+   <div class="tile hero"><span class="t-lab">${esc(L("Open findings","الملاحظات المفتوحة"))}</span><span class="t-val big num"><span data-count="${fails.length}">${fails.length}</span></span><span class="t-sub sevrow">${sevPill("high")}<b class="num">${bySev("high")}</b>${sevPill("medium")}<b class="num">${bySev("medium")}</b>${sevPill("low")}<b class="num">${bySev("low")}</b></span></div>
   </div>
   <div class="grid2">
    ${card(L("Reconciliation status by period","حالة المطابقة حسب الفترة"),`<div class="frame"><table class="heat"><thead><tr><th>${esc("Check")}</th>${C.ps.map(p=>`<th class="c">${esc(p.short)}</th>`).join("")}</tr></thead><tbody>
@@ -106,6 +107,10 @@ R.dash=C=>{
   <div class="grid2">
    ${card(L("Output VAT: declared vs ledger","ضريبة المخرجات: المُقر بها مقابل الدفاتر"),columnChart(cats,[{name:L("Declared in return","المُقر بها في الإقرار"),c:"s1",values:idx.map(i=>C.outRec[i].ret)},{name:L("Booked in ledger","المسجلة في الدفاتر"),c:"s2",values:idx.map(i=>C.outRec[i].gl)}]),`<button class="btn sm ghost" data-go="rout">${esc(L("Open","فتح"))}</button>`)}
    ${card(L("Input VAT: claimed vs defensible","ضريبة المدخلات: المخصومة مقابل القابلة للدفاع"),columnChart(cats,[{name:L("Claimed in return","المخصومة في الإقرار"),c:"s1",values:idx.map(i=>C.inRec[i].ret)},{name:L("Defensible","القابلة للدفاع عنها"),c:"s3",values:idx.map(i=>C.inRec[i].df)}]),`<button class="btn sm ghost" data-go="rin">${esc(L("Open","فتح"))}</button>`)}
+  </div>
+  <div class="grid2">
+   ${card(L("Tax at risk by area","الضريبة المعرضة حسب المجال"),(()=>{const it=Object.keys(AREAS).map(a=>({label:AREAS[a],value:fails.filter(t=>t.area===a).reduce((s,t)=>s+t.tax,0),c:"s2"}));return it.some(i=>i.value)?barList(it):`<p class="empty">${icon("check")}${esc(L("No tax at risk.","لا توجد ضريبة معرضة."))}</p>`})(),`<button class="btn sm ghost" data-go="tests">${esc(L("Tests","الاختبارات"))}</button>`)}
+   ${card(L("Exposure by period","التعرض حسب الفترة"),(()=>{const rs=E.rows.filter(r=>r.tax||r.allPen);return rs.length?columnChart(rs.map(r=>r.p.short),[{name:L("Tax","الضريبة"),c:"s2",values:rs.map(r=>r.tax)},{name:L("Penalties","الغرامات"),c:"s1",values:rs.map(r=>r.allPen)}]):`<p class="empty">${icon("check")}${esc(L("No exposure in any period.","لا يوجد تعرض في أي فترة."))}</p>`})(),`<button class="btn sm ghost" data-go="find">${esc(L("Details","التفاصيل"))}</button>`)}
   </div>
   ${card(L("Top findings","أهم الملاحظات"),top.length?`<div class="frame"><table class="tbl"><thead><tr><th>ID</th><th>${esc(L("Finding","الملاحظة"))}</th><th>${esc(L("Severity","الخطورة"))}</th><th class="n">${esc(L("Items","البنود"))}</th><th class="n">${esc(L("Tax at risk (SAR)","الضريبة المعرضة (ريال)"))}</th><th></th></tr></thead><tbody>${top.map(t=>`<tr><td class="mono">${t.id}</td><td>${esc(t.title)}</td><td>${sevPill(t.sev)}</td><td class="n">${t.count}</td>${nc(t.tax)}<td><button class="btn sm ghost" data-test="${t.id}">${esc(L("Review","مراجعة"))}</button></td></tr>`).join("")}</tbody></table></div>`:`<p class="empty">${icon("check")}${esc(L("No findings in the data entered so far.","لا توجد ملاحظات في البيانات المدخلة حتى الآن."))}</p>`,`<button class="btn sm ghost" data-go="tests">${esc(L("All tests","جميع الاختبارات"))}</button>`)}`;
 };

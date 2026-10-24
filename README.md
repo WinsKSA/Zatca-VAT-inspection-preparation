@@ -13,6 +13,9 @@ A web app to prepare for a ZATCA (Saudi Arabia) VAT inspection, in **Arabic and 
 - **Sampling:** monetary-unit sampling with vouching status.
 - **Findings & exposure:** findings register with decisions and explanations; tax and penalties in two scenarios.
 - **Response pack:** the 38-item document checklist ZATCA usually requests.
+- **Start here:** company details, the year under inspection and a **Monthly / Quarterly** filing choice with every period and due date, plus an upload checklist.
+- **Presentation mode:** a 7-slide executive briefing built from live data (readiness, exposure, reconciliations, findings, ZATCA requests, recommended actions), in Arabic or English. Use the **Present** button.
+- **Archive:** the demo data removed from the live Sheet on 12 Oct 2026 is kept in [`archive/demo-data-2026-10-12.json`](archive/demo-data-2026-10-12.json); the app can also reload it from **Data hub → Load example data**.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the research behind the design.
 
