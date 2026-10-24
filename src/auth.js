@@ -40,7 +40,8 @@ function welcomePanel(){const f=[["test",L("39 automated tests on 100% of your d
    ${setup?`<label class="fld"><span>${esc(L("Confirm password","تأكيد كلمة المرور"))}</span><input id="aPass2" type="password" required autocomplete="new-password" dir="ltr"></label><p class="note">${esc(ERR.weak)}</p>`:`<label class="chk"><input type="checkbox" id="aRemember" checked> <span>${esc(L("Keep me signed in on this device","البقاء متصلاً على هذا الجهاز"))}</span></label>`}
    <p class="auth-err" id="aErr" role="alert">${esc(sync.msg||"")}</p>
    <button class="btn primary" type="submit" id="aGo">${icon(setup?"users":"lock")}${esc(setup?L("Create account and continue","إنشاء الحساب والمتابعة"):L("Continue","متابعة"))}</button>
-   <p class="note">${esc(L("After your password we email you a 6-digit code.","بعد كلمة المرور نرسل إليك رمزاً من 6 أرقام بالبريد الإلكتروني."))}</p>${foot}</form></div>`;
+   <p class="note">${esc(L("After your password we email you a 6-digit code.","بعد كلمة المرور نرسل إليك رمزاً من 6 أرقام بالبريد الإلكتروني."))}</p>
+   <button type="button" class="btn ghost sm switch" id="aSwitch">${esc(setup?L("I already have an account – sign in","لدي حساب بالفعل – تسجيل الدخول"):L("First time? Create the administrator account","أول مرة؟ أنشئ حساب المدير"))}</button>${foot}</form></div>`;
 }
 function bindAuth(){
   const f=$("#authForm"),err=$("#aErr"),go=$("#aGo");($("#aOtp")||$("#aCode")||$("#aUser"))?.focus();
@@ -57,6 +58,7 @@ function bindAuth(){
       }catch(x){err.textContent=ERR.net}finally{busy(false)}};
     return;
   }
+  const sw=$("#aSwitch");if(sw)sw.onclick=()=>{sync.msg="";sync.state=sync.state==="setup"?"login":"setup";render()};
   f.onsubmit=async e=>{e.preventDefault();err.textContent="";const user=$("#aUser").value.trim().toLowerCase(),pass=$("#aPass").value;busy(true);
     try{
       if(sync.state==="setup"){if(pass!==$("#aPass2").value){err.textContent=ERR.mismatch;return}
