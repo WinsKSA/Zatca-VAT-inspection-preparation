@@ -638,7 +638,8 @@ function compute(){
   C.exposure=exposure(C);
   const app=C.tests.filter(t=>t.status!=="na"), w={high:3,medium:2,low:1};
   const wt=app.reduce((s,t)=>s+w[t.sev],0), wp=app.filter(t=>t.status==="pass").reduce((s,t)=>s+w[t.sev],0);
-  C.score=wt?Math.round(100*wp/wt):null;
+  const hasData=S.tb.length||S.sales.length||S.purchases.length||C.rets.some(r=>r.entered);
+  C.score=hasData&&wt?Math.round(100*wp/wt):null; // no score until real data is loaded
   C.ready=S.checklist.filter(x=>["Ready","Submitted","N/A"].includes(x.status)).length/S.checklist.length;
   return C;
 }
@@ -709,7 +710,7 @@ const TESTS=[
  T("A04","anomaly","low","Invoices dated on a Friday or Saturday","فواتير بتاريخ يوم جمعة أو سبت","Analytics","sales",C=>[...hitS(C,(r)=>{const d=D(r.date);return d&&(d.getUTCDay()===5||d.getUTCDay()===6)}),...hitP(C,(r)=>{const d=D(r.date);return d&&(d.getUTCDay()===5||d.getUTCDay()===6)})]),
  T("A05","anomaly","medium","Input VAT spike: a period above twice the median","ارتفاع مفاجئ في ضريبة المدخلات: فترة تتجاوز ضعف الوسيط","ZATCA risk indicator","rin",C=>{const v=C.rets.map(x=>x.inp).filter(x=>x>0).sort((a,b)=>a-b);if(v.length<3)return null;const med=v[Math.floor(v.length/2)];return hitPer(C,C.rets,x=>x.inp>2*med,x=>x.inp)})];
 function runTests(C){return TESTS.map(t=>{let hits=t.fn(C);const na=hits===null;hits=hits||[];
-  const noData={sales:!S.sales.length,purchases:!S.purchases.length,returns:!C.rets.some(r=>r.entered),ledger:!S.tb.length,anomaly:false}[t.area];
+  const noData={sales:!S.sales.length,purchases:!S.purchases.length,returns:!C.rets.some(r=>r.entered),ledger:!S.tb.length,anomaly:!S.sales.length&&!S.purchases.length}[t.area];
   const status=na||noData?"na":(hits.length?"fail":"pass");
   return{...t,hits,status,count:hits.length,value:r2(hits.reduce((s,h)=>s+Math.abs(h.amount||0),0)),tax:r2(hits.reduce((s,h)=>s+(h.tax||0),0))}})}
 
