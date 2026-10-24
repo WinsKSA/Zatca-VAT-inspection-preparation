@@ -144,12 +144,15 @@ function userChip(){if(!REMOTE||!AUTH.user)return "";return `<div class="umenu">
   ${isAdmin()?`<button class="umenu-i" data-go="users">${icon("users")}${esc(L("Users & access","المستخدمون والصلاحيات"))}</button>`:""}
   <button class="umenu-i" id="pwBtn">${icon("lock")}${esc(L("Change my password","تغيير كلمة المرور"))}</button>
   <button class="umenu-i danger" id="outBtn">${icon("out")}${esc(L("Sign out","تسجيل الخروج"))}</button></div></div>`}
+function closeMenus(){document.querySelectorAll(".umenu-pop").forEach(p=>{p.hidden=true});document.querySelectorAll("#userBtn").forEach(b=>b.setAttribute("aria-expanded","false"))}
+// one global listener: any click outside the menu, or Esc, closes it
+document.addEventListener("click",ev=>{if(!ev.target.closest(".umenu"))closeMenus()});document.addEventListener("keydown",ev=>{if(ev.key==="Escape")closeMenus()});
 function bindUserMenu(){
   const ys=$("#yearSel");if(ys)ys.onchange=()=>{const v=ys.value;if(v==="__all"){go("years");return}if(v==="__add"){addYearPrompt();ys.value=S.year;return}switchYear(v);save();render();toast(L(`Now working on ${v}`,`العمل الآن على سنة ${v}`))};
   const ib=$("#installBtn");if(ib){ib.hidden=!installEvt;ib.onclick=async()=>{if(!installEvt)return;installEvt.prompt();await installEvt.userChoice;installEvt=null;ib.hidden=true}}
   const ub=$("#userBtn"),pop=$("#userPop");if(!ub)return;
   ub.onclick=e=>{e.stopPropagation();pop.hidden=!pop.hidden;ub.setAttribute("aria-expanded",String(!pop.hidden))};
-  document.addEventListener("click",ev=>{if(!pop.hidden&&!ev.target.closest(".umenu")){pop.hidden=true;ub.setAttribute("aria-expanded","false")}},{once:true});
+  pop.addEventListener("click",ev=>{if(ev.target.closest("button"))closeMenus()});
   pop.querySelector("[data-go]")?.addEventListener("click",()=>go("users"));
   $("#outBtn").onclick=async()=>{try{await api("logout")}catch(e){}signedOut(L("You have signed out.","تم تسجيل الخروج."))};
   $("#pwBtn").onclick=()=>passwordDialog();

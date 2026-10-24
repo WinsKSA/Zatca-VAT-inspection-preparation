@@ -4,6 +4,7 @@ const tipAttr=t=>`data-tip="${esc(t)}"`;
 function legend(series){return `<div class="legend">${series.map(s=>`<span class="lg"><i class="sw" style="background:var(--${s.c})"></i>${esc(s.name)}</span>`).join("")}</div>`}
 // vertical grouped bars; series: [{name,c:'s1',values:[],type:'bar'|'line'}]
 function columnChart(cats,series,{h=220,fmtv=fmt0,pct=false,id=""}={}){
+  if(!cats.length||!series.some(s=>s.values.some(v=>Math.abs(v)>0.005)))return `<p class="empty chart-empty">${icon("dot")}${esc(L("No data yet. Figures appear here once data is entered.","لا توجد بيانات بعد. ستظهر الأرقام هنا بعد إدخال البيانات."))}</p>`;
   const W=680,H=h,padL=56,padR=12,padT=12,padB=28,iw=W-padL-padR,ih=H-padT-padB;
   const max=niceMax(Math.max(...series.flatMap(s=>s.values.map(v=>Math.max(0,v))),0)), y=v=>padT+ih-ih*Math.max(0,v)/max;
   const band=iw/cats.length, bars=series.filter(s=>s.type!=="line"), gw=band*0.66, bw=Math.max(3,Math.min(22,gw/Math.max(1,bars.length)-2));
