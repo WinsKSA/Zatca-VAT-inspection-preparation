@@ -26,8 +26,17 @@ function gridHTML(key,C){
   const head=`<tr><th></th>${cols.map(c=>`<th class="${c.t==="num"?"n":""}">${esc(c.h)}</th>`).join("")}${comp.map(c=>`<th class="${c.n?"n":""} calc">${esc(c.h)}</th>`).join("")}<th></th></tr>`;
   const body=slice.map(i=>{const row=data[i],x=rowCalc(key,i,C);return `<tr data-i="${i}"><td class="rowno">${i+1}</td>${cols.map((c,ci)=>`<td>${cellInput(c,getV(key,row,c.k),ci)}</td>`).join("")}${comp.map((c,j)=>compCell(c,row,x,j)).join("")}<td><button class="del" data-g="del" aria-label="Delete row ${i+1}">×</button></td></tr>`}).join("")
     ||`<tr><td colspan="${cols.length+comp.length+2}" class="empty">${esc(ui.flagged?"No rows with exceptions.":"No rows yet. Paste from Excel, import a file, or add a row.")}</td></tr>`;
-  return tools+`<div class="frame grid" data-grid="${key}"><table class="tbl edit" id="t-${key}"><thead>${head}</thead><tbody>${body}</tbody></table></div>`;
+  return tools+`<div class="frame grid" data-grid="${key}"><table class="tbl edit" id="t-${key}"><thead>${head}</thead><tbody>${body}</tbody><tfoot>${gridFoot(key,C,idx)}</tfoot></table></div>`;
 }
+// totals row: sums every numeric column over all rows in view (every page, not only this one)
+function gridFoot(key,C,idx){
+  const cols=COL[key](),comp=COMP[key],data=DATA[key]();if(!idx)idx=data.map((_,i)=>i);if(!idx.length)return "";
+  const sum=f=>idx.reduce((s,i)=>{const v=f(i);return s+(v===""||v==null?0:num(v))},0);
+  const skip=c=>/^Period|Days late|Months late/.test(c.h)||c.k==="p";
+  const cells=cols.map((c,ci)=>c.t==="num"&&!skip(c)?`<td class="n" data-tc="${ci}">${fmt(sum(i=>getV(key,data[i],c.k)))}</td>`:`<td></td>`);
+  const ccells=comp.map(c=>c.n&&!skip(c)?`<td class="n calc">${fmt(sum(i=>c.f(data[i],rowCalc(key,i,C))))}</td>`:`<td class="calc"></td>`);
+  if(cells.length)cells[0]=cells[0]===`<td></td>`?`<td><b>${esc(L("Total","الإجمالي"))}</b> <span class="note">${fmtInt(idx.length)}</span></td>`:cells[0];
+  return `<tr class="total"><td></td>${cells.join("")}${ccells.join("")}<td></td></tr>`}
 function cellInput(c,v,ci){const st=c.w?` style="min-width:${c.w}px"`:"";
   if(c.t==="sel"){const opts=[...c.o];if(v&&!opts.includes(v))opts.push(v);return `<select data-k="${c.k}" data-ci="${ci}"${st}><option value=""></option>${opts.map(o=>`<option value="${esc(o)}"${o===v?" selected":""}>${esc(o)}</option>`).join("")}</select>`}
   if(c.t==="date")return `<input type="date" data-k="${c.k}" data-ci="${ci}" value="${esc(v)}"${st}>`;
@@ -36,7 +45,7 @@ function compCell(c,row,x,j){const v=c.f(row,x);if(c.flags)return `<td class="ca
 function bindGrid(key){
   const wrap=document.querySelector(`[data-grid="${key}"]`);if(!wrap)return;const tb=wrap.querySelector("tbody"),cols=COL[key](),data=DATA[key];
   const upd=e=>{const el=e.target;if(!el.dataset.k)return;const tr=el.closest("tr"),i=+tr.dataset.i;setV(key,data()[i],el.dataset.k,el.value);S.example=false;save();
-    const C=compute(),x=rowCalc(key,i,C);tr.querySelectorAll("[data-c]").forEach(td=>{const c=COMP[key][+td.dataset.c],v=c.f(data()[i],x);td.textContent=c.n&&v!==""?fmt(v):v});renderNav(C);if(key==="tb")refreshTbCheck(C)};
+    const C=compute(),x=rowCalc(key,i,C);tr.querySelectorAll("[data-c]").forEach(td=>{const c=COMP[key][+td.dataset.c],v=c.f(data()[i],x);td.textContent=c.n&&v!==""?fmt(v):v});const tf=wrap.querySelector("tfoot");if(tf){const ui=UI[key];let idx=data().map((_,j)=>j);if(ui&&ui.flagged)idx=idx.filter(j=>{const y=rowCalc(key,j,C);return y&&y.flags&&y.flags.length});tf.innerHTML=gridFoot(key,C,idx)}renderNav(C);if(key==="tb")refreshTbCheck(C)};
   tb.addEventListener("input",upd);tb.addEventListener("change",upd);
   tb.addEventListener("paste",e=>{const el=e.target;if(!el.dataset||el.dataset.ci==null)return;const txt=(e.clipboardData||window.clipboardData).getData("text");if(!/[\t\n]/.test(txt.replace(/\s+$/,"")))return;e.preventDefault();
     const lines=txt.replace(/\r/g,"").replace(/\n+$/,"").split("\n").map(l=>l.split("\t"));const start=+el.closest("tr").dataset.i,ci=+el.dataset.ci;
@@ -148,5 +157,5 @@ L("Paid to ZATCA","المسدد للهيئة");L("Opening VAT liability per ledg
 window.addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(VIEWS.some(v=>v.id===h))go(h)});
 applyLang();$("#nav").setAttribute("aria-label",tr("Sections"));langObserver.observe(document.body,{childList:true,subtree:true,characterData:true});
 if(!REMOTE){ensureYears();try{const y=localStorage.getItem(KEY+"-year");if(y&&S.years&&S.years[y])switchYear(y)}catch(e){}}
-if(REMOTE&&AUTH.token){if(HAD_CACHE)sync.state="refreshing";loadRemote()}else if(REMOTE){checkSetup()}
+if(SUPA){supaStart()}else if(REMOTE&&AUTH.token){if(HAD_CACHE)sync.state="refreshing";loadRemote()}else if(REMOTE){checkSetup()}
 render();

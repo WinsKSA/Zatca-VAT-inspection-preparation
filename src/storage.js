@@ -39,13 +39,13 @@ async function api(action,body={}){
 function setToken(t,remember){AUTH.token=t;try{localStorage.removeItem(TOKEN_KEY);sessionStorage.removeItem(TOKEN_KEY);if(t)(remember?localStorage:sessionStorage).setItem(TOKEN_KEY,t)}catch(e){}}
 function signedOut(msg){clearTimeout(saveTimer);pending=false;sending=false;setToken(null);AUTH.user=null;try{localStorage.removeItem(KEY)}catch(e){}S=exampleState();S.example=false;S.tb=[];S.sales=[];S.purchases=[];S.payments=[];S.requests=[];S.returns=Array.from({length:12},blankReturn);
   lastSent={};if(typeof USERS!=="undefined")USERS=null;cur="dash";try{localStorage.removeItem(KEY+"-view")}catch(e){}sync.state="login";sync.msg=msg||"";render()}
-const canEdit=()=>!REMOTE||(AUTH.user&&AUTH.user.role!=="Viewer");
-const isAdmin=()=>REMOTE&&AUTH.user&&AUTH.user.role==="Admin";
+let canEdit=()=>!REMOTE||(AUTH.user&&AUTH.user.role!=="Viewer");
+let isAdmin=()=>REMOTE&&AUTH.user&&AUTH.user.role==="Admin";
 function setSync(state,msg){sync.state=state;sync.msg=msg||"";if(state==="saved")sync.at=new Date();const el=document.getElementById("sync");if(el)el.outerHTML=syncChip()}
 function snapshotAll(){const o={};for(const k of Object.keys(SCHEMA))o[k]=JSON.stringify(toTable(k));return o}
 function save(){if(typeof relabelActive==="function")relabelActive();
   try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){if(!REMOTE&&!saveWarned){saveWarned=true;toast("This data is too large to keep in the browser. It stays here until you close the page.")}}
-  if(!REMOTE||!canEdit()||["loading","choose","refreshing","login","setup","otp","signup","forgot","reset"].includes(sync.state))return;
+  if(!REMOTE||!canEdit()||["loading","choose","refreshing","login","setup","otp","signup","forgot","reset","newco","pick"].includes(sync.state))return;
   clearTimeout(saveTimer);setSync("pending");saveTimer=setTimeout(pushRemote,1200);
 }
 async function pushRemote(){

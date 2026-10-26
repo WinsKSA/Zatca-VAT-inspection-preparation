@@ -1,14 +1,19 @@
 # Fahs – VAT Inspection Command Center (فحص)
 
-A web app to prepare for a ZATCA (Saudi Arabia) VAT inspection, in **Arabic and English**, with **Google Sheets as the database**.
+A multi-company (SaaS) web app to prepare for a ZATCA (Saudi Arabia) VAT inspection, in **Arabic and English**. Each company has its own private workspace (Supabase Postgres with Row Level Security), its own team and roles, and up to 5+ years of data.
 
-نظام ويب للاستعداد لفحص هيئة الزكاة والضريبة والجمارك لضريبة القيمة المضافة، بالعربية والإنجليزية، مع جداول Google كقاعدة بيانات.
+نظام ويب متعدد المنشآت للاستعداد لفحص هيئة الزكاة والضريبة والجمارك لضريبة القيمة المضافة، بالعربية والإنجليزية. لكل منشأة مساحة عمل خاصة وفريق وصلاحيات.
 
 ## ▶ Open the system / فتح النظام
 
-**https://winsksa.github.io/Zatca-VAT-inspection-preparation/** opens the live system connected to the Google Sheet (sign in with the authorised Google account). A browser-only demo is at [demo.html](https://winsksa.github.io/Zatca-VAT-inspection-preparation/demo.html).
+| Link | What it is |
+|---|---|
+| **https://winsksa.github.io/Zatca-VAT-inspection-preparation/** | The live SaaS app: sign in with your email (a sign-in link is emailed), create your company, invite your team. |
+| [classic.html](https://winsksa.github.io/Zatca-VAT-inspection-preparation/classic.html) | The earlier single-company version that stores data in the Google Sheet (username + password + email code). |
+| [demo.html](https://winsksa.github.io/Zatca-VAT-inspection-preparation/demo.html) | Browser-only demo with example data. |
 
-يفتح الرابط أعلاه النظام المرتبط بجدول Google (يلزم تسجيل الدخول بحساب Google المصرّح له).
+**Roles:** Owner and Admin manage the team; Editor enters data; Viewer reads only. The platform owner also sees the **Platform console** (all companies, suspend or reactivate).
+Database schema and security rules: [`supabase/migrations`](supabase/migrations).
 
 ## What it does
 
