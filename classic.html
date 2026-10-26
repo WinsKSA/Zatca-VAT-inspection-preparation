@@ -9,6 +9,10 @@
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Fahs">
+<meta name="format-detection" content="telephone=no">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" media="print" onload="this.media='all'">
@@ -276,6 +280,52 @@ html[dir="rtl"] .pw input{padding-right:12px!important;padding-left:42px!importa
 .auth-foot{margin-top:4px}.co-list{display:flex;flex-direction:column;gap:8px}.co{display:flex;gap:12px;align-items:center;text-align:start;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);border-radius:10px;padding:12px 14px;cursor:pointer;font:inherit}.co:hover{border-color:var(--brand)}.co span{display:flex;flex-direction:column;flex:1}.co small{color:var(--muted)}.co .role{flex:none;font-size:11px;color:var(--muted);border:1px solid var(--line-2);border-radius:999px;padding:1px 8px}.auth-tabs{display:grid;grid-template-columns:1fr 1fr;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:4px;gap:4px}.auth-tabs button{border:0;background:none;color:var(--ink-2);font:600 14px var(--f-body);padding:9px;border-radius:7px;cursor:pointer}.auth-tabs button[aria-selected="true"]{background:var(--surface);color:var(--brand);box-shadow:0 1px 3px rgba(0,0,0,.12)}.btn.switch{align-self:center;text-decoration:underline}
 .chk{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--ink-2)}.chk input{width:auto;min-width:0}
 .btn.busy{opacity:.6;pointer-events:none}
+/* welcome popup */
+.wp-back{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(4,20,17,.62);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);animation:wpfade .25s ease both}
+.wp-back.out{animation:wpfade .2s ease reverse both}
+@keyframes wpfade{from{opacity:0}to{opacity:1}}
+.wp{width:100%;max-width:620px;max-height:calc(100dvh - 32px);overflow:auto;border-radius:22px;background:var(--surface);box-shadow:0 30px 90px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.06);animation:wppop .5s cubic-bezier(.2,.9,.25,1.15) both}
+@keyframes wppop{from{opacity:0;transform:translateY(24px) scale(.94)}to{opacity:1;transform:none}}
+.wp-hero{position:relative;overflow:hidden;padding:30px 30px 24px;color:#e6f2ee;background:linear-gradient(140deg,#0a2a25 0%,#0c3d35 45%,#123f37 70%,#1b3a2a 100%);isolation:isolate}
+.wp-orb{position:absolute;border-radius:50%;filter:blur(40px);opacity:.55;z-index:-1;animation:wpfloat 9s ease-in-out infinite alternate}
+.wp-orb.a{width:260px;height:260px;background:#2fb39c;top:-90px;inset-inline-start:-60px}
+.wp-orb.b{width:220px;height:220px;background:#e3b866;bottom:-110px;inset-inline-end:-40px;opacity:.38;animation-delay:-3s}
+.wp-orb.c{width:140px;height:140px;background:#4cc9b1;top:30%;inset-inline-end:28%;opacity:.25;animation-delay:-6s}
+@keyframes wpfloat{to{transform:translate(30px,20px) scale(1.15)}}
+.wp-x{position:absolute;top:14px;inset-inline-end:14px;width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:#fff;font-size:20px;line-height:1;cursor:pointer}
+.wp-x:hover{background:rgba(255,255,255,.18)}
+.wp-badge{position:relative;width:62px;height:62px;border-radius:18px;background:linear-gradient(135deg,#0f8a7a,#0b6b5f);display:grid;place-items:center;box-shadow:0 10px 30px rgba(47,179,156,.45);margin-bottom:16px;animation:wppop .6s .1s cubic-bezier(.2,.9,.25,1.3) both}
+.wp-badge svg{width:40px;height:40px}
+.wp-badge::before,.wp-badge::after{content:"";position:absolute;inset:-6px;border-radius:22px;border:2px solid rgba(227,184,102,.55);animation:wpring 2.4s ease-out infinite}
+.wp-badge::after{animation-delay:1.2s}
+@keyframes wpring{from{opacity:.9;transform:scale(1)}to{opacity:0;transform:scale(1.45)}}
+.wp-eyebrow{display:block;color:#e3b866;font:600 13px var(--f-body);letter-spacing:.08em;text-transform:uppercase;animation:rise .5s .15s ease both}
+html[lang="ar"] .wp-eyebrow{letter-spacing:0;font-size:14px}
+.wp-hero h2{margin:8px 0 0;font:700 clamp(23px,4.2vw,31px)/1.2 var(--f-display);color:#fff;text-wrap:balance;animation:rise .5s .22s ease both;background:linear-gradient(90deg,#fff 0%,#fff 55%,#f3d9a4 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.wp-co{display:inline-flex;gap:8px;align-items:center;margin:14px 0 0;padding:6px 12px 6px 10px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);font-size:14px;color:#d8ebe6;animation:rise .5s .28s ease both}
+.wp-co .ic{width:16px;height:16px;color:#e3b866}
+.wp-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:20px;animation:rise .5s .34s ease both}
+.wp-stats div{padding:12px;border-radius:14px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);display:flex;flex-direction:column;gap:2px}
+.wp-stats b{font:700 26px/1 var(--f-display);color:#fff;direction:ltr;text-align:start}
+.wp-stats span{font-size:12.5px;color:#a9c7bf}
+.wp-body{padding:22px 26px 22px;display:flex;flex-direction:column;gap:14px}
+.wp-lead{margin:0;font:600 15px var(--f-display);color:var(--ink)}
+.wp-steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.wp-steps li{animation:rise .45s ease both;animation-delay:calc(var(--d) + .3s)}
+.wp-steps button{width:100%;display:flex;gap:14px;align-items:center;text-align:start;padding:13px 14px;border-radius:14px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font:inherit;cursor:pointer;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+.wp-steps button:hover,.wp-steps button:focus-visible{transform:translateY(-2px);border-color:var(--brand);box-shadow:0 8px 22px rgba(11,107,95,.16)}
+.wp-n{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font:700 13px var(--f-display);color:var(--brand-ink);background:var(--brand)}
+.wp-steps .ic{flex:none;width:22px;height:22px;color:var(--gold)}
+.wp-t{display:flex;flex-direction:column;gap:2px;flex:1}.wp-t b{font-size:15px}.wp-t small{color:var(--muted);font-size:13px;line-height:1.4}
+.wp-install{display:flex;gap:12px;align-items:center;padding:12px 14px;border-radius:14px;background:var(--brand-soft);border:1px dashed var(--brand);animation:rise .45s .6s ease both}
+.wp-install>.ic{flex:none;width:22px;height:22px;color:var(--brand)}
+.wp-install div{display:flex;flex-direction:column;gap:2px;flex:1}.wp-install span{font-size:13px;color:var(--ink-2)}
+.wp-foot{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding-top:4px}
+.wp-foot .btn.primary{padding:11px 20px;font-size:15px}
+@media (max-width:600px){.wp-back{align-items:flex-end;padding:0}.wp{max-width:none;border-radius:22px 22px 0 0;max-height:94dvh;animation:wpup .45s cubic-bezier(.2,.9,.25,1) both}
+ @keyframes wpup{from{transform:translateY(100%)}to{transform:none}}
+ .wp-hero{padding:24px 20px 20px}.wp-body{padding:18px 18px calc(18px + env(safe-area-inset-bottom))}.wp-stats b{font-size:22px}.wp-foot .btn.primary{width:100%;justify-content:center}}
+
 .steps-mini{margin:0;padding-inline-start:20px;display:flex;flex-direction:column;gap:6px;color:var(--ink-2);font-size:14px}
 .umenu{position:relative}.umenu .role{font-size:11px;color:var(--muted);border:1px solid var(--line-2);border-radius:999px;padding:0 7px}
 [hidden]{display:none!important}
@@ -1651,6 +1701,57 @@ R.platform=()=>{if(!PLATFORM)return `<p class="empty">${esc(SERR.forbidden)}</p>
   </tbody></table></div><div class="row"><button class="btn sm" data-copy="t-plat">${esc("Copy table")}</button></div>`)}`};
 AFTER.platform=()=>{if(!PLAT)return;document.querySelectorAll("[data-pstat]").forEach(b=>b.onclick=()=>{const c=PLAT[+b.dataset.pstat],to=c.status==="active"?"suspended":"active";
   confirmBox(to==="suspended"?L(`Suspend ${c.name}? Its team can still view but cannot change data.`,`إيقاف ${c.name}؟ يمكن لفريقها العرض دون تعديل البيانات.`):L(`Activate ${c.name}?`,`تفعيل ${c.name}؟`),to==="suspended"?L("Suspend","إيقاف"):L("Activate","تفعيل"),async()=>{const {error}=await sbc().rpc("platform_set_status",{p_company:c.id,p_status:to});toast(error?sbErr(error):L("Done.","تم."));PLAT=null;render()})})};
+
+// ================================================================ welcome popup after sign-in (once per session) + install-as-app hints
+const IS_IOS=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+const IS_STANDALONE=()=>window.matchMedia("(display-mode: standalone)").matches||navigator.standalone===true||document.documentElement.classList.contains("native");
+function greeting(){const h=new Date().getHours();return h<12?L("Good morning","صباح الخير"):h<18?L("Good afternoon","مساء الخير"):L("Good evening","مساء الخير")}
+function welcomeName(){const u=AUTH.user||{};const n=String(u.name||u.username||"").trim();return n.includes("@")?n.split("@")[0]:n}
+function installCard(){
+  if(IS_STANDALONE())return "";
+  if(IS_IOS)return `<div class="wp-install">${icon("dl")}<div><b>${esc(L("Install Fahs on your iPhone","ثبّت فحص على جهاز iPhone"))}</b><span>${esc(L("In Safari tap Share, then “Add to Home Screen”.","في Safari اضغط زر المشاركة ثم «إضافة إلى الشاشة الرئيسية»."))}</span></div></div>`;
+  if(installEvt)return `<div class="wp-install">${icon("dl")}<div><b>${esc(L("Install Fahs as an app","ثبّت فحص كتطبيق"))}</b><span>${esc(L("Opens full screen from your home screen or desktop, like any app.","يفتح بملء الشاشة من الشاشة الرئيسية أو سطح المكتب مثل أي تطبيق."))}</span></div><button type="button" class="btn sm primary" id="wpInstall">${esc(L("Install","تثبيت"))}</button></div>`;
+  return "";
+}
+function welcomePopup(){
+  if(document.querySelector(".wp-back"))return;
+  const co=(typeof COMPANY!=="undefined"&&COMPANY)?COMPANY.name:(S.setup&&S.setup.company)||"";
+  const yrs=(S.years||[]).length||1,rows=(S.sales||[]).length+(S.purchases||[]).length;
+  const steps=[["upl",L("Load your data","حمّل بياناتك"),L("Trial balance, sales, purchases and returns. Paste from Excel or import a file.","ميزان المراجعة والمبيعات والمشتريات والإقرارات. الصق من Excel أو استورد ملفاً."),"hub"],
+    ["test",L("Run 39 inspection tests","شغّل 39 اختباراً للفحص"),L("Every invoice is checked the way a ZATCA auditor would.","تُفحص كل فاتورة بالطريقة التي يفحص بها مدقق الهيئة."),"tests"],
+    ["shield",L("Close the gaps before ZATCA does","عالج الملاحظات قبل الهيئة"),L("Reconcile, explain findings and see exposure with the fines initiative.","طابق، وفسّر الملاحظات، واعرف التعرض مع مبادرة الإعفاء من الغرامات."),"find"]];
+  const back=document.createElement("div");back.className="wp-back";back.setAttribute("role","dialog");back.setAttribute("aria-modal","true");back.setAttribute("aria-labelledby","wpTitle");
+  back.innerHTML=`<div class="wp">
+    <div class="wp-hero"><i class="wp-orb a"></i><i class="wp-orb b"></i><i class="wp-orb c"></i>
+      <button type="button" class="wp-x" id="wpClose" aria-label="${esc(L("Close","إغلاق"))}">×</button>
+      <div class="wp-badge"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="18" cy="18" r="8" fill="none" stroke="#fff" stroke-width="3"/><path d="M24 24l7 7" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/><path d="M14.5 18.5l2.5 2.5 4.5-5" fill="none" stroke="#e3b866" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="wp-eyebrow"><span>${esc(greeting())}</span>${welcomeName()?`<span data-notr>${LANG==="ar"?"، ":", "}</span><span data-notr>${esc(welcomeName())}</span>`:""}</span>
+      <h2 id="wpTitle">${esc(L("Welcome to Fahs. Your inspection, under control.","أهلاً بك في فحص. فحصك الضريبي تحت السيطرة."))}</h2>
+      ${co?`<p class="wp-co">${icon("building")}<span data-notr>${esc(co)}</span></p>`:""}
+      <div class="wp-stats"><div><b class="wp-count" data-to="39">0</b><span>${esc(L("automated tests","اختباراً آلياً"))}</span></div><div><b class="wp-count" data-to="${yrs}">0</b><span>${esc(L("years in scope","سنوات الفحص"))}</span></div><div><b class="wp-count" data-to="${rows}">0</b><span>${esc(L("invoices loaded","فاتورة محمّلة"))}</span></div></div>
+    </div>
+    <div class="wp-body">
+      <p class="wp-lead">${esc(L("Three steps to a confident inspection:","ثلاث خطوات لفحص بثقة:"))}</p>
+      <ol class="wp-steps">${steps.map((s,i)=>`<li style="--d:${.15+i*.09}s"><button type="button" data-wgo="${s[3]}"><span class="wp-n">${i+1}</span>${icon(s[0])}<span class="wp-t"><b>${esc(s[1])}</b><small>${esc(s[2])}</small></span></button></li>`).join("")}</ol>
+      ${installCard()}
+      <div class="wp-foot"><label class="chk"><input type="checkbox" id="wpNever"> ${esc(L("Don't show this again","لا تعرض هذه الرسالة مرة أخرى"))}</label><span class="grow"></span><button type="button" class="btn primary" id="wpGo">${esc(rows?L("Open the command center","افتح مركز القيادة"):L("Start now","ابدأ الآن"))}</button></div>
+    </div></div>`;
+  document.body.appendChild(back);
+  const close=()=>{try{if(back.querySelector("#wpNever").checked)localStorage.setItem(KEY+"-nowelcome","1")}catch(e){}back.classList.add("out");setTimeout(()=>back.remove(),220);document.removeEventListener("keydown",esc_)};
+  const esc_=e=>{if(e.key==="Escape")close()};document.addEventListener("keydown",esc_);
+  back.addEventListener("click",e=>{if(e.target===back)close()});
+  back.querySelector("#wpClose").onclick=close;
+  back.querySelector("#wpGo").onclick=()=>{close();go(rows?"dash":"hub")};
+  back.querySelectorAll("[data-wgo]").forEach(b=>b.onclick=()=>{close();go(b.dataset.wgo)});
+  const ib=back.querySelector("#wpInstall");if(ib)ib.onclick=async()=>{if(!installEvt)return;installEvt.prompt();await installEvt.userChoice;installEvt=null;ib.closest(".wp-install").remove()};
+  back.querySelectorAll(".wp-count").forEach(el=>{const to=+el.dataset.to,t0=performance.now(),dur=900;const step=t=>{const k=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-k,3);el.textContent=fmtInt(Math.round(to*e));if(k<1)requestAnimationFrame(step)};requestAnimationFrame(step)});
+  setTimeout(()=>back.querySelector("#wpGo")?.focus(),50);
+}
+// show once per browser session, right after the workspace opens
+{const _r=render;render=function(){_r();
+  if(!REMOTE||!AUTH.user||!["saved","saving"].includes(sync.state))return;
+  let skip=false;try{skip=localStorage.getItem(KEY+"-nowelcome")==="1"||sessionStorage.getItem(KEY+"-welcomed")==="1";if(!skip)sessionStorage.setItem(KEY+"-welcomed","1")}catch(e){}
+  if(!skip)setTimeout(welcomePopup,250)}}
 
 // ================================================================ data grids
 const COL={

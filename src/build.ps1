@@ -2,7 +2,7 @@
 #   index.html - the live SaaS app (email sign-in, many companies, data in Supabase)
 #   demo.html  - the same app in demo mode (no sign-in, saves only in the browser)
 $src = $PSScriptRoot; $root = Split-Path $src -Parent; $u = New-Object Text.UTF8Encoding $false
-$parts = "core.js","i18n.js","glue.js","engine.js","storage.js","years.js","charts.js","ui.js","ui2.js","extras.js","present.js","auth.js","supa.js","supaui.js","ui3.js"
+$parts = "core.js","i18n.js","glue.js","engine.js","storage.js","years.js","charts.js","ui.js","ui2.js","extras.js","present.js","auth.js","supa.js","supaui.js","welcome.js","ui3.js"
 $js = ($parts | ForEach-Object { [IO.File]::ReadAllText((Join-Path $src $_), [Text.Encoding]::UTF8).TrimStart([char]0xFEFF) }) -join "`n"
 $head = [IO.File]::ReadAllText((Join-Path $src "head.html"), [Text.Encoding]::UTF8)
 $html = $head + $js + "`n</script>`n</body>`n</html>`n"
