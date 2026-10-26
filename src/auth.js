@@ -155,7 +155,7 @@ function bindUserMenu(){
   pop.addEventListener("click",ev=>{if(ev.target.closest("button"))closeMenus()});
   pop.querySelector("[data-go]")?.addEventListener("click",()=>go("users"));
   $("#outBtn").onclick=async()=>{try{await api("logout")}catch(e){}signedOut(L("You have signed out.","تم تسجيل الخروج."))};
-  $("#pwBtn").onclick=()=>passwordDialog();
+  const pb=$("#pwBtn");if(pb)pb.onclick=()=>passwordDialog();
 }
 function formDialog(title,fields,okLabel,onOk){const back=document.createElement("div");back.className="modal-back";
   back.innerHTML=`<form class="modal" role="dialog" aria-modal="true"><h3>${esc(title)}</h3>${fields}<p class="auth-err" id="dErr" role="alert"></p><div class="row end"><button type="button" class="btn" id="dCancel">${esc("Cancel")}</button><button class="btn primary" id="dOk">${esc(okLabel)}</button></div></form>`;

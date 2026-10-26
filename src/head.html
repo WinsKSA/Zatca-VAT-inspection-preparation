@@ -322,6 +322,36 @@ html[lang="ar"] .wp-eyebrow{letter-spacing:0;font-size:14px}
 .wp-install div{display:flex;flex-direction:column;gap:2px;flex:1}.wp-install span{font-size:13px;color:var(--ink-2)}
 .wp-foot{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding-top:4px}
 .wp-foot .btn.primary{padding:11px 20px;font-size:15px}
+.wp-badge.logo{width:76px;height:76px;background:#fff;padding:8px}.wp-badge.logo img{width:100%;height:100%;object-fit:contain;border-radius:10px}
+.wp-glance{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;margin-top:12px;animation:rise .5s .42s ease both}
+.wp-glance>div{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:12px}
+.wp-gauge{grid-row:span 2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;position:relative;min-width:118px}
+.wp-gauge svg{width:96px;height:96px;transform:rotate(-90deg)}
+.wp-gauge circle{fill:none;stroke-width:8}.wp-gauge .tr{stroke:rgba(255,255,255,.12)}
+.wp-gauge .fg{stroke:#8fb0a8;stroke-linecap:round;stroke-dasharray:var(--c);stroke-dashoffset:var(--c);animation:wpgauge 1.3s .5s cubic-bezier(.3,.8,.3,1) forwards}
+.wp-gauge .fg.ok{stroke:#4cc9b1}.wp-gauge .fg.warn{stroke:#e3b866}.wp-gauge .fg.bad{stroke:#ef8a7a}
+@keyframes wpgauge{to{stroke-dashoffset:var(--o)}}
+html[dir="rtl"] .wp-gauge svg{transform:rotate(-90deg) scaleY(-1)}
+.wp-gauge b{position:absolute;top:calc(50% - 22px);font:700 22px var(--f-display);color:#fff;direction:ltr}
+.wp-gauge>span{font-size:12.5px;color:#a9c7bf}
+.wp-ch-h{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}.wp-ch-h b{font-size:13px;color:#fff;flex:1;min-width:max-content}
+.wp-leg{display:flex;gap:10px;align-items:center;font-size:12px;color:#cfe3de;flex-wrap:wrap}.wp-leg i{width:10px;height:10px;border-radius:3px;display:inline-block;margin-inline-end:-5px}
+.wp-leg i.s{background:#1f9e88}.wp-leg i.p{background:#b8862e}.wp-leg i.tk{margin-inline-end:4px}.wp-leg i.tk.ok{background:#4cc9b1}.wp-leg i.tk.bad{background:#ef8a7a}.wp-leg i.tk.na{background:rgba(255,255,255,.35)}.wp-leg b{color:#fff;font-size:12.5px}
+.wp-bars{display:flex;align-items:flex-end;gap:4px;height:64px;direction:ltr}
+html[dir="rtl"] .wp-bars{flex-direction:row-reverse}
+.wp-col{flex:1;height:100%;display:flex;align-items:flex-end;gap:2px;cursor:default;border-radius:4px}.wp-col:hover{background:rgba(255,255,255,.06)}
+.wp-col i{flex:1;height:var(--h);min-height:2px;border-radius:4px 4px 0 0;transform-origin:bottom;transform:scaleY(0);animation:wpgrow .7s cubic-bezier(.3,.8,.3,1) forwards;animation-delay:calc(var(--d) + .55s)}
+.wp-col i.s{background:#1f9e88}.wp-col i.p{background:#b8862e}
+@keyframes wpgrow{to{transform:scaleY(1)}}
+.wp-empty{margin:0;height:64px;display:grid;place-items:center;color:#a9c7bf;font-size:13px;text-align:center}
+.wp-stack{display:flex;gap:2px;height:12px;border-radius:6px;overflow:hidden;background:rgba(255,255,255,.08)}
+.wp-stack i{transform-origin:left;transform:scaleX(0);animation:wpgrowx .8s .7s cubic-bezier(.3,.8,.3,1) forwards}html[dir="rtl"] .wp-stack i{transform-origin:right}
+.wp-stack .ok{background:#4cc9b1}.wp-stack .bad{background:#ef8a7a}.wp-stack .na{background:rgba(255,255,255,.28)}
+@keyframes wpgrowx{to{transform:scaleX(1)}}
+.logo-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.logo-row>div{display:flex;flex-direction:column;gap:2px}
+.logo-prev{width:56px;height:56px;border-radius:12px;border:1px solid var(--line);background:#fff;display:grid;place-items:center;overflow:hidden;flex:none;color:var(--muted)}.logo-prev img{width:100%;height:100%;object-fit:contain}
+@media (max-width:600px){.wp-glance{grid-template-columns:minmax(0,1fr)}.wp-gauge{grid-row:auto;flex-direction:row;gap:14px;justify-content:flex-start}.wp-gauge svg{width:72px;height:72px}.wp-gauge b{position:static;font-size:24px}}
 @media (max-width:600px){.wp-back{align-items:flex-end;padding:0}.wp{max-width:none;border-radius:22px 22px 0 0;max-height:94dvh;animation:wpup .45s cubic-bezier(.2,.9,.25,1) both}
  @keyframes wpup{from{transform:translateY(100%)}to{transform:none}}
  .wp-hero{padding:24px 20px 20px}.wp-body{padding:18px 18px calc(18px + env(safe-area-inset-bottom))}.wp-stats b{font-size:22px}.wp-foot .btn.primary{width:100%;justify-content:center}}

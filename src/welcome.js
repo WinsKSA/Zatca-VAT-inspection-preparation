@@ -9,6 +9,28 @@ function installCard(){
   if(installEvt)return `<div class="wp-install">${icon("dl")}<div><b>${esc(L("Install Fahs as an app","ثبّت فحص كتطبيق"))}</b><span>${esc(L("Opens full screen from your home screen or desktop, like any app.","يفتح بملء الشاشة من الشاشة الرئيسية أو سطح المكتب مثل أي تطبيق."))}</span></div><button type="button" class="btn sm primary" id="wpInstall">${esc(L("Install","تثبيت"))}</button></div>`;
   return "";
 }
+// "at a glance" visuals: readiness gauge, test results bar, monthly sales vs purchases (palette validated on the dark hero)
+function welcomeCharts(){
+  let C;try{C=compute()}catch(e){return ""}
+  const score=C.score,R=34,CIRC=2*Math.PI*R,off=score==null?CIRC:CIRC*(1-score/100);
+  const t=C.tests||[],pass=t.filter(x=>x.status==="pass").length,fail=t.filter(x=>x.status==="fail").length,na=t.length-pass-fail;
+  const seg=(n,cls,lab)=>n?`<i class="${cls}" style="flex:${n}" title="${esc(lab)}: ${n}"></i>`:"";
+  const mon=Array.from({length:12},()=>({s:0,p:0}));
+  (S.sales||[]).forEach((r,i)=>{const d=D(r.date),x=C.sales[i];if(d&&x)mon[d.getUTCMonth()].s+=Math.abs(x.net||0)});
+  (S.purchases||[]).forEach((r,i)=>{const d=D(r.date),x=C.pur[i];if(d&&x)mon[d.getUTCMonth()].p+=Math.abs(x.net||0)});
+  const mx=Math.max(1,...mon.map(m=>Math.max(m.s,m.p))),has=mon.some(m=>m.s||m.p);
+  const mname=i=>LANG==="ar"&&typeof MON_AR!=="undefined"?MON_AR[i]:["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][i];
+  const bars=has?mon.map((m,i)=>`<div class="wp-col" title="${esc(mname(i))} · ${esc(L("Sales","المبيعات"))} ${fmt(m.s)} · ${esc(L("Purchases","المشتريات"))} ${fmt(m.p)}"><i class="s" style="--h:${(m.s/mx*100).toFixed(1)}%;--d:${(i*.04).toFixed(2)}s"></i><i class="p" style="--h:${(m.p/mx*100).toFixed(1)}%;--d:${(i*.04+.02).toFixed(2)}s"></i></div>`).join(""):`<p class="wp-empty">${esc(L("No data yet. Your monthly chart appears here.","لا توجد بيانات بعد. سيظهر هنا الرسم الشهري."))}</p>`;
+  return `<div class="wp-glance">
+    <div class="wp-gauge" role="img" aria-label="${esc(L("Inspection readiness","جاهزية الفحص"))} ${score==null?"—":score+"%"}">
+      <svg viewBox="0 0 84 84"><circle cx="42" cy="42" r="${R}" class="tr"/><circle cx="42" cy="42" r="${R}" class="fg${score==null?"":score>=80?" ok":score>=50?" warn":" bad"}" style="--c:${CIRC.toFixed(1)};--o:${off.toFixed(1)}"/></svg>
+      <b>${score==null?"—":`<span class="wp-count" data-to="${score}">0</span>%`}</b><span>${esc(L("Readiness","الجاهزية"))}</span></div>
+    <div class="wp-chart"><div class="wp-ch-h"><b>${esc(L("Sales vs purchases by month","المبيعات مقابل المشتريات شهرياً"))}</b><span class="wp-leg"><i class="s"></i>${esc(L("Sales","المبيعات"))}<i class="p"></i>${esc(L("Purchases","المشتريات"))}</span></div>
+      <div class="wp-bars">${bars}</div></div>
+    <div class="wp-tests"><div class="wp-ch-h"><b>${esc(L("Inspection tests","اختبارات الفحص"))}</b><span class="wp-leg"><span><i class="tk ok"></i><b data-notr>${pass}</b> <span>${esc(L("passed","ناجح"))}</span></span><span><i class="tk bad"></i><b data-notr>${fail}</b> <span>${esc(L("with findings","بملاحظات"))}</span></span><span><i class="tk na"></i><b data-notr>${na}</b> <span>${esc(L("need data","تحتاج بيانات"))}</span></span></span></div>
+      <div class="wp-stack">${seg(pass,"ok",L("Passed","ناجح"))}${seg(fail,"bad",L("With findings","بملاحظات"))}${seg(na,"na",L("Need data","تحتاج بيانات"))}</div></div>
+  </div>`;
+}
 function welcomePopup(){
   if(document.querySelector(".wp-back"))return;
   const co=(typeof COMPANY!=="undefined"&&COMPANY)?COMPANY.name:(S.setup&&S.setup.company)||"";
@@ -20,11 +42,12 @@ function welcomePopup(){
   back.innerHTML=`<div class="wp">
     <div class="wp-hero"><i class="wp-orb a"></i><i class="wp-orb b"></i><i class="wp-orb c"></i>
       <button type="button" class="wp-x" id="wpClose" aria-label="${esc(L("Close","إغلاق"))}">×</button>
-      <div class="wp-badge"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="18" cy="18" r="8" fill="none" stroke="#fff" stroke-width="3"/><path d="M24 24l7 7" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/><path d="M14.5 18.5l2.5 2.5 4.5-5" fill="none" stroke="#e3b866" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="wp-badge${S.setup.logo?" logo":""}">${S.setup.logo?`<img src="${esc(S.setup.logo)}" alt="${esc(co)}">`:`<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="18" cy="18" r="8" fill="none" stroke="#fff" stroke-width="3"/><path d="M24 24l7 7" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/><path d="M14.5 18.5l2.5 2.5 4.5-5" fill="none" stroke="#e3b866" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`}</div>
       <span class="wp-eyebrow"><span>${esc(greeting())}</span>${welcomeName()?`<span data-notr>${LANG==="ar"?"، ":", "}</span><span data-notr>${esc(welcomeName())}</span>`:""}</span>
       <h2 id="wpTitle">${esc(L("Welcome to Fahs. Your inspection, under control.","أهلاً بك في فحص. فحصك الضريبي تحت السيطرة."))}</h2>
       ${co?`<p class="wp-co">${icon("building")}<span data-notr>${esc(co)}</span></p>`:""}
       <div class="wp-stats"><div><b class="wp-count" data-to="39">0</b><span>${esc(L("automated tests","اختباراً آلياً"))}</span></div><div><b class="wp-count" data-to="${yrs}">0</b><span>${esc(L("years in scope","سنوات الفحص"))}</span></div><div><b class="wp-count" data-to="${rows}">0</b><span>${esc(L("invoices loaded","فاتورة محمّلة"))}</span></div></div>
+      ${welcomeCharts()}
     </div>
     <div class="wp-body">
       <p class="wp-lead">${esc(L("Three steps to a confident inspection:","ثلاث خطوات لفحص بثقة:"))}</p>
