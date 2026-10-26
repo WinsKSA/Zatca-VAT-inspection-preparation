@@ -61,6 +61,12 @@ function bindAuthExtra(){
   return true;
 }
 
+// brand line, shown big on the sign-in page and under the logo
+const SLOGAN=()=>(LANG==="ar"?"نتعلم من الماضي لنصنع الحاضر ونبني المستقبل":"We learn from the past to shape the present and build the future.");
+function sloganHTML(){return `<h2 class="w-slogan" aria-label="${esc(SLOGAN())}">${SLOGAN().split(" ").map((w,i)=>`<span style="--i:${i}" aria-hidden="true" data-notr>${esc(w)}</span>`).join(" ")}</h2>`}
+// past -> present -> future, drawn as a line that fills while a light travels along it
+function timeHTML(){const st=[["clock",L("The past","الماضي"),L("5 years of returns and ledgers","5 سنوات من الإقرارات والدفاتر")],["check",L("The present","الحاضر"),L("Reconciled and tested today","مطابقة وفحص اليوم")],["flag",L("The future","المستقبل"),L("Ready for every inspection","جاهزية تامة لكل فحص")]];
+  return `<div class="w-time" aria-hidden="true"><div class="w-line"><i></i><b></b></div>${st.map(([ic,t,s],i)=>`<div class="w-node" style="--n:${i}"><span class="w-pin">${icon(ic)}</span><b>${esc(t)}</b><small>${esc(s)}</small></div>`).join("")}</div>`}
 // animated product preview on the sign-in page: readiness ring, monthly bars, tests ticking, floating result chips
 function authShowcase(){
   const bars=[38,52,45,61,57,70,66,78,72,84,80,92];
@@ -80,14 +86,15 @@ function authShowcase(){
   </div>`}
 function welcomePanel(){const f=[["test",L("39 automated tests on 100% of your data","39 اختباراً آلياً على 100% من بياناتك")],["cal",L("Up to 5 years, monthly or quarterly","حتى 5 سنوات، شهرياً أو ربع سنوي")],["scale",L("Reconciliations, exposure and the fines initiative","المطابقات والتعرض ومبادرة الإعفاء من الغرامات")],["lock",typeof SUPA!=="undefined"&&SUPA?L("Secure sign-in: password or email link","دخول آمن بكلمة المرور أو برابط البريد"):L("Secure sign-in with an email code","دخول آمن برمز عبر البريد الإلكتروني")]];
   return `<aside class="welcome"><div class="w-aurora" aria-hidden="true"><i></i><i></i><i></i></div><div class="w-sparks" aria-hidden="true">${Array.from({length:14},(_,i)=>`<i style="--x:${(i*7.3)%100}%;--s:${6+(i*3)%9}s;--d:-${(i*1.7)%9}s"></i>`).join("")}</div>
-   <span class="w-eyebrow">${esc(L("Welcome to Fahs","مرحباً بك في فحص"))}</span><h2>${esc(L("Your ZATCA VAT inspection, under control.","فحص هيئة الزكاة والضريبة والجمارك، تحت السيطرة."))}</h2>
-   <p>${esc(L("Prepare every reconciliation, find issues before ZATCA does, and answer every request on time.","جهّز كل المطابقات، واكتشف الملاحظات قبل الهيئة، وأجب على كل طلب في موعده."))}</p>
+   <span class="w-eyebrow">${esc(L("Welcome to Fahs","مرحباً بك في فحص"))}</span>${sloganHTML()}
+   <p class="w-sub">${esc(L("Your ZATCA VAT inspection, under control. Prepare every reconciliation, find issues before ZATCA does, and answer every request on time.","فحص هيئة الزكاة والضريبة والجمارك تحت السيطرة. جهّز كل المطابقات، واكتشف الملاحظات قبل الهيئة، وأجب على كل طلب في موعده."))}</p>
+   ${timeHTML()}
    ${authShowcase()}
    <ul>${f.map(([i,t],k)=>`<li style="--d:${k*90}ms">${icon(i)}<span>${esc(t)}</span></li>`).join("")}</ul>
    <a class="w-app" href="app.html">${icon("dl")}<span>${esc(L("Get the app for iPhone and Android","حمّل التطبيق لـ iPhone وAndroid"))}</span></a>
    <p class="w-foot">${esc(typeof SUPA!=="undefined"&&SUPA?L("Each company has its own private, encrypted workspace.","لكل منشأة مساحة عمل خاصة ومشفّرة."):L("Data is stored in your company's Google Sheet.","تُحفظ البيانات في جدول Google الخاص بالمنشأة."))}</p></aside>`}function authScreen(){
   const setup=sync.state==="setup",otp=sync.state==="otp";
-  const brand=`<div class="auth-brand"><svg viewBox="0 0 40 40" class="logo" aria-hidden="true"><rect x="2" y="2" width="36" height="36" rx="10" fill="var(--brand)"/><circle cx="18" cy="18" r="8" fill="none" stroke="#fff" stroke-width="3"/><path d="M24 24l7 7" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/><path d="M14.5 18.5l2.5 2.5 4.5-5" fill="none" stroke="var(--gold-2)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><div><div class="wordmark">${LANG==="ar"?"فحص":"Fahs"}</div><div class="tagline">${esc(L("VAT inspection command center","مركز قيادة فحص ضريبة القيمة المضافة"))}</div></div></div>`;
+  const brand=`<div class="auth-brand"><svg viewBox="0 0 40 40" class="logo" aria-hidden="true"><rect x="2" y="2" width="36" height="36" rx="10" fill="var(--brand)"/><circle cx="18" cy="18" r="8" fill="none" stroke="#fff" stroke-width="3"/><path d="M24 24l7 7" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/><path d="M14.5 18.5l2.5 2.5 4.5-5" fill="none" stroke="var(--gold-2)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><div><div class="wordmark">${LANG==="ar"?"فحص":"Fahs"}</div><div class="tagline slogan-sm">${esc(SLOGAN())}</div></div></div>`;
   const foot=`<div class="row auth-foot"><button type="button" class="btn ghost sm" id="authLang" data-notr>${icon("lang")}${LANG==="ar"?"English":"العربية"}</button><span class="grow"></span><span class="note">${esc(L("Data is stored in your company's Google Sheet.","تُحفظ البيانات في جدول Google الخاص بالمنشأة."))}</span></div>`;
   const ex=authExtraScreen(brand,foot);if(ex)return ex;
   if(otp)return `<div class="auth">${welcomePanel()}<form class="auth-card" id="authForm" autocomplete="off">${brand}

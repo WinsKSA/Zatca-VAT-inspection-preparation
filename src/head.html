@@ -321,6 +321,7 @@ html[dir="rtl"] .pw input{padding-right:12px!important;padding-left:42px!importa
 .wp-eyebrow{display:block;color:#e3b866;font:600 13px var(--f-body);letter-spacing:.08em;text-transform:uppercase;animation:rise .5s .15s ease both}
 html[lang="ar"] .wp-eyebrow{letter-spacing:0;font-size:14px}
 .wp-hero h2{margin:8px 0 0;font:700 clamp(23px,4.2vw,31px)/1.2 var(--f-display);color:#fff;text-wrap:balance;animation:rise .5s .22s ease both;background:linear-gradient(90deg,#fff 0%,#fff 55%,#f3d9a4 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.wp-slogan{margin:10px 0 0;font:600 15.5px/1.5 "IBM Plex Sans Arabic",var(--f-body);color:#e3b866;animation:rise .5s .26s ease both}
 .wp-co{display:inline-flex;gap:8px;align-items:center;margin:14px 0 0;padding:6px 12px 6px 10px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);font-size:14px;color:#d8ebe6;animation:rise .5s .28s ease both}
 .wp-co .ic{width:16px;height:16px;color:#e3b866}
 .wp-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:20px;animation:rise .5s .34s ease both}
@@ -432,6 +433,33 @@ body.signed-out .auth-card .btn.primary{position:relative;overflow:hidden}
 body.signed-out .auth-card .btn.primary::after{content:"";position:absolute;top:0;bottom:0;width:40%;left:-60%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);transform:skewX(-20deg);animation:shine 3.2s 1s ease-in-out infinite}
 @keyframes shine{0%{left:-60%}55%,100%{left:130%}}
 @media (max-width:860px){.w-show{display:none}}
+/* brand slogan: words rise in one by one, then a gold light runs across them */
+.welcome .w-slogan{margin:6px 0 0;font:700 clamp(30px,4.4vw,52px)/1.22 var(--f-display);color:#fff;text-wrap:balance;animation:none}
+.w-slogan span{display:inline-block;opacity:0;transform:translateY(18px);filter:blur(8px);animation:wword .9s cubic-bezier(.2,.9,.25,1) forwards;animation-delay:calc(.25s + var(--i) * .16s);
+ background:linear-gradient(100deg,#fff 0%,#fff 40%,#f3d9a4 50%,#fff 60%,#fff 100%);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.w-slogan span:nth-child(3n+2){background-image:linear-gradient(100deg,#e3b866 0%,#f3d9a4 40%,#fff 50%,#f3d9a4 60%,#e3b866 100%)}
+html[lang="ar"] .welcome .w-slogan{font-family:"IBM Plex Sans Arabic",system-ui,sans-serif;font-weight:600;line-height:1.35}
+@keyframes wword{to{opacity:1;transform:none;filter:blur(0)}}
+.w-slogan span{animation:wword .9s cubic-bezier(.2,.9,.25,1) forwards,wshine 5s 2.4s ease-in-out infinite;animation-delay:calc(.25s + var(--i) * .16s),calc(2.4s + var(--i) * .08s)}
+@keyframes wshine{0%{background-position:100% 0}60%,100%{background-position:0 0}}
+.welcome .w-sub{animation:rise .7s 1.5s ease both;font-size:15.5px}
+.slogan-sm{font-size:12px!important;line-height:1.4;color:var(--gold)!important;font-weight:600}
+.w-time{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;max-width:520px;margin:8px 0 4px;animation:rise .6s 1.8s ease both}
+.w-line{position:absolute;top:21px;inset-inline:16.6%;height:2px;background:rgba(255,255,255,.12);border-radius:2px}
+.w-line i{position:absolute;inset:0;background:linear-gradient(90deg,#4cc9b1,#e3b866);transform:scaleX(0);transform-origin:left;animation:wline 2.4s 2.1s cubic-bezier(.4,0,.2,1) forwards;border-radius:2px}
+html[dir="rtl"] .w-line i{transform-origin:right;background:linear-gradient(270deg,#4cc9b1,#e3b866)}
+@keyframes wline{to{transform:scaleX(1)}}
+.w-line b{position:absolute;top:-4px;width:10px;height:10px;border-radius:50%;background:#fff;box-shadow:0 0 14px 4px rgba(227,184,102,.8);inset-inline-start:0;opacity:0;animation:wtravel 3.2s 4.6s ease-in-out infinite}
+@keyframes wtravel{0%{inset-inline-start:0;opacity:0}10%{opacity:1}90%{opacity:1}100%{inset-inline-start:calc(100% - 10px);opacity:0}}
+.w-node{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:3px;opacity:0;animation:wnode .7s cubic-bezier(.2,.9,.25,1.2) forwards;animation-delay:calc(2.1s + var(--n) * .8s)}
+@keyframes wnode{from{opacity:0;transform:translateY(10px) scale(.85)}to{opacity:1;transform:none}}
+.w-pin{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:#0c3d35;border:2px solid rgba(255,255,255,.18);box-shadow:0 0 0 6px rgba(12,32,29,.9);position:relative;z-index:1}
+.w-node:nth-child(2) .w-pin{border-color:#4cc9b1}.w-node:nth-child(3) .w-pin{border-color:#7fd0b8}.w-node:nth-child(4) .w-pin{border-color:#e3b866;animation:wpin 2.4s 4.6s ease-in-out infinite}
+@keyframes wpin{50%{box-shadow:0 0 0 6px rgba(12,32,29,.9),0 0 22px 6px rgba(227,184,102,.55)}}
+.w-pin .ic{width:20px;height:20px;color:#e3b866}
+.w-node b{font:600 14px var(--f-display);color:#fff;margin-top:4px}.w-node small{font-size:12px;color:#a9c7bf;line-height:1.35}
+.w-show{animation-delay:2.6s!important}
+@media (max-width:860px){.welcome .w-slogan{font-size:clamp(26px,7.5vw,34px)}.w-time{margin-bottom:8px}}
 .steps-mini{margin:0;padding-inline-start:20px;display:flex;flex-direction:column;gap:6px;color:var(--ink-2);font-size:14px}
 .umenu{position:relative}.umenu .role{font-size:11px;color:var(--muted);border:1px solid var(--line-2);border-radius:999px;padding:0 7px}
 [hidden]{display:none!important}

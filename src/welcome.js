@@ -45,6 +45,7 @@ function welcomePopup(){
       <div class="wp-badge${S.setup.logo?" logo":""}"><i class="wp-glow" aria-hidden="true"></i>${S.setup.logo?`<img src="${esc(S.setup.logo)}" alt="${esc(co)}">`:`<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="18" cy="18" r="8" fill="none" stroke="#fff" stroke-width="3"/><path d="M24 24l7 7" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/><path d="M14.5 18.5l2.5 2.5 4.5-5" fill="none" stroke="#e3b866" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`}</div>
       <span class="wp-eyebrow"><span>${esc(greeting())}</span>${welcomeName()?`<span data-notr>${LANG==="ar"?"، ":", "}</span><span data-notr>${esc(welcomeName())}</span>`:""}</span>
       <h2 id="wpTitle">${esc(L("Welcome to Fahs. Your inspection, under control.","أهلاً بك في فحص. فحصك الضريبي تحت السيطرة."))}</h2>
+      <p class="wp-slogan" data-notr>${esc(SLOGAN())}</p>
       ${co?`<p class="wp-co">${icon("building")}<span data-notr>${esc(co)}</span></p>`:""}
       <div class="wp-stats"><div><b class="wp-count" data-to="39">0</b><span>${esc(L("automated tests","اختباراً آلياً"))}</span></div><div><b class="wp-count" data-to="${yrs}">0</b><span>${esc(L("years in scope","سنوات الفحص"))}</span></div><div><b class="wp-count" data-to="${rows}">0</b><span>${esc(L("invoices loaded","فاتورة محمّلة"))}</span></div></div>
       ${welcomeCharts()}
