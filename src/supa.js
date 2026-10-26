@@ -3,16 +3,17 @@
 const SB_URL="https://xuogrqrjdabhrmicqwhd.supabase.co";
 const SB_KEY="sb_publishable_wNw9BzBBHFMWfpUaA6eIYg_97mL3Oxq";
 const SUPA=REMOTE&&window.FAHS_BACKEND!=="gas";
+let SETPW_OPTIONAL=false;
 let sb=null, COMPANY=null, COMPANIES=[], PLATFORM=false, TEAM=null, PLAT=null;
 // Sessions live only in this tab (sessionStorage): every time the system is opened it starts at the sign-in page.
 if(SUPA){try{Object.keys(localStorage).filter(k=>/^sb-.*-auth-token/.test(k)).forEach(k=>localStorage.removeItem(k))}catch(e){}}
 const sbc=()=>{if(!sb)sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,storage:window.sessionStorage,autoRefreshToken:true,detectSessionInUrl:true}});return sb};
 const ROLE_AR2={owner:"المالك",admin:"مدير",editor:"محرر",viewer:"مشاهد"};
 const roleLabel=r=>LANG==="ar"?(ROLE_AR2[r]||r):({owner:"Owner",admin:"Admin",editor:"Editor",viewer:"Viewer"}[r]||r);
-const SERR={rate:L("Too many codes were requested. Wait a minute and try again.","تم طلب رموز كثيرة. انتظر دقيقة ثم حاول مرة أخرى."),code:L("That code is wrong or has expired. Request a new one.","الرمز غير صحيح أو انتهت صلاحيته. اطلب رمزاً جديداً."),
+const SERR={rate:L("The free email service allows only 2 emails per hour, and that limit is reached. Try again later, or sign in with your password.","خدمة البريد المجانية تسمح برسالتين فقط في الساعة وقد تم بلوغ الحد. حاول لاحقاً أو ادخل بكلمة المرور."),code:L("That code is wrong or has expired. Request a new one.","الرمز غير صحيح أو انتهت صلاحيته. اطلب رمزاً جديداً."),
   email:L("Enter a valid email address.","أدخل بريداً إلكترونياً صحيحاً."),net:L("Cannot reach the server. Check your internet connection.","تعذر الوصول إلى الخادم. تحقق من اتصالك بالإنترنت."),
   forbidden:L("You don't have permission for this.","ليست لديك صلاحية لهذا الإجراء."),suspended:L("This company is suspended. Contact the platform administrator.","هذه المنشأة موقوفة. تواصل مع مدير المنصة.")};
-const sbErr=e=>{const m=String(e&&(e.message||e.error_description)||e||"");if(/rate|seconds|too many/i.test(m))return SERR.rate;if(/expired|invalid|otp|token/i.test(m))return SERR.code;if(/forbidden|permission|denied|policy/i.test(m))return SERR.forbidden;if(/fetch|network/i.test(m))return SERR.net;return m};
+const sbErr=e=>{const m=String(e&&(e.message||e.error_description)||e||"");if(/rate limit|over_email|too many|seconds/i.test(m))return SERR.rate;if(/expired|invalid|otp|token/i.test(m))return SERR.code;if(/forbidden|permission|denied|policy/i.test(m))return SERR.forbidden;if(/fetch|network/i.test(m))return SERR.net;return m};
 
 if(SUPA){
   // permissions now come from the company role
@@ -25,6 +26,7 @@ if(SUPA){
 
 // ---------------------------------------------------------------- start-up and company selection
 async function supaStart(){
+  if(/access_token|[?&]code=/.test(location.hash+location.search))window.__fromLink=true;
   if(/access_token|error_description|[?&]code=/.test(location.hash+location.search))setTimeout(()=>{try{history.replaceState(null,"",location.pathname)}catch(e){}},1500);
   sync.state=HAD_CACHE?"refreshing":"loading";
   try{const {data:{session}}=await sbc().auth.getSession();if(!session){sync.state="login";render();return}await afterSignIn(session)}
@@ -35,6 +37,8 @@ async function afterSignIn(session){
   if(SIGNING)return;SIGNING=true;try{await afterSignIn2(session)}finally{SIGNING=false}
 }
 async function afterSignIn2(session){
+  // arrived from an emailed sign-in link: offer to set a password right away (needed for the phone apps)
+  if(window.__fromLink){window.__fromLink=false;SETPW_OPTIONAL=true;sync.state="setpw";sync.msg="";render();return}
   const u=session.user;AUTH.user={username:u.email,email:u.email,name:(u.user_metadata&&u.user_metadata.full_name)||u.email.split("@")[0],role:"viewer"};
   try{await sbc().rpc("accept_invitations")}catch(e){}
   try{const r=await sbc().rpc("is_platform_admin");PLATFORM=!!r.data}catch(e){PLATFORM=false}

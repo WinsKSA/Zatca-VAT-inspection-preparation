@@ -22,7 +22,8 @@ function supaScreen(){
     <p class="note">${esc(L("Choose a password of at least 8 characters. You can then sign in with it on the web and in the mobile app.","اختر كلمة مرور من 8 أحرف على الأقل، ثم استخدمها للدخول من الويب ومن تطبيق الجوال."))}</p>
     <label class="fld"><span>${esc(L("New password","كلمة المرور الجديدة"))}</span><input id="nPass" type="password" required minlength="8" autocomplete="new-password" dir="ltr"></label>
     <label class="fld"><span>${esc(L("Confirm new password","تأكيد كلمة المرور الجديدة"))}</span><input id="nPass2" type="password" required minlength="8" autocomplete="new-password" dir="ltr"></label>${err}
-    <button class="btn primary" type="submit" id="aGo">${icon("lock")}${esc(L("Save password","حفظ كلمة المرور"))}</button>`,"off");
+    <button class="btn primary" type="submit" id="aGo">${icon("lock")}${esc(L("Save password","حفظ كلمة المرور"))}</button>
+    ${SETPW_OPTIONAL?`<button type="button" class="btn ghost sm switch" id="aSkip">${esc(L("Later, continue to my workspace","لاحقاً، تابع إلى مساحة العمل"))}</button>`:""}`,"off");
   if(st==="otp")return wrap(`<h1>${esc(L("Check your email","تحقق من بريدك الإلكتروني"))}</h1>
     <p class="note"><span>${esc(L("We sent a sign-in email to","أرسلنا رسالة دخول إلى"))}</span> <b dir="ltr" data-notr>${esc(SIGN.email)}</b>.</p>
     <ol class="steps-mini"><li>${esc(L("Open the email from Supabase Auth (check Spam/Junk too).","افتح الرسالة الواردة من Supabase Auth (وتحقق من مجلد الرسائل غير المرغوب فيها)."))}</li><li>${esc(L("Click the sign-in link. This page opens signed in.","اضغط رابط الدخول، وستفتح هذه الصفحة وأنت مسجّل الدخول."))}</li></ol>
@@ -56,6 +57,7 @@ function bindSupa(){
     if(lg&&!lg.includes("@")){try{const {data:em}=await sbc().rpc("login_email",{p_login:lg});SIGN.email=em||""}catch(x){SIGN.email=""}}
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(SIGN.email)){err.textContent=L("Enter your username or email first.","أدخل اسم المستخدم أو البريد الإلكتروني أولاً.");return}
     try{const {error}=await sbc().auth.resetPasswordForEmail(SIGN.email,{redirectTo:location.origin+location.pathname});if(error)throw error;sync.msg=L("We emailed you a link to set a new password.","أرسلنا إليك رابطاً لتعيين كلمة مرور جديدة.");render()}catch(x){err.textContent=sbErr(x)}};
+  const sk=$("#aSkip");if(sk)sk.onclick=async()=>{SETPW_OPTIONAL=false;sync.msg="";await afterSignIn((await sbc().auth.getSession()).data.session)};
   if(st==="pick"){document.querySelectorAll("[data-co]").forEach(b=>b.onclick=()=>openCompany(COMPANIES.find(c=>c.id===b.dataset.co)));$("#aNew").onclick=()=>{sync.state="newco";render()};return}
   if(st==="otp"){$("#aBack").onclick=()=>{sync.state="login";sync.msg="";render()};
     $("#aResend").onclick=async()=>{err.textContent="";try{await send();toast(L("Sent again. Check your inbox.","تمت إعادة الإرسال. تحقق من بريدك."))}catch(e){err.textContent=sbErr(e)}}}
@@ -75,7 +77,7 @@ function bindSupa(){
           sync.msg="";await afterSignIn(data.session);return}
         await send();sync.state="otp";sync.msg="";render();return}
       if(st==="setpw"){const a=$("#nPass").value;if(a.length<8){err.textContent=L("Use at least 8 characters.","استخدم 8 أحرف على الأقل.");return}if(a!==$("#nPass2").value){err.textContent=L("The passwords don't match.","كلمتا المرور غير متطابقتين.");return}
-        const {error}=await sbc().auth.updateUser({password:a});if(error)throw error;toast(L("Password saved.","تم حفظ كلمة المرور."));sync.msg="";await afterSignIn((await sbc().auth.getSession()).data.session);return}
+        const {error}=await sbc().auth.updateUser({password:a});if(error)throw error;toast(L("Password saved.","تم حفظ كلمة المرور."));SETPW_OPTIONAL=false;sync.msg="";await afterSignIn((await sbc().auth.getSession()).data.session);return}
       if(st==="otp"){const {data,error}=await sbc().auth.verifyOtp({email:SIGN.email,token:$("#aOtp").value.trim(),type:"email"});if(error)throw error;
         if(SIGN.name)sbc().from("profiles").update({full_name:SIGN.name}).eq("user_id",data.user.id).then(()=>{});
         sync.msg="";await afterSignIn(data.session);return}
