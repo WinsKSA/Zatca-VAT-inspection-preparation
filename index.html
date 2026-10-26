@@ -359,6 +359,60 @@ html[dir="rtl"] .wp-bars{flex-direction:row-reverse}
 .seg.how{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:4px}
 .seg.how button{border:0;background:none;color:var(--ink-2);font:500 13.5px var(--f-body);padding:7px;border-radius:7px;cursor:pointer}
 .seg.how button[aria-pressed="true"]{background:var(--surface);color:var(--brand);box-shadow:0 1px 3px rgba(0,0,0,.12);font-weight:600}
+/* sign-in page: aurora, sparks, live product preview, glass card with a moving gradient border */
+.welcome{position:relative;overflow:hidden;isolation:isolate}
+.w-aurora{position:absolute;inset:0;z-index:-2;overflow:hidden}
+.w-aurora i{position:absolute;width:55%;aspect-ratio:1;border-radius:50%;filter:blur(70px);opacity:.5;animation:aur 16s ease-in-out infinite alternate}
+.w-aurora i:nth-child(1){background:#2fb39c;top:-15%;inset-inline-start:-10%}
+.w-aurora i:nth-child(2){background:#e3b866;bottom:-20%;inset-inline-end:-5%;opacity:.3;animation-delay:-5s;animation-duration:19s}
+.w-aurora i:nth-child(3){background:#0f8a7a;top:35%;inset-inline-start:30%;opacity:.35;animation-delay:-9s;animation-duration:22s}
+@keyframes aur{33%{transform:translate(12%,8%) scale(1.15)}66%{transform:translate(-8%,14%) scale(.9)}100%{transform:translate(6%,-10%) scale(1.1)}}
+.welcome::before{content:"";position:absolute;inset:0;z-index:-1;background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:44px 44px;-webkit-mask-image:radial-gradient(70% 60% at 50% 45%,#000,transparent);mask-image:radial-gradient(70% 60% at 50% 45%,#000,transparent)}
+.w-sparks{position:absolute;inset:0;z-index:-1;pointer-events:none}
+.w-sparks i{position:absolute;bottom:-10px;left:var(--x);width:3px;height:3px;border-radius:50%;background:#e3b866;box-shadow:0 0 8px #e3b866;opacity:0;animation:spark var(--s) linear infinite;animation-delay:var(--d)}
+.w-sparks i:nth-child(odd){background:#4cc9b1;box-shadow:0 0 8px #4cc9b1}
+@keyframes spark{0%{transform:translateY(0);opacity:0}10%{opacity:.9}100%{transform:translateY(-105vh);opacity:0}}
+.welcome h2{animation:rise .6s .05s ease both}.welcome>p{animation:rise .6s .12s ease both}
+.w-show{position:relative;margin:14px 0 40px;max-width:470px;width:100%;animation:rise .7s .2s ease both}
+.w-dash{background:linear-gradient(160deg,rgba(255,255,255,.1),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.14);border-radius:18px;padding:14px;box-shadow:0 30px 60px rgba(0,0,0,.35);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);animation:float 7s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-8px)}}
+.w-dash-h{display:flex;gap:6px;align-items:center;margin-bottom:12px}.w-dash-h b{font:600 12.5px var(--f-body);color:#cfe3de;margin-inline-start:6px}
+.w-dot{width:9px;height:9px;border-radius:50%;background:#ef8a7a}.w-dot:nth-child(2){background:#e3b866}.w-dot:nth-child(3){background:#4cc9b1}
+.w-dash-b{display:flex;gap:16px;align-items:flex-end}
+.w-ring{position:relative;width:104px;flex:none;display:flex;flex-direction:column;align-items:center;gap:4px}
+.w-ring svg{width:104px;height:104px;transform:rotate(-90deg)}.w-ring circle{fill:none;stroke-width:10}.w-ring .t{stroke:rgba(255,255,255,.1)}
+.w-ring .f{stroke:url(#wrg);stroke-linecap:round;stroke-dasharray:314.2;stroke-dashoffset:314.2;animation:wring 1.8s .5s cubic-bezier(.3,.8,.3,1) forwards}
+@keyframes wring{to{stroke-dashoffset:25}}
+.w-ring>div{position:absolute;top:30px;display:flex;align-items:baseline;gap:1px;direction:ltr}.w-ring b{font:700 30px/1 var(--f-display);color:#fff}.w-ring small{color:#a9c7bf;font-size:14px}
+.w-ring>span{font-size:12px;color:#a9c7bf}
+.w-bars{flex:1;display:flex;align-items:flex-end;gap:5px;height:96px;direction:ltr}
+.w-bars i{flex:1;height:var(--h);border-radius:5px 5px 2px 2px;background:linear-gradient(180deg,#4cc9b1,#1f9e88);transform-origin:bottom;transform:scaleY(0);animation:wgrow .8s cubic-bezier(.3,.8,.3,1) forwards;animation-delay:var(--d)}
+.w-bars i:nth-child(3n){background:linear-gradient(180deg,#e3b866,#b8862e)}
+@keyframes wgrow{to{transform:scaleY(1)}}
+.welcome .w-ticks{list-style:none;margin:12px 0 0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.welcome .w-ticks li{display:flex!important;gap:8px;align-items:center;font-size:12.5px!important;color:#d8ebe6;opacity:0;animation:tick .5s ease forwards!important;animation-delay:var(--d)!important}
+@keyframes tick{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+.w-ck{flex:none;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;background:#2fb39c;color:#04211c;font:700 11px var(--f-display)}.w-ck.g{background:#e3b866}
+.w-chip{position:absolute;display:flex;gap:10px;align-items:center;padding:10px 14px;border-radius:14px;background:rgba(10,32,28,.82);border:1px solid rgba(255,255,255,.16);box-shadow:0 18px 40px rgba(0,0,0,.4);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);opacity:0;animation:chipin .7s cubic-bezier(.2,.9,.25,1.2) forwards,float 6s ease-in-out infinite}
+.w-chip span{display:flex;flex-direction:column}.w-chip b{font-size:13px;color:#fff;white-space:nowrap}.w-chip small{font-size:11.5px;color:#a9c7bf;white-space:nowrap}
+.w-chip .w-ck{width:28px;height:28px;font-size:12px}
+.w-chip.a{top:-18px;inset-inline-end:-24px;animation-delay:2.2s,2.9s}
+.w-chip.b{top:104px;inset-inline-end:-30px;animation-delay:3s,3.7s}
+.w-chip.c{bottom:-48px;inset-inline-end:-12px;animation-delay:3.8s,4.5s}
+@keyframes chipin{from{opacity:0;transform:translateY(14px) scale(.9)}to{opacity:1;transform:none}}
+.w-app{display:inline-flex;gap:8px;align-items:center;align-self:flex-start;margin-top:4px;padding:8px 14px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);color:#e6f2ee;text-decoration:none;font-size:13.5px;transition:background .2s}
+.w-app:hover{background:rgba(255,255,255,.16)}.w-app .ic{width:16px;height:16px;color:#e3b866}
+body.signed-out .auth-card{position:relative;background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-color:transparent}
+body.signed-out .auth-card::before{content:"";position:absolute;inset:-1px;border-radius:17px;padding:1.5px;background:conic-gradient(from var(--ang),#2fb39c,#e3b866,#0f8a7a,#4cc9b1,#2fb39c);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:spinb 6s linear infinite;pointer-events:none}
+@property --ang{syntax:"<angle>";inherits:false;initial-value:0deg}
+@keyframes spinb{to{--ang:360deg}}
+body.signed-out .auth-card .logo{animation:logopulse 3s ease-in-out infinite;border-radius:10px}
+@keyframes logopulse{50%{box-shadow:0 0 0 8px rgba(47,179,156,.18)}}
+body.signed-out .auth-card .fld input:focus{box-shadow:0 0 0 3px rgba(47,179,156,.25);border-color:var(--brand)}
+body.signed-out .auth-card .btn.primary{position:relative;overflow:hidden}
+body.signed-out .auth-card .btn.primary::after{content:"";position:absolute;top:0;bottom:0;width:40%;left:-60%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);transform:skewX(-20deg);animation:shine 3.2s 1s ease-in-out infinite}
+@keyframes shine{0%{left:-60%}55%,100%{left:130%}}
+@media (max-width:860px){.w-show{display:none}}
 .steps-mini{margin:0;padding-inline-start:20px;display:flex;flex-direction:column;gap:6px;color:var(--ink-2);font-size:14px}
 .umenu{position:relative}.umenu .role{font-size:11px;color:var(--muted);border:1px solid var(--line-2);border-radius:999px;padding:0 7px}
 [hidden]{display:none!important}
@@ -1382,10 +1436,30 @@ function bindAuthExtra(){
   return true;
 }
 
-function welcomePanel(){const f=[["test",L("39 automated tests on 100% of your data","39 اختباراً آلياً على 100% من بياناتك")],["cal",L("Up to 5 years, monthly or quarterly","حتى 5 سنوات، شهرياً أو ربع سنوي")],["scale",L("Reconciliations, exposure and the fines initiative","المطابقات والتعرض ومبادرة الإعفاء من الغرامات")],["lock",L("Secure sign-in with an email code","دخول آمن برمز عبر البريد الإلكتروني")]];
-  return `<aside class="welcome"><span class="w-eyebrow">${esc(L("Welcome to Fahs","مرحباً بك في فحص"))}</span><h2>${esc(L("Your ZATCA VAT inspection, under control.","فحص هيئة الزكاة والضريبة والجمارك، تحت السيطرة."))}</h2>
+// animated product preview on the sign-in page: readiness ring, monthly bars, tests ticking, floating result chips
+function authShowcase(){
+  const bars=[38,52,45,61,57,70,66,78,72,84,80,92];
+  const tests=[L("Sales VAT = 15% of net","ضريبة المبيعات = 15% من الصافي"),L("Supplier VAT numbers valid","أرقام الموردين الضريبية صحيحة"),L("Returns agree with the ledger","الإقرارات تطابق الدفاتر"),L("Input VAT is defensible","ضريبة المدخلات قابلة للدفاع")];
+  return `<div class="w-show" aria-hidden="true">
+   <div class="w-dash">
+    <div class="w-dash-h"><span class="w-dot"></span><span class="w-dot"></span><span class="w-dot"></span><b>${esc(L("Inspection command center","مركز قيادة الفحص"))}</b></div>
+    <div class="w-dash-b">
+     <div class="w-ring"><svg viewBox="0 0 120 120"><defs><linearGradient id="wrg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4cc9b1"/><stop offset="1" stop-color="#e3b866"/></linearGradient></defs><circle cx="60" cy="60" r="50" class="t"/><circle cx="60" cy="60" r="50" class="f"/></svg><div><b class="w-num">92</b><small>%</small></div><span>${esc(L("Readiness","الجاهزية"))}</span></div>
+     <div class="w-bars">${bars.map((h,i)=>`<i style="--h:${h}%;--d:${(0.6+i*0.07).toFixed(2)}s"></i>`).join("")}</div>
+    </div>
+    <ul class="w-ticks">${tests.map((t,i)=>`<li style="--d:${(1.4+i*0.45).toFixed(2)}s"><span class="w-ck">✓</span>${esc(t)}</li>`).join("")}</ul>
+   </div>
+   <div class="w-chip a"><span class="w-ck">✓</span><span><b>${esc(L("Output VAT reconciled","تمت مطابقة ضريبة المخرجات"))}</b><small>${esc(L("12 of 12 periods","12 من 12 فترة"))}</small></span></div>
+   <div class="w-chip b"><span class="w-ck g">٪</span><span><b>${esc(L("Fines initiative applied","تطبيق مبادرة الإعفاء"))}</b><small>${esc(L("Penalties waived to 31 Dec 2026","إعفاء الغرامات حتى 31 ديسمبر 2026"))}</small></span></div>
+   <div class="w-chip c"><span class="w-ck">39</span><span><b>${esc(L("Tests on every invoice","اختباراً على كل فاتورة"))}</b><small>${esc(L("Like a ZATCA auditor","كما يفحص مدقق الهيئة"))}</small></span></div>
+  </div>`}
+function welcomePanel(){const f=[["test",L("39 automated tests on 100% of your data","39 اختباراً آلياً على 100% من بياناتك")],["cal",L("Up to 5 years, monthly or quarterly","حتى 5 سنوات، شهرياً أو ربع سنوي")],["scale",L("Reconciliations, exposure and the fines initiative","المطابقات والتعرض ومبادرة الإعفاء من الغرامات")],["lock",typeof SUPA!=="undefined"&&SUPA?L("Secure sign-in: password or email link","دخول آمن بكلمة المرور أو برابط البريد"):L("Secure sign-in with an email code","دخول آمن برمز عبر البريد الإلكتروني")]];
+  return `<aside class="welcome"><div class="w-aurora" aria-hidden="true"><i></i><i></i><i></i></div><div class="w-sparks" aria-hidden="true">${Array.from({length:14},(_,i)=>`<i style="--x:${(i*7.3)%100}%;--s:${6+(i*3)%9}s;--d:-${(i*1.7)%9}s"></i>`).join("")}</div>
+   <span class="w-eyebrow">${esc(L("Welcome to Fahs","مرحباً بك في فحص"))}</span><h2>${esc(L("Your ZATCA VAT inspection, under control.","فحص هيئة الزكاة والضريبة والجمارك، تحت السيطرة."))}</h2>
    <p>${esc(L("Prepare every reconciliation, find issues before ZATCA does, and answer every request on time.","جهّز كل المطابقات، واكتشف الملاحظات قبل الهيئة، وأجب على كل طلب في موعده."))}</p>
+   ${authShowcase()}
    <ul>${f.map(([i,t],k)=>`<li style="--d:${k*90}ms">${icon(i)}<span>${esc(t)}</span></li>`).join("")}</ul>
+   <a class="w-app" href="app.html">${icon("dl")}<span>${esc(L("Get the app for iPhone and Android","حمّل التطبيق لـ iPhone وAndroid"))}</span></a>
    <p class="w-foot">${esc(typeof SUPA!=="undefined"&&SUPA?L("Each company has its own private, encrypted workspace.","لكل منشأة مساحة عمل خاصة ومشفّرة."):L("Data is stored in your company's Google Sheet.","تُحفظ البيانات في جدول Google الخاص بالمنشأة."))}</p></aside>`}function authScreen(){
   const setup=sync.state==="setup",otp=sync.state==="otp";
   const brand=`<div class="auth-brand"><svg viewBox="0 0 40 40" class="logo" aria-hidden="true"><rect x="2" y="2" width="36" height="36" rx="10" fill="var(--brand)"/><circle cx="18" cy="18" r="8" fill="none" stroke="#fff" stroke-width="3"/><path d="M24 24l7 7" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/><path d="M14.5 18.5l2.5 2.5 4.5-5" fill="none" stroke="var(--gold-2)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><div><div class="wordmark">${LANG==="ar"?"فحص":"Fahs"}</div><div class="tagline">${esc(L("VAT inspection command center","مركز قيادة فحص ضريبة القيمة المضافة"))}</div></div></div>`;
@@ -1836,6 +1910,9 @@ function welcomePopup(){
 }
 // show once per browser session, right after the workspace opens
 {const _r=render;render=function(){_r();
+  // sign-in page: count the readiness number up with the ring
+  document.querySelectorAll(".w-num:not(.done)").forEach(el=>{el.classList.add("done");const to=+el.textContent,t0=performance.now()+500,dur=1800;el.textContent="0";
+    const step=t=>{const k=Math.max(0,Math.min(1,(t-t0)/dur)),e=1-Math.pow(1-k,3);el.textContent=String(Math.round(to*e));if(k<1)requestAnimationFrame(step)};requestAnimationFrame(step)});
   if(!REMOTE||!AUTH.user||!["saved","saving"].includes(sync.state))return;
   let skip=false;try{skip=sessionStorage.getItem(KEY+"-welcomed")==="1";if(!skip)sessionStorage.setItem(KEY+"-welcomed","1")}catch(e){}
   if(!skip)setTimeout(welcomePopup,250)}}

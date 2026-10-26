@@ -68,6 +68,9 @@ function welcomePopup(){
 }
 // show once per browser session, right after the workspace opens
 {const _r=render;render=function(){_r();
+  // sign-in page: count the readiness number up with the ring
+  document.querySelectorAll(".w-num:not(.done)").forEach(el=>{el.classList.add("done");const to=+el.textContent,t0=performance.now()+500,dur=1800;el.textContent="0";
+    const step=t=>{const k=Math.max(0,Math.min(1,(t-t0)/dur)),e=1-Math.pow(1-k,3);el.textContent=String(Math.round(to*e));if(k<1)requestAnimationFrame(step)};requestAnimationFrame(step)});
   if(!REMOTE||!AUTH.user||!["saved","saving"].includes(sync.state))return;
   let skip=false;try{skip=sessionStorage.getItem(KEY+"-welcomed")==="1";if(!skip)sessionStorage.setItem(KEY+"-welcomed","1")}catch(e){}
   if(!skip)setTimeout(welcomePopup,250)}}

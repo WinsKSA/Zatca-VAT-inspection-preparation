@@ -61,10 +61,30 @@ function bindAuthExtra(){
   return true;
 }
 
-function welcomePanel(){const f=[["test",L("39 automated tests on 100% of your data","39 اختباراً آلياً على 100% من بياناتك")],["cal",L("Up to 5 years, monthly or quarterly","حتى 5 سنوات، شهرياً أو ربع سنوي")],["scale",L("Reconciliations, exposure and the fines initiative","المطابقات والتعرض ومبادرة الإعفاء من الغرامات")],["lock",L("Secure sign-in with an email code","دخول آمن برمز عبر البريد الإلكتروني")]];
-  return `<aside class="welcome"><span class="w-eyebrow">${esc(L("Welcome to Fahs","مرحباً بك في فحص"))}</span><h2>${esc(L("Your ZATCA VAT inspection, under control.","فحص هيئة الزكاة والضريبة والجمارك، تحت السيطرة."))}</h2>
+// animated product preview on the sign-in page: readiness ring, monthly bars, tests ticking, floating result chips
+function authShowcase(){
+  const bars=[38,52,45,61,57,70,66,78,72,84,80,92];
+  const tests=[L("Sales VAT = 15% of net","ضريبة المبيعات = 15% من الصافي"),L("Supplier VAT numbers valid","أرقام الموردين الضريبية صحيحة"),L("Returns agree with the ledger","الإقرارات تطابق الدفاتر"),L("Input VAT is defensible","ضريبة المدخلات قابلة للدفاع")];
+  return `<div class="w-show" aria-hidden="true">
+   <div class="w-dash">
+    <div class="w-dash-h"><span class="w-dot"></span><span class="w-dot"></span><span class="w-dot"></span><b>${esc(L("Inspection command center","مركز قيادة الفحص"))}</b></div>
+    <div class="w-dash-b">
+     <div class="w-ring"><svg viewBox="0 0 120 120"><defs><linearGradient id="wrg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4cc9b1"/><stop offset="1" stop-color="#e3b866"/></linearGradient></defs><circle cx="60" cy="60" r="50" class="t"/><circle cx="60" cy="60" r="50" class="f"/></svg><div><b class="w-num">92</b><small>%</small></div><span>${esc(L("Readiness","الجاهزية"))}</span></div>
+     <div class="w-bars">${bars.map((h,i)=>`<i style="--h:${h}%;--d:${(0.6+i*0.07).toFixed(2)}s"></i>`).join("")}</div>
+    </div>
+    <ul class="w-ticks">${tests.map((t,i)=>`<li style="--d:${(1.4+i*0.45).toFixed(2)}s"><span class="w-ck">✓</span>${esc(t)}</li>`).join("")}</ul>
+   </div>
+   <div class="w-chip a"><span class="w-ck">✓</span><span><b>${esc(L("Output VAT reconciled","تمت مطابقة ضريبة المخرجات"))}</b><small>${esc(L("12 of 12 periods","12 من 12 فترة"))}</small></span></div>
+   <div class="w-chip b"><span class="w-ck g">٪</span><span><b>${esc(L("Fines initiative applied","تطبيق مبادرة الإعفاء"))}</b><small>${esc(L("Penalties waived to 31 Dec 2026","إعفاء الغرامات حتى 31 ديسمبر 2026"))}</small></span></div>
+   <div class="w-chip c"><span class="w-ck">39</span><span><b>${esc(L("Tests on every invoice","اختباراً على كل فاتورة"))}</b><small>${esc(L("Like a ZATCA auditor","كما يفحص مدقق الهيئة"))}</small></span></div>
+  </div>`}
+function welcomePanel(){const f=[["test",L("39 automated tests on 100% of your data","39 اختباراً آلياً على 100% من بياناتك")],["cal",L("Up to 5 years, monthly or quarterly","حتى 5 سنوات، شهرياً أو ربع سنوي")],["scale",L("Reconciliations, exposure and the fines initiative","المطابقات والتعرض ومبادرة الإعفاء من الغرامات")],["lock",typeof SUPA!=="undefined"&&SUPA?L("Secure sign-in: password or email link","دخول آمن بكلمة المرور أو برابط البريد"):L("Secure sign-in with an email code","دخول آمن برمز عبر البريد الإلكتروني")]];
+  return `<aside class="welcome"><div class="w-aurora" aria-hidden="true"><i></i><i></i><i></i></div><div class="w-sparks" aria-hidden="true">${Array.from({length:14},(_,i)=>`<i style="--x:${(i*7.3)%100}%;--s:${6+(i*3)%9}s;--d:-${(i*1.7)%9}s"></i>`).join("")}</div>
+   <span class="w-eyebrow">${esc(L("Welcome to Fahs","مرحباً بك في فحص"))}</span><h2>${esc(L("Your ZATCA VAT inspection, under control.","فحص هيئة الزكاة والضريبة والجمارك، تحت السيطرة."))}</h2>
    <p>${esc(L("Prepare every reconciliation, find issues before ZATCA does, and answer every request on time.","جهّز كل المطابقات، واكتشف الملاحظات قبل الهيئة، وأجب على كل طلب في موعده."))}</p>
+   ${authShowcase()}
    <ul>${f.map(([i,t],k)=>`<li style="--d:${k*90}ms">${icon(i)}<span>${esc(t)}</span></li>`).join("")}</ul>
+   <a class="w-app" href="app.html">${icon("dl")}<span>${esc(L("Get the app for iPhone and Android","حمّل التطبيق لـ iPhone وAndroid"))}</span></a>
    <p class="w-foot">${esc(typeof SUPA!=="undefined"&&SUPA?L("Each company has its own private, encrypted workspace.","لكل منشأة مساحة عمل خاصة ومشفّرة."):L("Data is stored in your company's Google Sheet.","تُحفظ البيانات في جدول Google الخاص بالمنشأة."))}</p></aside>`}function authScreen(){
   const setup=sync.state==="setup",otp=sync.state==="otp";
   const brand=`<div class="auth-brand"><svg viewBox="0 0 40 40" class="logo" aria-hidden="true"><rect x="2" y="2" width="36" height="36" rx="10" fill="var(--brand)"/><circle cx="18" cy="18" r="8" fill="none" stroke="#fff" stroke-width="3"/><path d="M24 24l7 7" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/><path d="M14.5 18.5l2.5 2.5 4.5-5" fill="none" stroke="var(--gold-2)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><div><div class="wordmark">${LANG==="ar"?"فحص":"Fahs"}</div><div class="tagline">${esc(L("VAT inspection command center","مركز قيادة فحص ضريبة القيمة المضافة"))}</div></div></div>`;
