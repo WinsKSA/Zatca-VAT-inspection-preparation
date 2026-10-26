@@ -4,7 +4,9 @@ const SB_URL="https://xuogrqrjdabhrmicqwhd.supabase.co";
 const SB_KEY="sb_publishable_wNw9BzBBHFMWfpUaA6eIYg_97mL3Oxq";
 const SUPA=REMOTE&&window.FAHS_BACKEND!=="gas";
 let sb=null, COMPANY=null, COMPANIES=[], PLATFORM=false, TEAM=null, PLAT=null;
-const sbc=()=>{if(!sb)sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});return sb};
+// Sessions live only in this tab (sessionStorage): every time the system is opened it starts at the sign-in page.
+if(SUPA){try{Object.keys(localStorage).filter(k=>/^sb-.*-auth-token/.test(k)).forEach(k=>localStorage.removeItem(k))}catch(e){}}
+const sbc=()=>{if(!sb)sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,storage:window.sessionStorage,autoRefreshToken:true,detectSessionInUrl:true}});return sb};
 const ROLE_AR2={owner:"المالك",admin:"مدير",editor:"محرر",viewer:"مشاهد"};
 const roleLabel=r=>LANG==="ar"?(ROLE_AR2[r]||r):({owner:"Owner",admin:"Admin",editor:"Editor",viewer:"Viewer"}[r]||r);
 const SERR={rate:L("Too many codes were requested. Wait a minute and try again.","تم طلب رموز كثيرة. انتظر دقيقة ثم حاول مرة أخرى."),code:L("That code is wrong or has expired. Request a new one.","الرمز غير صحيح أو انتهت صلاحيته. اطلب رمزاً جديداً."),

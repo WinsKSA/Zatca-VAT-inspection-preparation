@@ -27,7 +27,7 @@ function fromTableRaw(k,t){const s=SCHEMA[k];if(!t||!t.rows)return;if(s.kind==="
 // ---------------------------------------------------------------- API client and session
 const TOKEN_KEY=KEY+"-token";
 let AUTH={token:null,user:null};
-try{AUTH.token=localStorage.getItem(TOKEN_KEY)||sessionStorage.getItem(TOKEN_KEY)}catch(e){}
+try{localStorage.removeItem(TOKEN_KEY);AUTH.token=sessionStorage.getItem(TOKEN_KEY)}catch(e){}
 let lastSent={}, sync={state:!REMOTE?"local":(AUTH.token?"loading":"login"),at:null,msg:""}, sending=false, pending=false;
 async function api(action,body={}){
   const res=await fetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action,token:AUTH.token,...body})});
@@ -36,7 +36,7 @@ async function api(action,body={}){
   if(j&&j.error==="auth"&&action!=="login"){signedOut(L("Your session has ended. Please sign in again.","انتهت الجلسة. يرجى تسجيل الدخول مرة أخرى."));throw new Error("auth")}
   return j;
 }
-function setToken(t,remember){AUTH.token=t;try{localStorage.removeItem(TOKEN_KEY);sessionStorage.removeItem(TOKEN_KEY);if(t)(remember?localStorage:sessionStorage).setItem(TOKEN_KEY,t)}catch(e){}}
+function setToken(t,remember){AUTH.token=t;try{localStorage.removeItem(TOKEN_KEY);sessionStorage.removeItem(TOKEN_KEY);if(t)sessionStorage.setItem(TOKEN_KEY,t)}catch(e){}}
 function signedOut(msg){clearTimeout(saveTimer);try{sessionStorage.removeItem(KEY+"-welcomed")}catch(e){}pending=false;sending=false;setToken(null);AUTH.user=null;try{localStorage.removeItem(KEY)}catch(e){}S=exampleState();S.example=false;S.tb=[];S.sales=[];S.purchases=[];S.payments=[];S.requests=[];S.returns=Array.from({length:12},blankReturn);
   lastSent={};if(typeof USERS!=="undefined")USERS=null;cur="dash";try{localStorage.removeItem(KEY+"-view")}catch(e){}sync.state="login";sync.msg=msg||"";render()}
 let canEdit=()=>!REMOTE||(AUTH.user&&AUTH.user.role!=="Viewer");

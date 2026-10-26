@@ -112,7 +112,7 @@ function welcomePanel(){const f=[["test",L("39 automated tests on 100% of your d
     <label class="fld"><span>${esc(L("Your email (sign-in codes are sent here)","بريدك الإلكتروني (تُرسل إليه رموز الدخول)"))}</span><input id="aMail" type="email" required autocomplete="email" dir="ltr"></label>`:""}
    <label class="fld"><span>${esc(L("Username","اسم المستخدم"))}</span><input id="aUser" required autocomplete="username" autocapitalize="none" spellcheck="false" dir="ltr"></label>
    <label class="fld"><span>${esc(L("Password","كلمة المرور"))}</span><input id="aPass" type="password" required autocomplete="${setup?"new-password":"current-password"}" dir="ltr"></label>
-   ${setup?`<label class="fld"><span>${esc(L("Confirm password","تأكيد كلمة المرور"))}</span><input id="aPass2" type="password" required autocomplete="new-password" dir="ltr"></label><p class="note">${esc(ERR.weak)}</p>`:`<label class="chk"><input type="checkbox" id="aRemember" checked> <span>${esc(L("Keep me signed in on this device","البقاء متصلاً على هذا الجهاز"))}</span></label>`}
+   ${setup?`<label class="fld"><span>${esc(L("Confirm password","تأكيد كلمة المرور"))}</span><input id="aPass2" type="password" required autocomplete="new-password" dir="ltr"></label><p class="note">${esc(ERR.weak)}</p>`:``}
    <p class="auth-err" id="aErr" role="alert">${esc(sync.msg||"")}</p>
    <button class="btn primary" type="submit" id="aGo">${icon(setup?"users":"lock")}${esc(setup?L("Create account and continue","إنشاء الحساب والمتابعة"):L("Continue","متابعة"))}</button>
    <p class="note">${esc(L("After your password we email you a 6-digit code.","بعد كلمة المرور نرسل إليك رمزاً من 6 أرقام بالبريد الإلكتروني."))}</p>
