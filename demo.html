@@ -282,10 +282,29 @@ html[dir="rtl"] .pw input{padding-right:12px!important;padding-left:42px!importa
 .btn.busy{opacity:.6;pointer-events:none}
 /* welcome popup */
 .wp-back{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(4,20,17,.62);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);animation:wpfade .25s ease both}
-.wp-back.out{animation:wpfade .2s ease reverse both}
+.wp-back{animation:wpfade .45s ease both}
+.wp-back.out{animation:wpfadeout .5s ease .1s both}
+@keyframes wpfadeout{from{opacity:1}to{opacity:0}}
+.wp-back.out .wp{animation:wpgone .45s cubic-bezier(.4,0,.6,1) both}
+@keyframes wpgone{from{opacity:1;transform:none;filter:blur(0)}to{opacity:0;transform:translateY(18px) scale(.95);filter:blur(8px)}}
+.wp-back.out .wp-hero>*,.wp-back.out .wp-body>*{animation:wpfadeitem .3s ease both!important}
+@keyframes wpfadeitem{to{opacity:0;transform:translateY(-6px)}}
+/* hero light sweep, shimmer on the title, glow behind the logo, sparks */
+.wp-hero::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.12) 45%,transparent 60%);transform:translateX(-120%);animation:wpsweep 2.6s .9s ease-in-out both}
+@keyframes wpsweep{to{transform:translateX(120%)}}
+.wp-badge{isolation:isolate}.wp-badge>*{position:relative;z-index:1}
+.wp-glow{position:absolute;inset:-26px;border-radius:50%;z-index:0;background:radial-gradient(circle,rgba(227,184,102,.45),transparent 65%);animation:wpglow 3s ease-in-out infinite}
+@keyframes wpglow{50%{transform:scale(1.2);opacity:.6}}
+.wp-sparks{position:absolute;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+.wp-sparks i{position:absolute;bottom:-8px;left:var(--x);width:3px;height:3px;border-radius:50%;background:#e3b866;box-shadow:0 0 8px #e3b866;opacity:0;animation:wpspark var(--s) linear infinite;animation-delay:var(--d)}
+.wp-sparks i:nth-child(odd){background:#4cc9b1;box-shadow:0 0 8px #4cc9b1}
+@keyframes wpspark{0%{transform:translateY(0);opacity:0}15%{opacity:.9}100%{transform:translateY(-420px);opacity:0}}
+.wp-steps li{opacity:0;animation:wpstep .6s cubic-bezier(.2,.9,.25,1) both;animation-delay:calc(var(--d) + .55s)}
+@keyframes wpstep{from{opacity:0;transform:translateY(14px);filter:blur(4px)}to{opacity:1;transform:none;filter:blur(0)}}
+.wp-foot{animation:rise .5s 1.05s ease both}.wp-lead{animation:rise .5s .6s ease both}
 @keyframes wpfade{from{opacity:0}to{opacity:1}}
-.wp{width:100%;max-width:620px;max-height:calc(100dvh - 32px);overflow:auto;border-radius:22px;background:var(--surface);box-shadow:0 30px 90px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.06);animation:wppop .5s cubic-bezier(.2,.9,.25,1.15) both}
-@keyframes wppop{from{opacity:0;transform:translateY(24px) scale(.94)}to{opacity:1;transform:none}}
+.wp{width:100%;max-width:620px;max-height:calc(100dvh - 32px);overflow:auto;border-radius:22px;background:var(--surface);box-shadow:0 30px 90px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.06);animation:wppop .7s cubic-bezier(.2,.9,.25,1.1) .05s both}
+@keyframes wppop{from{opacity:0;transform:translateY(28px) scale(.92);filter:blur(10px)}to{opacity:1;transform:none;filter:blur(0)}}
 .wp-hero{position:relative;overflow:hidden;padding:30px 30px 24px;color:#e6f2ee;background:linear-gradient(140deg,#0a2a25 0%,#0c3d35 45%,#123f37 70%,#1b3a2a 100%);isolation:isolate}
 .wp-orb{position:absolute;border-radius:50%;filter:blur(40px);opacity:.55;z-index:-1;animation:wpfloat 9s ease-in-out infinite alternate}
 .wp-orb.a{width:260px;height:260px;background:#2fb39c;top:-90px;inset-inline-start:-60px}
@@ -311,7 +330,7 @@ html[lang="ar"] .wp-eyebrow{letter-spacing:0;font-size:14px}
 .wp-body{padding:22px 26px 22px;display:flex;flex-direction:column;gap:14px}
 .wp-lead{margin:0;font:600 15px var(--f-display);color:var(--ink)}
 .wp-steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
-.wp-steps li{animation:rise .45s ease both;animation-delay:calc(var(--d) + .3s)}
+
 .wp-steps button{width:100%;display:flex;gap:14px;align-items:center;text-align:start;padding:13px 14px;border-radius:14px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font:inherit;cursor:pointer;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
 .wp-steps button:hover,.wp-steps button:focus-visible{transform:translateY(-2px);border-color:var(--brand);box-shadow:0 8px 22px rgba(11,107,95,.16)}
 .wp-n{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font:700 13px var(--f-display);color:var(--brand-ink);background:var(--brand)}
@@ -1883,9 +1902,9 @@ function welcomePopup(){
     ["shield",L("Close the gaps before ZATCA does","عالج الملاحظات قبل الهيئة"),L("Reconcile, explain findings and see exposure with the fines initiative.","طابق، وفسّر الملاحظات، واعرف التعرض مع مبادرة الإعفاء من الغرامات."),"find"]];
   const back=document.createElement("div");back.className="wp-back";back.setAttribute("role","dialog");back.setAttribute("aria-modal","true");back.setAttribute("aria-labelledby","wpTitle");
   back.innerHTML=`<div class="wp">
-    <div class="wp-hero"><i class="wp-orb a"></i><i class="wp-orb b"></i><i class="wp-orb c"></i>
+    <div class="wp-hero"><i class="wp-orb a"></i><i class="wp-orb b"></i><i class="wp-orb c"></i><div class="wp-sparks" aria-hidden="true">${Array.from({length:12},(_,i)=>`<i style="--x:${(i*8.7+3)%100}%;--s:${5+(i*3)%7}s;--d:-${(i*1.3)%6}s"></i>`).join("")}</div>
       <button type="button" class="wp-x" id="wpClose" aria-label="${esc(L("Close","إغلاق"))}">×</button>
-      <div class="wp-badge${S.setup.logo?" logo":""}">${S.setup.logo?`<img src="${esc(S.setup.logo)}" alt="${esc(co)}">`:`<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="18" cy="18" r="8" fill="none" stroke="#fff" stroke-width="3"/><path d="M24 24l7 7" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/><path d="M14.5 18.5l2.5 2.5 4.5-5" fill="none" stroke="#e3b866" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`}</div>
+      <div class="wp-badge${S.setup.logo?" logo":""}"><i class="wp-glow" aria-hidden="true"></i>${S.setup.logo?`<img src="${esc(S.setup.logo)}" alt="${esc(co)}">`:`<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="18" cy="18" r="8" fill="none" stroke="#fff" stroke-width="3"/><path d="M24 24l7 7" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/><path d="M14.5 18.5l2.5 2.5 4.5-5" fill="none" stroke="#e3b866" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`}</div>
       <span class="wp-eyebrow"><span>${esc(greeting())}</span>${welcomeName()?`<span data-notr>${LANG==="ar"?"، ":", "}</span><span data-notr>${esc(welcomeName())}</span>`:""}</span>
       <h2 id="wpTitle">${esc(L("Welcome to Fahs. Your inspection, under control.","أهلاً بك في فحص. فحصك الضريبي تحت السيطرة."))}</h2>
       ${co?`<p class="wp-co">${icon("building")}<span data-notr>${esc(co)}</span></p>`:""}
@@ -1899,7 +1918,7 @@ function welcomePopup(){
       <div class="wp-foot"><span class="grow"></span><button type="button" class="btn primary" id="wpGo">${esc(rows?L("Open the command center","افتح مركز القيادة"):L("Start now","ابدأ الآن"))}</button></div>
     </div></div>`;
   document.body.appendChild(back);
-  const close=()=>{back.classList.add("out");setTimeout(()=>back.remove(),220);document.removeEventListener("keydown",esc_)};
+  const close=()=>{back.classList.add("out");setTimeout(()=>back.remove(),620);document.removeEventListener("keydown",esc_)};
   const esc_=e=>{if(e.key==="Escape")close()};document.addEventListener("keydown",esc_);
   back.addEventListener("click",e=>{if(e.target===back)close()});
   back.querySelector("#wpClose").onclick=close;
@@ -1907,7 +1926,7 @@ function welcomePopup(){
   back.querySelectorAll("[data-wgo]").forEach(b=>b.onclick=()=>{close();go(b.dataset.wgo)});
   const ib=back.querySelector("#wpInstall");if(ib)ib.onclick=async()=>{if(!installEvt)return;installEvt.prompt();await installEvt.userChoice;installEvt=null;ib.closest(".wp-install").remove()};
   back.querySelectorAll(".wp-count").forEach(el=>{const to=+el.dataset.to,t0=performance.now(),dur=900;const step=t=>{const k=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-k,3);el.textContent=fmtInt(Math.round(to*e));if(k<1)requestAnimationFrame(step)};requestAnimationFrame(step)});
-  setTimeout(()=>back.querySelector("#wpGo")?.focus(),50);
+  setTimeout(()=>back.querySelector("#wpGo")?.focus({preventScroll:true}),50);
 }
 // show once per browser session, right after the workspace opens
 {const _r=render;render=function(){_r();

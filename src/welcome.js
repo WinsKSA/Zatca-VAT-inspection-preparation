@@ -40,9 +40,9 @@ function welcomePopup(){
     ["shield",L("Close the gaps before ZATCA does","عالج الملاحظات قبل الهيئة"),L("Reconcile, explain findings and see exposure with the fines initiative.","طابق، وفسّر الملاحظات، واعرف التعرض مع مبادرة الإعفاء من الغرامات."),"find"]];
   const back=document.createElement("div");back.className="wp-back";back.setAttribute("role","dialog");back.setAttribute("aria-modal","true");back.setAttribute("aria-labelledby","wpTitle");
   back.innerHTML=`<div class="wp">
-    <div class="wp-hero"><i class="wp-orb a"></i><i class="wp-orb b"></i><i class="wp-orb c"></i>
+    <div class="wp-hero"><i class="wp-orb a"></i><i class="wp-orb b"></i><i class="wp-orb c"></i><div class="wp-sparks" aria-hidden="true">${Array.from({length:12},(_,i)=>`<i style="--x:${(i*8.7+3)%100}%;--s:${5+(i*3)%7}s;--d:-${(i*1.3)%6}s"></i>`).join("")}</div>
       <button type="button" class="wp-x" id="wpClose" aria-label="${esc(L("Close","إغلاق"))}">×</button>
-      <div class="wp-badge${S.setup.logo?" logo":""}">${S.setup.logo?`<img src="${esc(S.setup.logo)}" alt="${esc(co)}">`:`<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="18" cy="18" r="8" fill="none" stroke="#fff" stroke-width="3"/><path d="M24 24l7 7" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/><path d="M14.5 18.5l2.5 2.5 4.5-5" fill="none" stroke="#e3b866" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`}</div>
+      <div class="wp-badge${S.setup.logo?" logo":""}"><i class="wp-glow" aria-hidden="true"></i>${S.setup.logo?`<img src="${esc(S.setup.logo)}" alt="${esc(co)}">`:`<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="18" cy="18" r="8" fill="none" stroke="#fff" stroke-width="3"/><path d="M24 24l7 7" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/><path d="M14.5 18.5l2.5 2.5 4.5-5" fill="none" stroke="#e3b866" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`}</div>
       <span class="wp-eyebrow"><span>${esc(greeting())}</span>${welcomeName()?`<span data-notr>${LANG==="ar"?"، ":", "}</span><span data-notr>${esc(welcomeName())}</span>`:""}</span>
       <h2 id="wpTitle">${esc(L("Welcome to Fahs. Your inspection, under control.","أهلاً بك في فحص. فحصك الضريبي تحت السيطرة."))}</h2>
       ${co?`<p class="wp-co">${icon("building")}<span data-notr>${esc(co)}</span></p>`:""}
@@ -56,7 +56,7 @@ function welcomePopup(){
       <div class="wp-foot"><span class="grow"></span><button type="button" class="btn primary" id="wpGo">${esc(rows?L("Open the command center","افتح مركز القيادة"):L("Start now","ابدأ الآن"))}</button></div>
     </div></div>`;
   document.body.appendChild(back);
-  const close=()=>{back.classList.add("out");setTimeout(()=>back.remove(),220);document.removeEventListener("keydown",esc_)};
+  const close=()=>{back.classList.add("out");setTimeout(()=>back.remove(),620);document.removeEventListener("keydown",esc_)};
   const esc_=e=>{if(e.key==="Escape")close()};document.addEventListener("keydown",esc_);
   back.addEventListener("click",e=>{if(e.target===back)close()});
   back.querySelector("#wpClose").onclick=close;
@@ -64,7 +64,7 @@ function welcomePopup(){
   back.querySelectorAll("[data-wgo]").forEach(b=>b.onclick=()=>{close();go(b.dataset.wgo)});
   const ib=back.querySelector("#wpInstall");if(ib)ib.onclick=async()=>{if(!installEvt)return;installEvt.prompt();await installEvt.userChoice;installEvt=null;ib.closest(".wp-install").remove()};
   back.querySelectorAll(".wp-count").forEach(el=>{const to=+el.dataset.to,t0=performance.now(),dur=900;const step=t=>{const k=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-k,3);el.textContent=fmtInt(Math.round(to*e));if(k<1)requestAnimationFrame(step)};requestAnimationFrame(step)});
-  setTimeout(()=>back.querySelector("#wpGo")?.focus(),50);
+  setTimeout(()=>back.querySelector("#wpGo")?.focus({preventScroll:true}),50);
 }
 // show once per browser session, right after the workspace opens
 {const _r=render;render=function(){_r();
