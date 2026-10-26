@@ -1,0 +1,12 @@
+{
+  "appId": "sa.wins.fahs",
+  "appName": "Fahs فحص",
+  "webDir": "www",
+  "server": {
+    "url": "https://winsksa.github.io/Zatca-VAT-inspection-preparation/index.html",
+    "allowNavigation": ["winsksa.github.io", "*.supabase.co"],
+    "errorPath": "offline.html"
+  },
+  "android": { "backgroundColor": "#0c201d" },
+  "ios": { "backgroundColor": "#0c201d", "contentInset": "always" }
+}
