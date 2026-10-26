@@ -53,10 +53,10 @@ function welcomePopup(){
       <p class="wp-lead">${esc(L("Three steps to a confident inspection:","ثلاث خطوات لفحص بثقة:"))}</p>
       <ol class="wp-steps">${steps.map((s,i)=>`<li style="--d:${.15+i*.09}s"><button type="button" data-wgo="${s[3]}"><span class="wp-n">${i+1}</span>${icon(s[0])}<span class="wp-t"><b>${esc(s[1])}</b><small>${esc(s[2])}</small></span></button></li>`).join("")}</ol>
       ${installCard()}
-      <div class="wp-foot"><label class="chk"><input type="checkbox" id="wpNever"> ${esc(L("Don't show this again","لا تعرض هذه الرسالة مرة أخرى"))}</label><span class="grow"></span><button type="button" class="btn primary" id="wpGo">${esc(rows?L("Open the command center","افتح مركز القيادة"):L("Start now","ابدأ الآن"))}</button></div>
+      <div class="wp-foot"><span class="grow"></span><button type="button" class="btn primary" id="wpGo">${esc(rows?L("Open the command center","افتح مركز القيادة"):L("Start now","ابدأ الآن"))}</button></div>
     </div></div>`;
   document.body.appendChild(back);
-  const close=()=>{try{if(back.querySelector("#wpNever").checked)localStorage.setItem(KEY+"-nowelcome","1")}catch(e){}back.classList.add("out");setTimeout(()=>back.remove(),220);document.removeEventListener("keydown",esc_)};
+  const close=()=>{back.classList.add("out");setTimeout(()=>back.remove(),220);document.removeEventListener("keydown",esc_)};
   const esc_=e=>{if(e.key==="Escape")close()};document.addEventListener("keydown",esc_);
   back.addEventListener("click",e=>{if(e.target===back)close()});
   back.querySelector("#wpClose").onclick=close;
@@ -69,5 +69,5 @@ function welcomePopup(){
 // show once per browser session, right after the workspace opens
 {const _r=render;render=function(){_r();
   if(!REMOTE||!AUTH.user||!["saved","saving"].includes(sync.state))return;
-  let skip=false;try{skip=localStorage.getItem(KEY+"-nowelcome")==="1"||sessionStorage.getItem(KEY+"-welcomed")==="1";if(!skip)sessionStorage.setItem(KEY+"-welcomed","1")}catch(e){}
+  let skip=false;try{skip=sessionStorage.getItem(KEY+"-welcomed")==="1";if(!skip)sessionStorage.setItem(KEY+"-welcomed","1")}catch(e){}
   if(!skip)setTimeout(welcomePopup,250)}}

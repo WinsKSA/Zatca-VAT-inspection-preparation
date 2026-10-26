@@ -37,7 +37,7 @@ async function api(action,body={}){
   return j;
 }
 function setToken(t,remember){AUTH.token=t;try{localStorage.removeItem(TOKEN_KEY);sessionStorage.removeItem(TOKEN_KEY);if(t)(remember?localStorage:sessionStorage).setItem(TOKEN_KEY,t)}catch(e){}}
-function signedOut(msg){clearTimeout(saveTimer);pending=false;sending=false;setToken(null);AUTH.user=null;try{localStorage.removeItem(KEY)}catch(e){}S=exampleState();S.example=false;S.tb=[];S.sales=[];S.purchases=[];S.payments=[];S.requests=[];S.returns=Array.from({length:12},blankReturn);
+function signedOut(msg){clearTimeout(saveTimer);try{sessionStorage.removeItem(KEY+"-welcomed")}catch(e){}pending=false;sending=false;setToken(null);AUTH.user=null;try{localStorage.removeItem(KEY)}catch(e){}S=exampleState();S.example=false;S.tb=[];S.sales=[];S.purchases=[];S.payments=[];S.requests=[];S.returns=Array.from({length:12},blankReturn);
   lastSent={};if(typeof USERS!=="undefined")USERS=null;cur="dash";try{localStorage.removeItem(KEY+"-view")}catch(e){}sync.state="login";sync.msg=msg||"";render()}
 let canEdit=()=>!REMOTE||(AUTH.user&&AUTH.user.role!=="Viewer");
 let isAdmin=()=>REMOTE&&AUTH.user&&AUTH.user.role==="Admin";

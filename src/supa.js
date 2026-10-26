@@ -18,7 +18,7 @@ if(SUPA){
   isAdmin=()=>!!COMPANY&&["owner","admin"].includes(COMPANY.role);
   signedOut=async msg=>{clearTimeout(saveTimer);pending=false;sending=false;try{await sbc().auth.signOut()}catch(e){}COMPANY=null;COMPANIES=[];TEAM=null;PLAT=null;AUTH.user=null;
     try{localStorage.removeItem(KEY);localStorage.removeItem(KEY+"-view")}catch(e){}cur="dash";S=exampleState();S.example=false;S.tb=[];S.sales=[];S.purchases=[];S.payments=[];S.requests=[];S.returns=Array.from({length:12},blankReturn);
-    lastSent={};sync.state="login";sync.msg=msg||"";render()};
+    try{sessionStorage.removeItem(KEY+"-welcomed")}catch(e){}lastSent={};sync.state="login";sync.msg=msg||"";render()};
 }
 
 // ---------------------------------------------------------------- start-up and company selection
