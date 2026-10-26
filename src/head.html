@@ -15,7 +15,7 @@
 <meta name="format-detection" content="telephone=no">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Cairo:wght@600;700;800&display=swap" media="print" onload="this.media='all'">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <style>
 body.syncing .content input,body.syncing .content select,body.syncing .content textarea,body.syncing .content button{pointer-events:none;opacity:.75}
@@ -321,7 +321,7 @@ html[dir="rtl"] .pw input{padding-right:12px!important;padding-left:42px!importa
 .wp-eyebrow{display:block;color:#e3b866;font:600 13px var(--f-body);letter-spacing:.08em;text-transform:uppercase;animation:rise .5s .15s ease both}
 html[lang="ar"] .wp-eyebrow{letter-spacing:0;font-size:14px}
 .wp-hero h2{margin:8px 0 0;font:700 clamp(23px,4.2vw,31px)/1.2 var(--f-display);color:#fff;text-wrap:balance;animation:rise .5s .22s ease both;background:linear-gradient(90deg,#fff 0%,#fff 55%,#f3d9a4 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-.wp-slogan{margin:10px 0 0;font:600 15.5px/1.5 "IBM Plex Sans Arabic",var(--f-body);color:#e3b866;animation:rise .5s .26s ease both}
+.wp-slogan{margin:10px 0 0;font:700 16px/1.5 "Cairo","IBM Plex Sans Arabic",var(--f-body);color:#e3b866;animation:rise .5s .26s ease both}
 .wp-co{display:inline-flex;gap:8px;align-items:center;margin:14px 0 0;padding:6px 12px 6px 10px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);font-size:14px;color:#d8ebe6;animation:rise .5s .28s ease both}
 .wp-co .ic{width:16px;height:16px;color:#e3b866}
 .wp-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:20px;animation:rise .5s .34s ease both}
@@ -438,12 +438,12 @@ body.signed-out .auth-card .btn.primary::after{content:"";position:absolute;top:
 .w-slogan span{display:inline-block;opacity:0;transform:translateY(18px);filter:blur(8px);animation:wword .9s cubic-bezier(.2,.9,.25,1) forwards;animation-delay:calc(.25s + var(--i) * .16s);
  background:linear-gradient(100deg,#fff 0%,#fff 40%,#f3d9a4 50%,#fff 60%,#fff 100%);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .w-slogan span:nth-child(3n+2){background-image:linear-gradient(100deg,#e3b866 0%,#f3d9a4 40%,#fff 50%,#f3d9a4 60%,#e3b866 100%)}
-html[lang="ar"] .welcome .w-slogan{font-family:"IBM Plex Sans Arabic",system-ui,sans-serif;font-weight:600;line-height:1.35}
+html[lang="ar"] .welcome .w-slogan{font-family:"Cairo","IBM Plex Sans Arabic",system-ui,sans-serif;font-weight:800;line-height:1.4}
 @keyframes wword{to{opacity:1;transform:none;filter:blur(0)}}
 .w-slogan span{animation:wword .9s cubic-bezier(.2,.9,.25,1) forwards,wshine 5s 2.4s ease-in-out infinite;animation-delay:calc(.25s + var(--i) * .16s),calc(2.4s + var(--i) * .08s)}
 @keyframes wshine{0%{background-position:100% 0}60%,100%{background-position:0 0}}
 .welcome .w-sub{animation:rise .7s 1.5s ease both;font-size:15.5px}
-.slogan-sm{font-size:12px!important;line-height:1.4;color:var(--gold)!important;font-weight:600}
+.slogan-sm{font-family:"Cairo","IBM Plex Sans Arabic",sans-serif!important;font-size:12px!important;line-height:1.4;color:var(--gold)!important;font-weight:600}
 .w-time{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;max-width:520px;margin:8px 0 4px;animation:rise .6s 1.8s ease both}
 .w-line{position:absolute;top:21px;inset-inline:16.6%;height:2px;background:rgba(255,255,255,.12);border-radius:2px}
 .w-line i{position:absolute;inset:0;background:linear-gradient(90deg,#4cc9b1,#e3b866);transform:scaleX(0);transform-origin:left;animation:wline 2.4s 2.1s cubic-bezier(.4,0,.2,1) forwards;border-radius:2px}

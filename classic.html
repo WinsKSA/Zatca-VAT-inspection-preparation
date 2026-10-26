@@ -15,7 +15,7 @@
 <meta name="format-detection" content="telephone=no">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Cairo:wght@600;700;800&display=swap" media="print" onload="this.media='all'">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <style>
 body.syncing .content input,body.syncing .content select,body.syncing .content textarea,body.syncing .content button{pointer-events:none;opacity:.75}
@@ -321,7 +321,7 @@ html[dir="rtl"] .pw input{padding-right:12px!important;padding-left:42px!importa
 .wp-eyebrow{display:block;color:#e3b866;font:600 13px var(--f-body);letter-spacing:.08em;text-transform:uppercase;animation:rise .5s .15s ease both}
 html[lang="ar"] .wp-eyebrow{letter-spacing:0;font-size:14px}
 .wp-hero h2{margin:8px 0 0;font:700 clamp(23px,4.2vw,31px)/1.2 var(--f-display);color:#fff;text-wrap:balance;animation:rise .5s .22s ease both;background:linear-gradient(90deg,#fff 0%,#fff 55%,#f3d9a4 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-.wp-slogan{margin:10px 0 0;font:600 15.5px/1.5 "IBM Plex Sans Arabic",var(--f-body);color:#e3b866;animation:rise .5s .26s ease both}
+.wp-slogan{margin:10px 0 0;font:700 16px/1.5 "Cairo","IBM Plex Sans Arabic",var(--f-body);color:#e3b866;animation:rise .5s .26s ease both}
 .wp-co{display:inline-flex;gap:8px;align-items:center;margin:14px 0 0;padding:6px 12px 6px 10px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);font-size:14px;color:#d8ebe6;animation:rise .5s .28s ease both}
 .wp-co .ic{width:16px;height:16px;color:#e3b866}
 .wp-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:20px;animation:rise .5s .34s ease both}
@@ -438,12 +438,12 @@ body.signed-out .auth-card .btn.primary::after{content:"";position:absolute;top:
 .w-slogan span{display:inline-block;opacity:0;transform:translateY(18px);filter:blur(8px);animation:wword .9s cubic-bezier(.2,.9,.25,1) forwards;animation-delay:calc(.25s + var(--i) * .16s);
  background:linear-gradient(100deg,#fff 0%,#fff 40%,#f3d9a4 50%,#fff 60%,#fff 100%);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .w-slogan span:nth-child(3n+2){background-image:linear-gradient(100deg,#e3b866 0%,#f3d9a4 40%,#fff 50%,#f3d9a4 60%,#e3b866 100%)}
-html[lang="ar"] .welcome .w-slogan{font-family:"IBM Plex Sans Arabic",system-ui,sans-serif;font-weight:600;line-height:1.35}
+html[lang="ar"] .welcome .w-slogan{font-family:"Cairo","IBM Plex Sans Arabic",system-ui,sans-serif;font-weight:800;line-height:1.4}
 @keyframes wword{to{opacity:1;transform:none;filter:blur(0)}}
 .w-slogan span{animation:wword .9s cubic-bezier(.2,.9,.25,1) forwards,wshine 5s 2.4s ease-in-out infinite;animation-delay:calc(.25s + var(--i) * .16s),calc(2.4s + var(--i) * .08s)}
 @keyframes wshine{0%{background-position:100% 0}60%,100%{background-position:0 0}}
 .welcome .w-sub{animation:rise .7s 1.5s ease both;font-size:15.5px}
-.slogan-sm{font-size:12px!important;line-height:1.4;color:var(--gold)!important;font-weight:600}
+.slogan-sm{font-family:"Cairo","IBM Plex Sans Arabic",sans-serif!important;font-size:12px!important;line-height:1.4;color:var(--gold)!important;font-weight:600}
 .w-time{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;max-width:520px;margin:8px 0 4px;animation:rise .6s 1.8s ease both}
 .w-line{position:absolute;top:21px;inset-inline:16.6%;height:2px;background:rgba(255,255,255,.12);border-radius:2px}
 .w-line i{position:absolute;inset:0;background:linear-gradient(90deg,#4cc9b1,#e3b866);transform:scaleX(0);transform-origin:left;animation:wline 2.4s 2.1s cubic-bezier(.4,0,.2,1) forwards;border-radius:2px}
@@ -1758,7 +1758,7 @@ if(SUPA)pushRemote=async function(){
 // ================================================================ SaaS screens: sign-in by email code, companies, team, platform console
 IC.building='<path d="M4 21V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16M15 9h4a1 1 0 0 1 1 1v11M3 21h18M8 8h3M8 12h3M8 16h3"/>';
 IC.shield='<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>';
-let SIGN={email:"",name:"",mode:"login",how:"pw"};
+let SIGN={email:"",login:"",user:"",name:"",mode:"login",how:"link"};
 function supaScreen(){
   const st=sync.state,brand=`<div class="auth-brand"><svg viewBox="0 0 40 40" class="logo" aria-hidden="true"><rect x="2" y="2" width="36" height="36" rx="10" fill="var(--brand)"/><circle cx="18" cy="18" r="8" fill="none" stroke="#fff" stroke-width="3"/><path d="M24 24l7 7" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/><path d="M14.5 18.5l2.5 2.5 4.5-5" fill="none" stroke="var(--gold-2)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><div><div class="wordmark">${LANG==="ar"?"فحص":"Fahs"}</div><div class="tagline slogan-sm">${esc(SLOGAN())}</div></div></div>`;
   const foot=`<div class="row auth-foot"><button type="button" class="btn ghost sm" id="authLang" data-notr>${icon("lang")}${LANG==="ar"?"English":"العربية"}</button><span class="grow"></span><span class="note">${esc(L("Each company's data is private to its own team.","بيانات كل منشأة خاصة بفريقها فقط."))}</span></div>`;
@@ -1766,13 +1766,15 @@ function supaScreen(){
   const wrap=(inner,ac="on")=>`<div class="auth">${welcomePanel()}<form class="auth-card" id="authForm" autocomplete="${ac}">${brand}${inner}${foot}</form></div>`;
   const tabs=`<div class="auth-tabs" role="tablist"><button type="button" role="tab" data-mode="login" aria-selected="${SIGN.mode==="login"}">${esc(L("Sign in","تسجيل الدخول"))}</button><button type="button" role="tab" data-mode="signup" aria-selected="${SIGN.mode==="signup"}">${esc(L("Sign up","إنشاء حساب"))}</button></div>`;
   if(st==="login")return wrap(`${tabs}
-    <p class="note">${esc(SIGN.mode==="signup"?L("Create your account with your work email. Then create your company, or join one you were invited to.","أنشئ حسابك ببريد العمل، ثم أنشئ منشأتك أو انضم إلى منشأة دُعيت إليها."):L("Sign in with your email and password, or ask for a sign-in link by email.","سجّل الدخول ببريدك وكلمة المرور، أو اطلب رابط دخول بالبريد."))}</p>
-    ${SIGN.mode==="signup"?`<label class="fld"><span>${esc(L("Full name","الاسم الكامل"))}</span><input id="sName" required autocomplete="name" value="${esc(SIGN.name)}"></label>`:""}
-    <label class="fld"><span>${esc(L("Email","البريد الإلكتروني"))}</span><input id="sMail" type="email" required autocomplete="email" dir="ltr" value="${esc(SIGN.email)}"></label>
-    <div class="seg how" role="radiogroup" aria-label="${esc(L("How to sign in","طريقة الدخول"))}"><button type="button" data-how="pw" aria-pressed="${SIGN.how==="pw"}">${esc(L("Password","كلمة المرور"))}</button><button type="button" data-how="link" aria-pressed="${SIGN.how==="link"}">${esc(L("Email link","رابط بالبريد"))}</button></div>
+    <p class="note">${esc(SIGN.mode==="signup"?L("Create your account with your work email. Then create your company, or join one you were invited to.","أنشئ حسابك ببريد العمل، ثم أنشئ منشأتك أو انضم إلى منشأة دُعيت إليها."):L("Sign in with your username or email. Get a code by email, or use your password.","سجّل الدخول باسم المستخدم أو البريد الإلكتروني، برمز يصلك بالبريد أو بكلمة المرور."))}</p>
+    ${SIGN.mode==="signup"?`<label class="fld"><span>${esc(L("Full name","الاسم الكامل"))}</span><input id="sName" required autocomplete="name" value="${esc(SIGN.name)}"></label>
+    <label class="fld"><span>${esc(L("Username","اسم المستخدم"))}</span><input id="sUser" required autocomplete="username" autocapitalize="none" spellcheck="false" dir="ltr" pattern="[a-z0-9._\\-]{3,32}" title="${esc(L("3 to 32 lowercase letters, digits, dot, dash or underscore","من 3 إلى 32 حرفاً إنجليزياً صغيراً أو أرقاماً أو . - _"))}" value="${esc(SIGN.user||"")}"></label>
+    <label class="fld"><span>${esc(L("Email","البريد الإلكتروني"))}</span><input id="sMail" type="email" required autocomplete="email" dir="ltr" value="${esc(SIGN.email)}"></label>`
+    :`<label class="fld"><span>${esc(L("Username or email","اسم المستخدم أو البريد الإلكتروني"))}</span><input id="sMail" required autocomplete="username" autocapitalize="none" spellcheck="false" dir="ltr" value="${esc(SIGN.login||SIGN.email)}"></label>`}
+    <div class="seg how" role="radiogroup" aria-label="${esc(L("How to sign in","طريقة الدخول"))}"><button type="button" data-how="link" aria-pressed="${SIGN.how==="link"}">${esc(L("Email code","رمز بالبريد"))}</button><button type="button" data-how="pw" aria-pressed="${SIGN.how==="pw"}">${esc(L("Password","كلمة المرور"))}</button></div>
     ${SIGN.how==="pw"?`<label class="fld"><span>${esc(L("Password","كلمة المرور"))}</span><input id="sPass" type="password" required minlength="8" autocomplete="${SIGN.mode==="signup"?"new-password":"current-password"}" dir="ltr"></label>
-     ${SIGN.mode==="signup"?`<p class="note">${esc(L("At least 8 characters. We'll email a link once to confirm your address.","8 أحرف على الأقل. سنرسل رابطاً مرة واحدة لتأكيد بريدك."))}</p>`:`<button type="button" class="btn ghost sm switch" id="aForgot">${esc(L("Forgot password?","نسيت كلمة المرور؟"))}</button>`}`:`<p class="note">${esc(L("We'll email you a secure sign-in link. No password needed.","سنرسل إليك رابط دخول آمناً بالبريد. لا حاجة لكلمة مرور."))}</p>`}${err}
-    <button class="btn primary" type="submit" id="aGo">${icon("lock")}${esc(SIGN.how==="pw"?(SIGN.mode==="signup"?L("Create account","إنشاء الحساب"):L("Sign in","تسجيل الدخول")):L("Email me a sign-in link","أرسل لي رابط الدخول"))}</button>`);
+     ${SIGN.mode==="signup"?`<p class="note">${esc(L("At least 8 characters. We'll email a link once to confirm your address.","8 أحرف على الأقل. سنرسل رابطاً مرة واحدة لتأكيد بريدك."))}</p>`:`<button type="button" class="btn ghost sm switch" id="aForgot">${esc(L("Forgot password?","نسيت كلمة المرور؟"))}</button>`}`:`<p class="note">${esc(L("We'll email you a one-time sign-in code. No password needed.","سنرسل إلى بريدك رمز دخول لمرة واحدة. لا حاجة لكلمة مرور."))}</p>`}${err}
+    <button class="btn primary" type="submit" id="aGo">${icon("lock")}${esc(SIGN.how==="pw"?(SIGN.mode==="signup"?L("Create account","إنشاء الحساب"):L("Sign in","تسجيل الدخول")):L("Email me a code","أرسل لي رمز الدخول"))}</button>`);
   if(st==="setpw")return wrap(`<h1>${esc(L("Set a new password","تعيين كلمة مرور جديدة"))}</h1>
     <p class="note">${esc(L("Choose a password of at least 8 characters. You can then sign in with it on the web and in the mobile app.","اختر كلمة مرور من 8 أحرف على الأقل، ثم استخدمها للدخول من الويب ومن تطبيق الجوال."))}</p>
     <label class="fld"><span>${esc(L("New password","كلمة المرور الجديدة"))}</span><input id="nPass" type="password" required minlength="8" autocomplete="new-password" dir="ltr"></label>
@@ -1802,20 +1804,27 @@ function bindSupa(){
   $("#authLang").onclick=()=>{LANG=LANG==="ar"?"en":"ar";try{localStorage.setItem(KEY+"-lang",LANG)}catch(e){}applyLang();render()};
   document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{SIGN.mode=b.dataset.mode;SIGN.email=$("#sMail")?.value||SIGN.email;sync.msg="";render()});
   const out=$("#aOut");if(out)out.onclick=()=>signedOut("");
-  const send=async()=>{const {error}=await sbc().auth.signInWithOtp({email:SIGN.email,options:{shouldCreateUser:true,emailRedirectTo:location.origin+location.pathname,data:SIGN.name?{full_name:SIGN.name}:undefined}});if(error)throw error};
+  const send=async()=>{const {error}=await sbc().auth.signInWithOtp({email:SIGN.email,options:{shouldCreateUser:SIGN.mode==="signup",emailRedirectTo:location.origin+location.pathname,data:{full_name:SIGN.name||undefined,username:SIGN.user||undefined}}});
+    if(error){if(/signups not allowed|not found/i.test(error.message))throw new Error(L("No account uses that email yet. Choose Sign up to create one.","لا يوجد حساب بهذا البريد بعد. اختر «إنشاء حساب».")) ;throw error}};
   const st=sync.state;($("#aOtp")||$("#nPass")||$("#cName")||$("#sName")||$("#sMail"))?.focus();
   if(typeof addEyes==="function")addEyes(document);
   document.querySelectorAll("[data-how]").forEach(b=>b.onclick=()=>{SIGN.how=b.dataset.how;SIGN.email=$("#sMail")?.value||SIGN.email;SIGN.name=$("#sName")?.value||SIGN.name;sync.msg="";render()});
-  const fg=$("#aForgot");if(fg)fg.onclick=async()=>{err.textContent="";SIGN.email=$("#sMail").value.trim().toLowerCase();if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(SIGN.email)){err.textContent=SERR.email;return}
+  const fg=$("#aForgot");if(fg)fg.onclick=async()=>{err.textContent="";const lg=$("#sMail").value.trim().toLowerCase();SIGN.email=lg;
+    if(lg&&!lg.includes("@")){try{const {data:em}=await sbc().rpc("login_email",{p_login:lg});SIGN.email=em||""}catch(x){SIGN.email=""}}
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(SIGN.email)){err.textContent=L("Enter your username or email first.","أدخل اسم المستخدم أو البريد الإلكتروني أولاً.");return}
     try{const {error}=await sbc().auth.resetPasswordForEmail(SIGN.email,{redirectTo:location.origin+location.pathname});if(error)throw error;sync.msg=L("We emailed you a link to set a new password.","أرسلنا إليك رابطاً لتعيين كلمة مرور جديدة.");render()}catch(x){err.textContent=sbErr(x)}};
   if(st==="pick"){document.querySelectorAll("[data-co]").forEach(b=>b.onclick=()=>openCompany(COMPANIES.find(c=>c.id===b.dataset.co)));$("#aNew").onclick=()=>{sync.state="newco";render()};return}
   if(st==="otp"){$("#aBack").onclick=()=>{sync.state="login";sync.msg="";render()};
     $("#aResend").onclick=async()=>{err.textContent="";try{await send();toast(L("Sent again. Check your inbox.","تمت إعادة الإرسال. تحقق من بريدك."))}catch(e){err.textContent=sbErr(e)}}}
   f.onsubmit=async e=>{e.preventDefault();err.textContent="";busy(true);
     try{
-      if(st==="login"){SIGN.email=$("#sMail").value.trim().toLowerCase();SIGN.name=$("#sName")?.value.trim()||"";if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(SIGN.email)){err.textContent=SERR.email;return}
+      if(st==="login"){SIGN.login=$("#sMail").value.trim().toLowerCase();SIGN.name=$("#sName")?.value.trim()||"";SIGN.user=$("#sUser")?.value.trim().toLowerCase()||"";
+        if(SIGN.mode==="signup"&&!/^[a-z0-9._-]{3,32}$/.test(SIGN.user)){err.textContent=L("Username: 3 to 32 lowercase English letters, digits, dot, dash or underscore.","اسم المستخدم: من 3 إلى 32 حرفاً إنجليزياً صغيراً أو أرقاماً أو . - _");return}
+        if(SIGN.login.includes("@"))SIGN.email=SIGN.login;
+        else{const {data:em,error:le}=await sbc().rpc("login_email",{p_login:SIGN.login});if(le)throw le;if(!em){err.textContent=L("No account uses that username. Check it, or sign in with your email.","لا يوجد حساب بهذا الاسم. تحقق منه أو ادخل ببريدك الإلكتروني.");return}SIGN.email=em}
+        if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(SIGN.email)){err.textContent=SERR.email;return}
         if(SIGN.how==="pw"){const pw=$("#sPass").value;if(pw.length<8){err.textContent=L("Use at least 8 characters.","استخدم 8 أحرف على الأقل.");return}
-          if(SIGN.mode==="signup"){const {data,error}=await sbc().auth.signUp({email:SIGN.email,password:pw,options:{emailRedirectTo:location.origin+location.pathname,data:SIGN.name?{full_name:SIGN.name}:undefined}});if(error)throw error;
+          if(SIGN.mode==="signup"){const {data,error}=await sbc().auth.signUp({email:SIGN.email,password:pw,options:{emailRedirectTo:location.origin+location.pathname,data:{full_name:SIGN.name||undefined,username:SIGN.user||undefined}}});if(error)throw error;
             if(data.session){await afterSignIn(data.session);return}
             SIGN.mode="login";sync.msg=L("Account created. Open the confirmation email we sent, then sign in with your password.","تم إنشاء الحساب. افتح رسالة التأكيد التي أرسلناها ثم سجّل الدخول بكلمة المرور.");render();return}
           const {data,error}=await sbc().auth.signInWithPassword({email:SIGN.email,password:pw});
@@ -1846,15 +1855,21 @@ if(SUPA){
   userChip=function(){if(!AUTH.user)return "";return `<div class="umenu"><button class="btn ghost" id="userBtn" aria-haspopup="true" aria-expanded="false">${icon("building")}<span data-notr>${esc(COMPANY?COMPANY.name:"")}</span><span class="role">${esc(roleLabel(COMPANY?COMPANY.role:""))}</span></button>
     <div class="umenu-pop" id="userPop" hidden><div class="umenu-h"><b data-notr dir="ltr">${esc(AUTH.user.email)}</b><span class="note">${esc(roleLabel(COMPANY?COMPANY.role:""))} · <span data-notr>${esc(COMPANY?COMPANY.name:"")}</span></span></div>
     ${COMPANIES.length>1||true?`<button class="umenu-i" id="coSwitch">${icon("building")}${esc(L("Switch or create company","تبديل المنشأة أو إنشاء أخرى"))}</button>`:""}
-    <button class="umenu-i" id="pwSet">${icon("lock")}${esc(L("Set or change password","تعيين أو تغيير كلمة المرور"))}</button>
+    <button class="umenu-i" id="pwSet">${icon("lock")}${esc(L("Username and password","اسم المستخدم وكلمة المرور"))}</button>
     <button class="umenu-i" id="teamGo">${icon("users")}${esc(L("Team & access","الفريق والصلاحيات"))}</button>
     ${PLATFORM?`<button class="umenu-i" id="platGo">${icon("shield")}${esc(L("Platform console","لوحة المنصة"))}</button>`:""}
     <button class="umenu-i danger" id="outBtn">${icon("out")}${esc(L("Sign out","تسجيل الخروج"))}</button></div></div>`};
   const _bum=bindUserMenu;bindUserMenu=function(){_bum();
     const sw=$("#coSwitch");if(sw)sw.onclick=()=>{closeMenus();COMPANY=null;sync.state="pick";render()};
     const tg=$("#teamGo");if(tg)tg.onclick=()=>{closeMenus();go("team")};const pg=$("#platGo");if(pg)pg.onclick=()=>{closeMenus();go("platform")};
-    const ps=$("#pwSet");if(ps)ps.onclick=()=>{closeMenus();formDialog(L("Set or change password","تعيين أو تغيير كلمة المرور"),pwField("pNew",L("New password","كلمة المرور الجديدة"))+pwField("pNew2",L("Confirm new password","تأكيد كلمة المرور الجديدة"))+`<p class="note">${esc(L("At least 8 characters. Use it to sign in on the web and in the mobile app.","8 أحرف على الأقل. استخدمها للدخول من الويب ومن تطبيق الجوال."))}</p>`,L("Save password","حفظ كلمة المرور"),
-      async f=>{const n=f.querySelector("#pNew").value;if(n.length<8)return L("Use at least 8 characters.","استخدم 8 أحرف على الأقل.");if(n!==f.querySelector("#pNew2").value)return L("The passwords don't match.","كلمتا المرور غير متطابقتين.");const {error}=await sbc().auth.updateUser({password:n});if(error)return sbErr(error);toast(L("Password saved.","تم حفظ كلمة المرور."))})};
+    const ps=$("#pwSet");if(ps)ps.onclick=async()=>{closeMenus();let un="";try{const {data}=await sbc().from("profiles").select("username").eq("user_id",(await sbc().auth.getUser()).data.user.id).single();un=data&&data.username||""}catch(x){}
+      formDialog(L("Username and password","اسم المستخدم وكلمة المرور"),`<label class="fld"><span>${esc(L("Username","اسم المستخدم"))}</span><input id="pUser" required autocomplete="username" autocapitalize="none" spellcheck="false" dir="ltr" value="${esc(un)}"></label>`+pwField("pNew",L("New password (leave empty to keep)","كلمة المرور الجديدة (اتركها فارغة للإبقاء)")).replace(" required","")+pwField("pNew2",L("Confirm new password","تأكيد كلمة المرور الجديدة")).replace(" required","")+`<p class="note">${esc(L("Sign in with your username or email. Password: at least 8 characters.","ادخل باسم المستخدم أو البريد. كلمة المرور: 8 أحرف على الأقل."))}</p>`,L("Save","حفظ"),
+      async f=>{const u=f.querySelector("#pUser").value.trim().toLowerCase(),n=f.querySelector("#pNew").value;
+        if(!/^[a-z0-9._-]{3,32}$/.test(u))return L("Username: 3 to 32 lowercase English letters, digits, dot, dash or underscore.","اسم المستخدم: من 3 إلى 32 حرفاً إنجليزياً صغيراً أو أرقاماً أو . - _");
+        if(n){if(n.length<8)return L("Use at least 8 characters.","استخدم 8 أحرف على الأقل.");if(n!==f.querySelector("#pNew2").value)return L("The passwords don't match.","كلمتا المرور غير متطابقتين.")}
+        if(u!==un){const {error}=await sbc().rpc("set_username",{p_username:u});if(error)return /taken/.test(error.message)?L("That username is taken. Choose another.","اسم المستخدم مستخدم. اختر اسماً آخر."):sbErr(error)}
+        if(n){const {error}=await sbc().auth.updateUser({password:n});if(error)return sbErr(error)}
+        toast(L("Saved.","تم الحفظ."))})};
     const ob=$("#outBtn");if(ob)ob.onclick=()=>{closeMenus();signedOut(L("You have signed out.","تم تسجيل الخروج."))}};
   // when signed in through the emailed link
   sbc().auth.onAuthStateChange((ev,session)=>{if(ev==="PASSWORD_RECOVERY"){sync.state="setpw";sync.msg="";render();return}if(ev==="SIGNED_IN"&&session&&!COMPANY&&["login","otp"].includes(sync.state))afterSignIn(session)});
