@@ -1918,8 +1918,8 @@ function welcomePopup(){
       <div class="wp-foot"><span class="grow"></span><button type="button" class="btn primary" id="wpGo">${esc(rows?L("Open the command center","افتح مركز القيادة"):L("Start now","ابدأ الآن"))}</button></div>
     </div></div>`;
   document.body.appendChild(back);
-  // the whole entrance (fade-in, charts, steps, light sweep) plays over 7 seconds; looping effects keep their own pace
-  const INTRO_MS=7000;
+  // the whole entrance (fade-in, charts, steps, light sweep) plays over 9 seconds; looping effects keep their own pace
+  const INTRO_MS=9000;
   if(back.getAnimations)requestAnimationFrame(()=>{const an=back.getAnimations({subtree:true}).filter(a=>a.effect&&a.effect.getTiming().iterations!==Infinity);
     const end=Math.max(1,...an.map(a=>{const t=a.effect.getTiming();return (t.delay||0)+(+t.duration||0)}));an.forEach(a=>{a.playbackRate=end/INTRO_MS})});
   const close=()=>{back.classList.add("out");setTimeout(()=>back.remove(),620);document.removeEventListener("keydown",esc_)};
@@ -1929,7 +1929,7 @@ function welcomePopup(){
   back.querySelector("#wpGo").onclick=()=>{close();go(rows?"dash":"hub")};
   back.querySelectorAll("[data-wgo]").forEach(b=>b.onclick=()=>{close();go(b.dataset.wgo)});
   const ib=back.querySelector("#wpInstall");if(ib)ib.onclick=async()=>{if(!installEvt)return;installEvt.prompt();await installEvt.userChoice;installEvt=null;ib.closest(".wp-install").remove()};
-  back.querySelectorAll(".wp-count").forEach(el=>{const to=+el.dataset.to,t0=performance.now()+1200,dur=4500;const step=t=>{const k=Math.max(0,Math.min(1,(t-t0)/dur)),e=1-Math.pow(1-k,3);el.textContent=fmtInt(Math.round(to*e));if(k<1)requestAnimationFrame(step)};requestAnimationFrame(step)});
+  back.querySelectorAll(".wp-count").forEach(el=>{const to=+el.dataset.to,t0=performance.now()+1500,dur=5800;const step=t=>{const k=Math.max(0,Math.min(1,(t-t0)/dur)),e=1-Math.pow(1-k,3);el.textContent=fmtInt(Math.round(to*e));if(k<1)requestAnimationFrame(step)};requestAnimationFrame(step)});
   setTimeout(()=>back.querySelector("#wpGo")?.focus({preventScroll:true}),50);
 }
 // show once per browser session, right after the workspace opens
