@@ -60,7 +60,7 @@ function bindGrid(key){
     if(b.dataset.g==="clearall")confirmBox("Delete every row in this table?","Delete rows",()=>{data().length=0;save();render()});
     if(b.dataset.g==="import")pickFile(wb=>importTable(key,wb))});
 }
-function normCell(c,v){v=v==null?"":v;if(c.t==="date")return normDate(v);if(c.t==="sel")return normSel(v,c.o);if(c.t==="num"){if(v===""||v==null)return "";return String(num(v))}return String(v).trim()}
+function normCell(c,v){v=v==null?"":v;if(c.t==="date")return normDate(v);if(c.t==="sel")return normSel(v,c.o);if(c.t==="num"){if(v===""||v==null)return "";return String(Math.round(num(v)*100)/100)}return String(v).trim()}
 function rowsInto(key,rows,colCount){const cols=COL[key]();let n=0;for(const r of rows){if(!r.slice(0,colCount).some(v=>String(v).trim()!==""))continue;const row=NEWROW[key]();cols.forEach((c,k)=>setV(key,row,c.k,normCell(c,r[k])));DATA[key]().push(row);n++}return n}
 const SHEET_AR={Setup:"الإعدادات",Checklist:"قائمة_المستندات",TB_Monthly:"ميزان_المراجعة",VAT_Returns:"الإقرارات",Sales_Register:"سجل_المبيعات",Purchase_Register:"سجل_المشتريات",ZATCA_Payments:"المدفوعات"};
 function importTable(key,wb){

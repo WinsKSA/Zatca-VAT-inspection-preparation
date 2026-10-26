@@ -69,7 +69,7 @@ const KEY="fahs-vat-v2";
 function blankReturn(){const b={};BOX_IDS.forEach(x=>b[x]={a:"",j:"",v:""});return{filed:"",ref:"",b,b14:"",b15:"",b16:""}}
 function exampleState(){
   const s={example:true,
-   setup:{company:"Example Trading Company",vat:"300000000000003",cr:"1010000000",fy:"2025-01-01",freq:"Monthly",rate:"15",tol:"10",asof:"2026-10-04",lpp:"5",irp:"50",init:"Yes",initEnd:"2026-12-31",initCut:"2026-06-30"},
+   setup:{company:"Example Trading Company",vat:"300000000000003",cr:"1010000000",fy:"2025-01-01",freq:"Monthly",rate:"15",tol:"10",asof:(()=>{const t=new Date();return new Date(Date.UTC(t.getFullYear(),t.getMonth(),t.getDate())).toISOString().slice(0,10)})(),lpp:"5",irp:"50",init:"Yes",initEnd:"2026-12-31",initCut:"2026-06-30"},
    tb:[],returns:Array.from({length:12},blankReturn),sales:[],purchases:[],payments:[],
    checklist:CHECKLIST.map((c,i)=>({status:i<8?"Ready":(i<14?"In progress":"Not started"),owner:i<8?"Finance":"",ref:"",notes:""})),
    recItems:[{d:"Timing – invoices booked in a different period",a:""},{d:"Revenue accruals not yet invoiced",a:""},{d:"Other",a:""}],
