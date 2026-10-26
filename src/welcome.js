@@ -71,11 +71,37 @@ function welcomePopup(){
   back.querySelectorAll(".wp-count").forEach(el=>{const to=+el.dataset.to,t0=performance.now()+1500,dur=5800;const step=t=>{const k=Math.max(0,Math.min(1,(t-t0)/dur)),e=1-Math.pow(1-k,3);el.textContent=fmtInt(Math.round(to*e));if(k<1)requestAnimationFrame(step)};requestAnimationFrame(step)});
   setTimeout(()=>back.querySelector("#wpGo")?.focus({preventScroll:true}),50);
 }
-// show once per browser session, right after the workspace opens
+// ---------------------------------------------------------------- sign out after 5 minutes without activity
+// Last activity is shared by every tab; reopening the app after 5 idle minutes starts at the sign-in page.
+const IDLE_MS=5*60*1000,IDLE_WARN_MS=30*1000,ACT_KEY=KEY+"-active";
+const signedIn=()=>REMOTE&&!!AUTH.user&&!["login","otp","setup","signup","forgot","reset","setpw"].includes(sync.state);
+const lastActive=()=>{try{return +localStorage.getItem(ACT_KEY)||0}catch(e){return 0}};
+const touchActive=()=>{try{localStorage.setItem(ACT_KEY,String(Date.now()))}catch(e){}};
+if(REMOTE){const la=lastActive();if(la&&Date.now()-la>IDLE_MS){
+  try{Object.keys(localStorage).filter(k=>/^sb-.*-auth-token$/.test(k)).forEach(k=>localStorage.removeItem(k))}catch(e){}
+  if(typeof setToken==="function"&&AUTH.token)setToken(null);sync.msg=L("You were signed out after 5 minutes without activity.","تم تسجيل خروجك بعد 5 دقائق دون نشاط.")}}
+let idleWarn=null;
+function idleDialog(){if(idleWarn)return;idleWarn=document.createElement("div");idleWarn.className="modal-back idle-back";
+  idleWarn.innerHTML=`<div class="modal idle" role="alertdialog" aria-modal="true" aria-labelledby="idleT"><h3 id="idleT">${esc(L("Are you still there?","هل ما زلت هنا؟"))}</h3><p class="note">${esc(L("For your security you'll be signed out in","حفاظاً على أمانك سيتم تسجيل خروجك خلال"))} <b class="idle-n" data-notr>30</b> ${esc(L("seconds.","ثانية."))}</p><div class="row end"><button type="button" class="btn" id="idleOut">${esc(L("Sign out now","تسجيل الخروج الآن"))}</button><button type="button" class="btn primary" id="idleStay">${esc(L("Stay signed in","البقاء متصلاً"))}</button></div></div>`;
+  document.body.appendChild(idleWarn);idleWarn.querySelector("#idleStay").onclick=()=>{touchActive();closeIdle()};idleWarn.querySelector("#idleOut").onclick=()=>idleSignOut(L("You have signed out.","تم تسجيل الخروج."));idleWarn.querySelector("#idleStay").focus()}
+function closeIdle(){if(idleWarn){idleWarn.remove();idleWarn=null}}
+function idleSignOut(msg){closeIdle();document.querySelector(".wp-back")?.remove();WELCOMED=false;try{localStorage.removeItem(ACT_KEY)}catch(e){}
+  if(SUPA)signedOut(msg);else{(async()=>{try{await api("logout")}catch(e){}signedOut(msg)})()}}
+if(REMOTE){let t=0;const bump=()=>{const n=Date.now();if(n-t>4000){t=n;if(!idleWarn)touchActive()}};
+  ["pointerdown","keydown","wheel","touchstart","mousemove","scroll"].forEach(ev=>addEventListener(ev,bump,{passive:true,capture:true}));
+  setInterval(()=>{if(!signedIn()){closeIdle();return}const idle=Date.now()-(lastActive()||Date.now());
+    if(idle>=IDLE_MS)idleSignOut(L("You were signed out after 5 minutes without activity.","تم تسجيل خروجك بعد 5 دقائق دون نشاط."));
+    else if(idle>=IDLE_MS-IDLE_WARN_MS){idleDialog();const n=idleWarn.querySelector(".idle-n");if(n)n.textContent=String(Math.max(0,Math.ceil((IDLE_MS-idle)/1000)))}
+    else closeIdle()},1000);
+  addEventListener("storage",e=>{if(e.key===ACT_KEY)closeIdle()})}
+
+// the welcome message opens every time the system opens (each page load) and after every sign-in
+let WELCOMED=false;
 {const _r=render;render=function(){_r();
   // sign-in page: count the readiness number up with the ring
   document.querySelectorAll(".w-num:not(.done)").forEach(el=>{el.classList.add("done");const to=+el.textContent,t0=performance.now()+500,dur=1800;el.textContent="0";
     const step=t=>{const k=Math.max(0,Math.min(1,(t-t0)/dur)),e=1-Math.pow(1-k,3);el.textContent=String(Math.round(to*e));if(k<1)requestAnimationFrame(step)};requestAnimationFrame(step)});
-  if(!REMOTE||!AUTH.user||!["saved","saving"].includes(sync.state))return;
-  let skip=false;try{skip=sessionStorage.getItem(KEY+"-welcomed")==="1";if(!skip)sessionStorage.setItem(KEY+"-welcomed","1")}catch(e){}
-  if(!skip)setTimeout(welcomePopup,250)}}
+  if(!REMOTE)return;
+  if(!AUTH.user||["login","otp","setup","signup","forgot","reset","setpw"].includes(sync.state)){WELCOMED=false;return}
+  if(!["saved","saving"].includes(sync.state)||WELCOMED)return;
+  WELCOMED=true;touchActive();setTimeout(welcomePopup,250)}}

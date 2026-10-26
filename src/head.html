@@ -460,6 +460,11 @@ html[dir="rtl"] .w-line i{transform-origin:right;background:linear-gradient(270d
 .w-node b{font:600 14px var(--f-display);color:#fff;margin-top:4px}.w-node small{font-size:12px;color:#a9c7bf;line-height:1.35}
 .w-show{animation-delay:2.6s!important}
 @media (max-width:860px){.welcome .w-slogan{font-size:clamp(26px,7.5vw,34px)}.w-time{margin-bottom:8px}}
+/* tall sign-in panel: fills the screen height, normal text size */
+body.signed-out .auth-card{min-height:calc(100vh - 48px);min-height:calc(100dvh - 48px);justify-content:center;gap:16px;padding-block:40px;align-self:start;position:sticky;top:24px}
+@media (max-width:860px){body.signed-out .auth-card{min-height:0;padding-block:28px;position:relative;top:0}}
+/* idle sign-out warning */
+.idle-back{z-index:95}.modal.idle{max-width:420px;text-align:start;animation:wppop .35s ease both}.modal.idle .idle-n{font:700 20px var(--f-display);color:var(--crit-ink)}
 .steps-mini{margin:0;padding-inline-start:20px;display:flex;flex-direction:column;gap:6px;color:var(--ink-2);font-size:14px}
 .umenu{position:relative}.umenu .role{font-size:11px;color:var(--muted);border:1px solid var(--line-2);border-radius:999px;padding:0 7px}
 [hidden]{display:none!important}
