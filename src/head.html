@@ -549,6 +549,12 @@ html[dir="rtl"] .db-ring svg{transform:rotate(-90deg) scaleY(-1)}
 .ms-grid button[aria-current="true"]{border-color:var(--brand);background:var(--brand-soft);color:var(--brand)}
 .ms-ic{position:relative;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--surface);border:1px solid var(--line)}.ms-ic .ic{width:20px;height:20px;color:var(--brand)}
 .ms-ic .mt-b{position:absolute;top:-6px;inset-inline-end:-8px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--crit);color:#fff;font:700 10px/17px var(--f-body);font-style:normal}
+/* return rebuilt from the data */
+.rc-tbl td.rc-bad{color:var(--crit-ink);font-weight:700;background:color-mix(in srgb,var(--crit) 10%,transparent)}
+.rc-tbl td.rc-ok,.tbl td.rc-ok{color:var(--good-ink);text-align:center}.tbl td.rc-bad{color:var(--crit-ink);font-weight:700}
+.rc-tbl th.rc-g{text-align:center;border-bottom:1px solid var(--line)}
+.rc-tbl tbody td:nth-child(2){min-width:260px}.rc-tbl td.boxno{white-space:nowrap}
+.rc-tbl tr.rc-net td{font-size:14.5px;background:var(--brand-soft)}
 .steps-mini{margin:0;padding-inline-start:20px;display:flex;flex-direction:column;gap:6px;color:var(--ink-2);font-size:14px}
 .umenu{position:relative}.umenu .role{font-size:11px;color:var(--muted);border:1px solid var(--line-2);border-radius:999px;padding:0 7px}
 [hidden]{display:none!important}
