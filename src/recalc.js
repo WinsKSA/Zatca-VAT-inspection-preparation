@@ -1,67 +1,102 @@
-// ================================================================ VAT return rebuilt from the registers, beside the return filed with ZATCA
-// Boxes 1-5 come from the sales register by VAT category, boxes 7-11 from the purchase register.
-// Output VAT = boxes 1, 2 and 9 (reverse charge); input VAT = boxes 7, 8, 9 (and 10, 11 at zero).
-// Box 14 (corrections) and box 15 (credit carried forward) cannot be derived from invoices, so the filed values are used.
+// ================================================================ VAT return rebuilt from the registers, laid out like the ZATCA VAT return form
+// Same structure as the form filed on the ZATCA portal: boxes 1-16, each with Amount, Adjustments and VAT amount.
+// Sales boxes 1-5 come from the sales register by VAT category; credit and debit notes go to Adjustments.
+// Purchase boxes 7-11 come from the purchase register; negative lines (supplier credit notes) go to Adjustments.
+// Output VAT = boxes 1, 2 and 9 (reverse charge); input VAT = boxes 7, 8 and 9.
+// Box 14 (corrections of earlier periods) and box 15 (credit carried forward) cannot be derived from invoices: the filed values are used.
 VIEWS.splice(VIEWS.findIndex(v=>v.id==="ret")+1,0,{id:"rcalc",t:L("Return from the data","الإقرار المحتسب من البيانات"),i:"scale"});
-UI.rcalc=UI.rcalc||{p:-1};
+UI.rcalc=UI.rcalc||{p:-1,view:"cmp"};
+const NOTE_TYPES=["Credit Note","Debit Note"];
 function recalcPeriods(C){
   const rate=C.c.rate;
   return C.ps.map((p,i)=>{
-    const box={};BOX_IDS.forEach(b=>box[b]={a:0,v:0});
-    S.sales.forEach((r,k)=>{const x=C.sales[k];if(!x||x.p!==p.no)return;const j=SALES_CATS.indexOf(r.cat);if(j<0||j>4)return;const b=j+1;box[b].a+=x.net;if(b===1||b===2)box[b].v+=x.vat});
-    S.purchases.forEach((r,k)=>{const x=C.pur[k];if(!x||x.p!==p.no)return;const j=PUR_CATS.indexOf(r.cat);if(j<0||j>4)return;const b=[7,8,9,10,11][j];box[b].a+=x.net;
-      if(b===7||b===8)box[b].v+=x.vat;if(b===9)box[b].v+=x.vat?x.vat:r2(x.net*rate)});
-    BOX_IDS.forEach(b=>{box[b].a=r2(box[b].a);box[b].v=r2(box[b].v)});
-    const R=C.rets[i],out=r2(box[1].v+box[2].v+box[9].v),inp=r2(box[7].v+box[8].v+box[9].v),net=r2(out-inp),b16=r2(net+R.b14-R.b15);
-    const box6=r2([1,2,3,4,5].reduce((s,b)=>s+box[b].a,0)),box12=r2([7,8,9,10,11].reduce((s,b)=>s+box[b].a,0));
-    return{p,i,box,box6,box12,out,inp,net,b16,R};
+    const box={};BOX_IDS.forEach(b=>box[b]={a:0,j:0,v:0,n:0});
+    S.sales.forEach((r,k)=>{const x=C.sales[k];if(!x||x.p!==p.no)return;const j=SALES_CATS.indexOf(r.cat);if(j<0||j>4)return;const b=j+1,t=box[b];
+      if(NOTE_TYPES.includes(r.type))t.j+=x.net;else t.a+=x.net;if(b===1||b===2)t.v+=x.vat;t.n++});
+    S.purchases.forEach((r,k)=>{const x=C.pur[k];if(!x||x.p!==p.no)return;const j=PUR_CATS.indexOf(r.cat);if(j<0||j>4)return;const b=[7,8,9,10,11][j],t=box[b];
+      if(x.net<0)t.j+=x.net;else t.a+=x.net;if(b===7||b===8)t.v+=x.vat;if(b===9)t.v+=x.vat?x.vat:r2(x.net*rate);t.n++});
+    BOX_IDS.forEach(b=>{const t=box[b];t.a=r2(t.a);t.j=r2(t.j);t.v=r2(t.v)});
+    const R=C.rets[i],tot=bs=>bs.reduce((s,b)=>s+box[b].a+box[b].j,0);
+    const out=r2(box[1].v+box[2].v+box[9].v),inp=r2(box[7].v+box[8].v+box[9].v),net=r2(out-inp);
+    return{p,i,box,box6:r2(tot([1,2,3,4,5])),box12:r2(tot([7,8,9,10,11])),out,inp,net,b16:r2(net+R.b14-R.b15),R};
   });
 }
+// filed values per box, split into amount / adjustment / VAT like the form
+const filedBox=(R,ret,b)=>({a:num(ret.b[b].a),j:num(ret.b[b].j),v:num(ret.b[b].v)});
 function rcSum(list){
-  const t={box:{},box6:0,box12:0,out:0,inp:0,net:0,b16:0,R:{n:b=>0,v:b=>0,box6:0,box12:0,out:0,inp:0,box13:0,b14:0,b15:0,b16:0}};
-  BOX_IDS.forEach(b=>t.box[b]={a:0,v:0});const fn={},fv={};BOX_IDS.forEach(b=>{fn[b]=0;fv[b]=0});
-  list.forEach(x=>{BOX_IDS.forEach(b=>{t.box[b].a+=x.box[b].a;t.box[b].v+=x.box[b].v;fn[b]+=x.R.n(b);fv[b]+=x.R.v(b)});
+  const t={box:{},fb:{},box6:0,box12:0,out:0,inp:0,net:0,b16:0,R:{box6:0,box12:0,out:0,inp:0,box13:0,b14:0,b15:0,b16:0}};
+  BOX_IDS.forEach(b=>{t.box[b]={a:0,j:0,v:0,n:0};t.fb[b]={a:0,j:0,v:0}});
+  list.forEach(x=>{const ret=S.returns[x.p.i];BOX_IDS.forEach(b=>{["a","j","v","n"].forEach(f=>t.box[b][f]+=x.box[b][f]);const f=filedBox(x.R,ret,b);t.fb[b].a+=f.a;t.fb[b].j+=f.j;t.fb[b].v+=f.v});
     ["box6","box12","out","inp","net","b16"].forEach(k=>t[k]+=x[k]);["box6","box12","out","inp","box13","b14","b15","b16"].forEach(k=>t.R[k]+=x.R[k])});
-  t.R.n=b=>fn[b];t.R.v=b=>fv[b];return t;
+  return t;
+}
+function rcView(all,k){
+  if(k>=0){const x=all[Math.min(k,all.length-1)],ret=S.returns[x.p.i],fb={};BOX_IDS.forEach(b=>fb[b]=filedBox(x.R,ret,b));return{...x,fb,label:x.p.label,period:x.p}}
+  return{...rcSum(all),label:L("Whole year","السنة كاملة"),period:null};
+}
+// variance waterfall: filed net VAT -> output VAT difference -> input VAT difference -> net VAT from the data
+function waterfall(v){
+  const steps=[{l:L("Filed with ZATCA","المقدم للهيئة"),v:v.R.b16,t:"base"},{l:L("Output VAT difference","فرق ضريبة المخرجات"),v:r2(v.out-v.R.out),t:"d"},
+    {l:L("Input VAT difference","فرق ضريبة المدخلات"),v:r2(-(v.inp-v.R.inp)),t:"d"},{l:L("From the data","من البيانات"),v:v.b16,t:"base"}];
+  let run=0;const pts=steps.map(s=>{let a,b;if(s.t==="base"){a=0;b=s.v;run=s.v}else{a=run;b=run+s.v;run=b}return{...s,lo:Math.min(a,b),hi:Math.max(a,b)}});
+  const mn=Math.min(0,...pts.map(p=>p.lo)),mx=Math.max(1,...pts.map(p=>p.hi)),span=mx-mn||1,pc=x=>((x-mn)/span*100).toFixed(2);
+  return `<div class="wf">${pts.map((p,i)=>`<div class="wf-row" style="--d:${(i*.12).toFixed(2)}s"><span class="wf-l">${esc(p.l)}</span><div class="wf-track"><i class="wf-zero" style="inset-inline-start:${pc(0)}%"></i><b class="wf-bar ${p.t==="base"?"base":p.v>0?"up":p.v<0?"down":"flat"}" style="inset-inline-start:${pc(p.lo)}%;width:${Math.max(.6,(p.hi-p.lo)/span*100).toFixed(2)}%"></b></div><span class="wf-v num ${p.t!=="base"&&Math.abs(p.v)>0.005?(p.v>0?"up":"down"):""}">${p.t!=="base"&&p.v>0?"+":""}${fmt(p.v)}</span></div>`).join("")}</div>
+   <p class="note">${esc(L("Read it top to bottom: what you filed, plus the output VAT the registers add, minus the input VAT they do not support, equals the net VAT the data supports.","اقرأه من الأعلى إلى الأسفل: ما قدمته، مضافاً إليه ضريبة المخرجات التي تضيفها السجلات، ناقصاً ضريبة المدخلات التي لا تدعمها، يساوي صافي الضريبة الذي تدعمه البيانات."))}</p>`;
 }
 R.rcalc=C=>{
-  const all=recalcPeriods(C),k=UI.rcalc.p,sel=k<0?rcSum(all):all[Math.min(k,all.length-1)],tol=C.c.tol,R=sel.R;
-  const chip=(lab,i,st)=>`<button class="chip" data-rcp="${i}" aria-pressed="${i===k}"><i class="dotc ${st}"></i>${esc(lab)}</button>`;
+  const all=recalcPeriods(C),k=UI.rcalc.p,mode=UI.rcalc.view||"cmp",v=rcView(all,k),tol=C.c.tol,R=v.R;
   const stOf=x=>!x.R.entered&&!x.box6&&!x.box12?"none":Math.abs(x.b16-x.R.b16)>tol?"bad":"ok";
-  const diffCell=(a,b)=>{const d=r2(a-b);return `<td class="n ${Math.abs(d)>tol?"rc-bad":"rc-ok"}">${Math.abs(d)>tol?fmt(d):"✓"}</td>`};
-  const row=(no,name,ca,fa,cv,fv,cls="")=>`<tr class="${cls}"><td class="boxno">${no}</td><td>${esc(name)}</td><td class="n">${fmt(ca)}</td><td class="n">${fmt(fa)}</td>${diffCell(ca,fa)}<td class="n">${cv==null?"":fmt(cv)}</td><td class="n">${fv==null?"":fmt(fv)}</td>${cv==null?"<td></td>":diffCell(cv,fv)}</tr>`;
+  const chip=(lab,i,st)=>`<button class="chip" data-rcp="${i}" aria-pressed="${i===k}"><i class="dotc ${st}"></i>${esc(lab)}</button>`;
+  const seg=(id,lab)=>`<button type="button" data-rcv="${id}" aria-pressed="${mode===id}">${esc(lab)}</button>`;
+  // one form cell: the computed value, the filed value under it, and the difference
+  const cell=(c,f,show=true)=>{if(!show)return `<td class="zf-c zf-na"></td>`;const d=r2(c-f),bad=Math.abs(d)>tol;
+    if(mode==="calc")return `<td class="zf-c"><b class="num">${fmt(c)}</b></td>`;
+    if(mode==="filed")return `<td class="zf-c"><b class="num">${fmt(f)}</b></td>`;
+    return `<td class="zf-c${bad?" bad":""}"><b class="num">${fmt(c)}</b><small><span>${esc(L("Filed","المقدم"))}</span> <span class="num">${fmt(f)}</span></small>${bad?`<em class="num">${d>0?"+":""}${fmt(d)}</em>`:`<em class="ok">✓</em>`}</td>`};
   const B=b=>BOXES.find(x=>x.b===b),nm=b=>LANG==="ar"?B(b).ar:B(b).en;
-  const body=[1,2,3,4,5].map(b=>row(L(`Box ${b}`,`خانة ${b}`),nm(b),sel.box[b].a,R.n(b),sel.box[b].v,R.v(b))).join("")
-    +row(L("Box 6","خانة 6"),L("Total sales","إجمالي المبيعات"),sel.box6,R.box6,sel.out,R.out,"total")
-    +[7,8,9,10,11].map(b=>row(L(`Box ${b}`,`خانة ${b}`),nm(b),sel.box[b].a,R.n(b),sel.box[b].v,R.v(b))).join("")
-    +row(L("Box 12","خانة 12"),L("Total purchases","إجمالي المشتريات"),sel.box12,R.box12,sel.inp,R.inp,"total")
-    +`<tr class="total"><td class="boxno">${esc(L("Box 13","خانة 13"))}</td><td>${esc(L("Net VAT due for the period","صافي الضريبة المستحقة عن الفترة"))}</td><td colspan="3"></td><td class="n">${fmt(sel.net)}</td><td class="n">${fmt(R.box13)}</td>${diffCell(sel.net,R.box13)}</tr>
-     <tr><td class="boxno">${esc(L("Box 14","خانة 14"))}</td><td>${esc(L("Corrections from previous periods (as filed)","تصحيحات الفترات السابقة (كما في الإقرار)"))}</td><td colspan="3"></td><td class="n">${fmt(R.b14)}</td><td class="n">${fmt(R.b14)}</td><td></td></tr>
-     <tr><td class="boxno">${esc(L("Box 15","خانة 15"))}</td><td>${esc(L("VAT credit carried forward (as filed)","الرصيد الدائن المرحل (كما في الإقرار)"))}</td><td colspan="3"></td><td class="n">${fmt(R.b15)}</td><td class="n">${fmt(R.b15)}</td><td></td></tr>
-     <tr class="total rc-net"><td class="boxno">${esc(L("Box 16","خانة 16"))}</td><td><b>${esc(L("Net VAT payable / (refundable)","صافي الضريبة المستحقة / (القابلة للاسترداد)"))}</b></td><td colspan="3"></td><td class="n"><b>${fmt(sel.b16)}</b></td><td class="n"><b>${fmt(R.b16)}</b></td>${diffCell(sel.b16,R.b16)}</tr>`;
-  const dNet=r2(sel.b16-R.b16),dOut=r2(sel.out-R.out),dInp=r2(sel.inp-R.inp);
-  const tile=(lab,v,sub,cls)=>`<div class="tile hero ${cls}"><span class="t-lab">${esc(lab)}</span><span class="t-val big num"><span data-count="${Math.round(v)}">${fmt0(v)}</span><small> SAR</small></span><span class="t-sub">${sub}</span></div>`;
-  const say=(d,pos,neg)=>Math.abs(d)<=tol?pill("ok",L("Agrees with the return","مطابق للإقرار")):pill(d>0?"bad":"warn",d>0?pos:neg);
-  const chartRows=all.filter(x=>x.R.entered||x.box6||x.box12);
-  return `<p class="lead">${esc(L("This is the VAT return as it should be, rebuilt box by box from the sales and purchase registers you entered, side by side with the return you filed with ZATCA. Any difference is what an inspector would ask you to explain.","هذا هو الإقرار الضريبي كما يجب أن يكون، محتسباً خانةً خانة من سجلي المبيعات والمشتريات المدخلين، بجانب الإقرار المقدم إلى الهيئة. أي فرق هو ما سيطلب المفتش تفسيره."))}</p>
-   <div class="chips">${chip(L("Whole year","السنة كاملة"),-1,all.some(x=>stOf(x)==="bad")?"bad":"ok")}${all.map((x,i)=>chip(x.p.label,i,stOf(x))).join("")}</div>
+  const line=(b,vat=true)=>`<tr><td class="zf-no"><span>${b}</span></td><td class="zf-d">${esc(nm(b))}${v.box[b].n?`<small>${esc(L(`${v.box[b].n} invoices`,`${v.box[b].n} فاتورة`))}</small>`:""}</td>${cell(v.box[b].a,v.fb[b].a)}${cell(v.box[b].j,v.fb[b].j)}${cell(v.box[b].v,v.fb[b].v,vat)}</tr>`;
+  const totRow=(no,name,ca,fa,cv,fv)=>`<tr class="zf-tot"><td class="zf-no"><span>${no}</span></td><td class="zf-d"><b>${esc(name)}</b></td>${cell(ca,fa)}<td class="zf-c zf-na"></td>${cell(cv,fv)}</tr>`;
+  const sumRow=(no,name,c,f,strong,derived=true)=>`<tr class="zf-sum${strong?" strong":""}"><td class="zf-no"><span>${no}</span></td><td class="zf-d" colspan="3">${strong?`<b>${esc(name)}</b>`:esc(name)}${derived?"":`<small>${esc(L("Taken from the filed return","مأخوذة من الإقرار المقدم"))}</small>`}</td>${cell(c,f)}</tr>`;
+  const head=`<tr><th class="zf-no">${esc(L("Box","الخانة"))}</th><th class="zf-d"></th><th class="zf-c">${esc(L("Amount (SAR)","المبلغ (ريال)"))}</th><th class="zf-c">${esc(L("Adjustments (SAR)","التعديلات (ريال)"))}</th><th class="zf-c">${esc(L("VAT amount (SAR)","مبلغ ضريبة القيمة المضافة (ريال)"))}</th></tr>`;
+  const dNet=r2(v.b16-R.b16),dOut=r2(v.out-R.out),dInp=r2(v.inp-R.inp);
+  const verdict=Math.abs(dNet)<=tol?["ok",L("The data supports the return as filed.","البيانات تدعم الإقرار كما تم تقديمه.")]:dNet>0?["bad",L(`The registers show ${fmt(dNet)} SAR more net VAT than was declared. Expect ZATCA to assess it, plus penalties.`,`تُظهر السجلات صافي ضريبة أعلى بمبلغ ${fmt(dNet)} ريال مما تم الإقرار به. يُتوقع أن تقدّره الهيئة مع الغرامات.`)]:["warn",L(`The registers show ${fmt(-dNet)} SAR less net VAT than was declared. You may have overpaid; check before claiming a correction.`,`تُظهر السجلات صافي ضريبة أقل بمبلغ ${fmt(-dNet)} ريال مما تم الإقرار به. قد تكون سددت بالزيادة؛ تحقق قبل طلب التصحيح.`)];
+  const per=v.period,co=S.setup;
+  return `<p class="lead">${esc(L("The VAT return as your data says it should be, laid out exactly like the ZATCA return form, with what you filed under every figure. Any difference is what an inspector will ask you to explain.","الإقرار الضريبي كما تقول بياناتك إنه يجب أن يكون، بنفس ترتيب نموذج إقرار الهيئة، وتحت كل رقم ما قمت بتقديمه. أي فرق هو ما سيطلب المفتش تفسيره."))}</p>
+   <div class="rc-bar"><div class="chips">${chip(L("Whole year","السنة كاملة"),-1,all.some(x=>stOf(x)==="bad")?"bad":"ok")}${all.map((x,i)=>chip(x.p.label,i,stOf(x))).join("")}</div>
+    <div class="seg how rc-seg" role="radiogroup" aria-label="${esc(L("Show","العرض"))}">${seg("cmp",L("Compare","مقارنة"))}${seg("calc",L("From the data","من البيانات"))}${seg("filed",L("As filed","كما قُدّم"))}</div></div>
+   <div class="rc-verdict ${verdict[0]}">${icon(verdict[0]==="ok"?"check":"alert")}<span>${esc(verdict[1])}</span></div>
    <div class="tiles">
-    ${tile(L("Net VAT difference (box 16)","فرق صافي الضريبة (خانة 16)"),dNet,say(dNet,L("Under-declared to ZATCA","أقل من المستحق في الإقرار"),L("Over-declared to ZATCA","أكثر من المستحق في الإقرار")),Math.abs(dNet)>tol?(dNet>0?"bad":"warn"):"ok")}
-    ${tile(L("Output VAT difference","فرق ضريبة المخرجات"),dOut,say(dOut,L("Registers show more output VAT","السجلات تظهر ضريبة مخرجات أكثر"),L("Return shows more output VAT","الإقرار يظهر ضريبة مخرجات أكثر")),Math.abs(dOut)>tol?"warn":"ok")}
-    ${tile(L("Input VAT difference","فرق ضريبة المدخلات"),dInp,say(-dInp,L("Return claims more input VAT","الإقرار يخصم ضريبة مدخلات أكثر"),L("Registers support more input VAT","السجلات تدعم ضريبة مدخلات أكثر")),Math.abs(dInp)>tol?"warn":"ok")}
-    ${tile(L("Net VAT from the data","صافي الضريبة من البيانات"),sel.b16,`<span>${esc(L("Filed","المقدم"))}</span><b class="num">${fmt(R.b16)}</b>`,"")}
+    <div class="tile hero ${Math.abs(dNet)>tol?(dNet>0?"bad":"warn"):"ok"}"><span class="t-lab">${esc(L("Net VAT difference (box 16)","فرق صافي الضريبة (خانة 16)"))}</span><span class="t-val big num">${dNet>0?"+":""}<span data-count="${Math.round(dNet)}">${fmt0(dNet)}</span><small> SAR</small></span><span class="t-sub"><span>${esc(L("From the data","من البيانات"))}</span><b class="num">${fmt(v.b16)}</b><span>·</span><span>${esc(L("Filed","المقدم"))}</span><b class="num">${fmt(R.b16)}</b></span></div>
+    <div class="tile hero ${Math.abs(dOut)>tol?"warn":"ok"}"><span class="t-lab">${esc(L("Output VAT difference","فرق ضريبة المخرجات"))}</span><span class="t-val big num">${dOut>0?"+":""}${fmt0(dOut)}<small> SAR</small></span><span class="t-sub"><span>${esc(L("Boxes 1, 2 and 9","الخانات 1 و2 و9"))}</span></span></div>
+    <div class="tile hero ${Math.abs(dInp)>tol?"warn":"ok"}"><span class="t-lab">${esc(L("Input VAT difference","فرق ضريبة المدخلات"))}</span><span class="t-val big num">${dInp>0?"+":""}${fmt0(dInp)}<small> SAR</small></span><span class="t-sub"><span>${esc(L("Boxes 7, 8 and 9","الخانات 7 و8 و9"))}</span></span></div>
+    <div class="tile hero"><span class="t-lab">${esc(L("Periods that do not agree","الفترات غير المطابقة"))}</span><span class="t-val big num"><span data-count="${all.filter(x=>stOf(x)==="bad").length}">${all.filter(x=>stOf(x)==="bad").length}</span><small> / ${all.length}</small></span><span class="t-sub"><span>${esc(L(`Tolerance SAR ${fmt(tol)}`,`حد التقريب ${fmt(tol)} ريال`))}</span></span></div>
    </div>
-   ${card(k<0?L("Whole year: computed vs filed","السنة كاملة: المحتسب مقابل المقدم"):L(`${tr(sel.p.label)}: computed vs filed`,`${tr(sel.p.label)}: المحتسب مقابل المقدم`),`<div class="frame"><table class="tbl rc-tbl" id="t-rcalc"><thead>
-     <tr><th rowspan="2"></th><th rowspan="2">${esc(L("Description","البيان"))}</th><th class="n rc-g" colspan="3">${esc(L("Amount (SAR)","المبلغ (ريال)"))}</th><th class="n rc-g" colspan="3">${esc(L("VAT (SAR)","الضريبة (ريال)"))}</th></tr>
-     <tr><th class="n">${esc(L("From the data","من البيانات"))}</th><th class="n">${esc(L("Filed with ZATCA","المقدم للهيئة"))}</th><th class="n">${esc(L("Difference","الفرق"))}</th><th class="n">${esc(L("From the data","من البيانات"))}</th><th class="n">${esc(L("Filed with ZATCA","المقدم للهيئة"))}</th><th class="n">${esc(L("Difference","الفرق"))}</th></tr></thead><tbody>${body}</tbody></table></div>
-     <p class="note">${esc(L("Difference = from the data − filed. A positive VAT difference means the registers show more tax than was declared. Box 14 and box 15 are taken from the filed return. Amounts include credit notes as negatives.","الفرق = من البيانات − المقدم. الفرق الموجب في الضريبة يعني أن السجلات تظهر ضريبة أكثر مما تم الإقرار به. الخانتان 14 و15 مأخوذتان من الإقرار المقدم. تُحتسب الإشعارات الدائنة بالسالب."))}</p>`,
-     `<button class="btn sm" id="rcCopy">${esc(L("Copy table","نسخ الجدول"))}</button>`)}
-   ${card(L("Net VAT by period: from the data vs filed","صافي الضريبة لكل فترة: من البيانات مقابل المقدم"),chartRows.length?columnChart(chartRows.map(x=>x.p.short),[{name:L("From the data","من البيانات"),c:"s2",values:chartRows.map(x=>x.b16)},{name:L("Filed with ZATCA","المقدم للهيئة"),c:"s1",values:chartRows.map(x=>x.R.b16)}]):`<p class="empty">${esc(L("No data yet","لا توجد بيانات بعد"))}</p>`)}
+   <section class="card zf">
+    <header class="zf-h"><div><span class="zf-k">${esc(L("VAT return · rebuilt from your data","إقرار ضريبة القيمة المضافة · محتسب من بياناتك"))}</span><h2>${esc(per?L(`Tax period: ${tr(per.label)}`,`الفترة الضريبية: ${tr(per.label)}`):L("Whole year (all periods)","السنة كاملة (جميع الفترات)"))}</h2></div>
+     <dl><div><dt>${esc(L("Taxpayer","المكلف"))}</dt><dd data-notr>${esc(co.company||"—")}</dd></div><div><dt>${esc(L("VAT number","الرقم الضريبي"))}</dt><dd class="num">${esc(co.vat||"—")}</dd></div>
+      ${per?`<div><dt>${esc(L("Period","الفترة"))}</dt><dd class="num" dir="ltr">${esc(showDate(per.st))} – ${esc(showDate(per.en))}</dd></div><div><dt>${esc(L("Due date","تاريخ الاستحقاق"))}</dt><dd class="num" dir="ltr">${esc(showDate(per.due))}</dd></div>`:""}</dl>
+     <button class="btn sm" id="rcCopy">${esc(L("Copy","نسخ"))}</button></header>
+    <div class="frame"><table class="zf-t" id="t-rcalc">
+     <tbody class="zf-sec"><tr class="zf-cap"><th colspan="5">${esc(L("VAT on sales","ضريبة القيمة المضافة على المبيعات"))}</th></tr>${head}${[1,2,3,4,5].map(b=>line(b,b<=2)).join("")}${totRow(6,L("Total sales","إجمالي المبيعات"),v.box6,R.box6,v.out,R.out)}</tbody>
+     <tbody class="zf-sec"><tr class="zf-cap"><th colspan="5">${esc(L("VAT on purchases","ضريبة القيمة المضافة على المشتريات"))}</th></tr>${head}${[7,8,9,10,11].map(b=>line(b,b<=9)).join("")}${totRow(12,L("Total purchases","إجمالي المشتريات"),v.box12,R.box12,v.inp,R.inp)}</tbody>
+     <tbody class="zf-sec"><tr class="zf-cap"><th colspan="5">${esc(L("Net VAT","صافي الضريبة"))}</th></tr>
+      ${sumRow(13,L("Total VAT due for the current period","إجمالي ضريبة القيمة المضافة المستحقة عن الفترة الحالية"),v.net,R.box13)}
+      ${sumRow(14,L("Corrections from previous periods (between ±5,000 SAR)","تصحيحات من الفترات السابقة (بين ±5,000 ريال)"),R.b14,R.b14,false,false)}
+      ${sumRow(15,L("VAT credit carried forward from previous periods","ضريبة القيمة المضافة المرحلة من الفترات السابقة"),R.b15,R.b15,false,false)}
+      ${sumRow(16,L("Net VAT due (or claimed)","صافي ضريبة القيمة المضافة المستحقة (أو المستردة)"),v.b16,R.b16,true)}</tbody>
+    </table></div>
+    <p class="note">${esc(L("Difference = from the data − filed. Credit and debit notes are shown in Adjustments. Box 2 VAT is borne by the State. Box 14 and box 15 are taken from the filed return.","الفرق = من البيانات − المقدم. تظهر الإشعارات الدائنة والمدينة في عمود التعديلات. ضريبة الخانة 2 تتحملها الدولة. الخانتان 14 و15 مأخوذتان من الإقرار المقدم."))}</p>
+   </section>
+   <div class="grid2">
+    ${card(L("How the difference builds up","كيف يتكوّن الفرق"),waterfall(v))}
+    ${(()=>{const rows=all.filter(x=>x.R.entered||x.box6||x.box12);return card(L("Net VAT by period: from the data vs filed","صافي الضريبة لكل فترة: من البيانات مقابل المقدم"),rows.length?columnChart(rows.map(x=>x.p.short),[{name:L("From the data","من البيانات"),c:"s2",values:rows.map(x=>x.b16)},{name:L("Filed with ZATCA","المقدم للهيئة"),c:"s1",values:rows.map(x=>x.R.b16)}]):`<p class="empty">${esc(L("No data yet","لا توجد بيانات بعد"))}</p>`)})()}
+   </div>
    ${card(L("Every period at a glance","كل الفترات بنظرة واحدة"),`<div class="frame"><table class="tbl"><thead><tr><th>${esc(L("Period","الفترة"))}</th><th class="n">${esc(L("Sales (data)","المبيعات (البيانات)"))}</th><th class="n">${esc(L("Sales (filed)","المبيعات (المقدم)"))}</th><th class="n">${esc(L("Output VAT (data)","ضريبة المخرجات (البيانات)"))}</th><th class="n">${esc(L("Output VAT (filed)","ضريبة المخرجات (المقدم)"))}</th><th class="n">${esc(L("Input VAT (data)","ضريبة المدخلات (البيانات)"))}</th><th class="n">${esc(L("Input VAT (filed)","ضريبة المدخلات (المقدم)"))}</th><th class="n">${esc(L("Net (data)","الصافي (البيانات)"))}</th><th class="n">${esc(L("Net (filed)","الصافي (المقدم)"))}</th><th class="n">${esc(L("Difference","الفرق"))}</th></tr></thead><tbody>
-     ${all.map(x=>`<tr><td><button class="link" data-rcp="${x.i}">${esc(x.p.label)}</button></td><td class="n">${fmt(x.box6)}</td><td class="n">${fmt(x.R.box6)}</td><td class="n">${fmt(x.out)}</td><td class="n">${fmt(x.R.out)}</td><td class="n">${fmt(x.inp)}</td><td class="n">${fmt(x.R.inp)}</td><td class="n">${fmt(x.b16)}</td><td class="n">${fmt(x.R.b16)}</td>${diffCell(x.b16,x.R.b16)}</tr>`).join("")}</tbody>
-     <tfoot>${(()=>{const t=rcSum(all);return `<tr class="total"><td><b>${esc(L("Total","الإجمالي"))}</b></td><td class="n">${fmt(t.box6)}</td><td class="n">${fmt(t.R.box6)}</td><td class="n">${fmt(t.out)}</td><td class="n">${fmt(t.R.out)}</td><td class="n">${fmt(t.inp)}</td><td class="n">${fmt(t.R.inp)}</td><td class="n">${fmt(t.b16)}</td><td class="n">${fmt(t.R.b16)}</td>${diffCell(t.b16,t.R.b16)}</tr>`})()}</tfoot></table></div>`)}`;
+     ${all.map(x=>{const d=r2(x.b16-x.R.b16);return `<tr><td><button class="link" data-rcp="${x.i}">${esc(x.p.label)}</button></td><td class="n">${fmt(x.box6)}</td><td class="n">${fmt(x.R.box6)}</td><td class="n">${fmt(x.out)}</td><td class="n">${fmt(x.R.out)}</td><td class="n">${fmt(x.inp)}</td><td class="n">${fmt(x.R.inp)}</td><td class="n">${fmt(x.b16)}</td><td class="n">${fmt(x.R.b16)}</td><td class="n ${Math.abs(d)>tol?"rc-bad":"rc-ok"}">${Math.abs(d)>tol?fmt(d):"✓"}</td></tr>`}).join("")}</tbody>
+     <tfoot>${(()=>{const t=rcSum(all),d=r2(t.b16-t.R.b16);return `<tr class="total"><td><b>${esc(L("Total","الإجمالي"))}</b></td><td class="n">${fmt(t.box6)}</td><td class="n">${fmt(t.R.box6)}</td><td class="n">${fmt(t.out)}</td><td class="n">${fmt(t.R.out)}</td><td class="n">${fmt(t.inp)}</td><td class="n">${fmt(t.R.inp)}</td><td class="n">${fmt(t.b16)}</td><td class="n">${fmt(t.R.b16)}</td><td class="n ${Math.abs(d)>tol?"rc-bad":"rc-ok"}">${Math.abs(d)>tol?fmt(d):"✓"}</td></tr>`})()}</tfoot></table></div>`)}`;
 };
 AFTER.rcalc=()=>{
   document.querySelectorAll("[data-rcp]").forEach(b=>b.onclick=()=>{UI.rcalc.p=+b.dataset.rcp;render()});
+  document.querySelectorAll("[data-rcv]").forEach(b=>b.onclick=()=>{UI.rcalc.view=b.dataset.rcv;render()});
   const cp=$("#rcCopy");if(cp)cp.onclick=()=>copyText(tableTSV(document.getElementById("t-rcalc")));
 };
