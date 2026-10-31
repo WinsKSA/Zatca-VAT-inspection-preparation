@@ -624,6 +624,61 @@ html[lang="ar"] .nav-group,html[lang="ar"] .tbl thead th{letter-spacing:0;text-t
   .bl-row{grid-template-columns:minmax(0,1fr) auto}.bl-track{grid-column:1/-1;order:3}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* ===================== Fahs design system v3: one look across every page ===================== */
+/* canvas: soft mesh behind the working area */
+body:not(.signed-out) .app>main,body:not(.signed-out) #main{background:radial-gradient(60% 40% at 100% 0%,color-mix(in srgb,var(--brand) 7%,transparent),transparent 70%),radial-gradient(50% 35% at 0% 100%,color-mix(in srgb,var(--gold) 6%,transparent),transparent 70%)}
+/* sidebar */
+nav.rail{background:linear-gradient(180deg,#0b2420 0%,#0c201d 45%,#0a1b18 100%);border-inline-end:1px solid rgba(255,255,255,.06)}
+nav.rail .brand{padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,.07)}
+nav.rail .entity{background:linear-gradient(140deg,rgba(47,179,156,.16),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.1);border-radius:14px}
+nav.rail .nav-group{display:flex;align-items:center;gap:8px}nav.rail .nav-group::after{content:"";flex:1;height:1px;background:rgba(255,255,255,.07)}
+nav.rail .nav-btn{border-radius:11px;margin:1px 0;position:relative}
+nav.rail .nav-btn .ic{transition:transform .2s ease,color .2s ease}
+nav.rail .nav-btn:hover .ic{transform:scale(1.1);color:var(--gold-2)}
+nav.rail .nav-btn[aria-current="true"]{background:linear-gradient(90deg,rgba(47,179,156,.28),rgba(47,179,156,.08));box-shadow:inset 3px 0 0 var(--gold-2),0 6px 18px rgba(0,0,0,.18)}
+[dir="rtl"] nav.rail .nav-btn[aria-current="true"]{background:linear-gradient(270deg,rgba(47,179,156,.28),rgba(47,179,156,.08));box-shadow:inset -3px 0 0 var(--gold-2),0 6px 18px rgba(0,0,0,.18)}
+nav.rail .nav-btn[aria-current="true"] .ic{color:var(--gold-2);opacity:1}
+nav.rail .badge{background:linear-gradient(135deg,#e5484d,#c93b3f);box-shadow:0 2px 8px rgba(229,72,77,.4)}
+/* top bar */
+.topbar{border-bottom:1px solid color-mix(in srgb,var(--line) 70%,transparent);background:color-mix(in srgb,var(--surface) 78%,transparent)!important;backdrop-filter:blur(14px) saturate(1.2);-webkit-backdrop-filter:blur(14px) saturate(1.2)}
+.topbar h1{font-weight:700;letter-spacing:-.01em}
+/* page header band */
+.pg-hero{position:relative;overflow:hidden;isolation:isolate;display:flex;gap:16px;align-items:center;padding:18px 20px;margin-bottom:16px;border-radius:18px;color:#e6f2ee;
+ background:linear-gradient(135deg,#0a2a25 0%,#0c3d35 55%,#163a2c 100%);box-shadow:0 14px 34px rgba(4,20,17,.18);animation:cardin .55s cubic-bezier(.2,.9,.25,1) both}
+.pg-hero::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.08) 48%,transparent 60%);transform:translateX(-120%);animation:wpsweep 2.6s .3s ease-in-out both}
+.pg-orb{position:absolute;z-index:-1;width:240px;height:240px;border-radius:50%;background:#2fb39c;opacity:.28;filter:blur(55px);top:-120px;inset-inline-end:-40px;animation:wpfloat 9s ease-in-out infinite alternate}
+.pg-ic{flex:none;width:52px;height:52px;border-radius:15px;display:grid;place-items:center;background:linear-gradient(135deg,#0f8a7a,#0b6b5f);box-shadow:0 8px 22px rgba(47,179,156,.38);animation:pop .5s .1s cubic-bezier(.2,.9,.25,1.4) both}
+.pg-ic .ic{width:26px;height:26px;color:#fff}
+.pg-tx{min-width:0}.pg-crumb{display:block;font-size:12px;font-weight:600;color:#e3b866}
+.pg-hero h2{margin:2px 0 0;font:700 20px/1.25 var(--f-display);color:#fff}
+.pg-hero p{margin:6px 0 0;color:#b9d6cf;font-size:14px;line-height:1.6;max-width:90ch}
+.pg-hero p b,.pg-hero p strong{color:#fff}
+/* cards & tiles */
+.card{border-radius:18px;border-color:color-mix(in srgb,var(--line) 85%,transparent);box-shadow:0 1px 2px rgba(4,20,17,.04),0 8px 24px rgba(4,20,17,.05)}
+.card-h h2{display:flex;align-items:center;gap:10px}.card-h h2::before{content:"";width:4px;height:18px;border-radius:3px;background:linear-gradient(180deg,var(--brand-2),var(--gold-2));flex:none}
+.tile{border-radius:16px;box-shadow:0 1px 2px rgba(4,20,17,.04),0 8px 22px rgba(4,20,17,.05)}
+.t-val{letter-spacing:-.01em}
+/* tables */
+.frame{border-radius:14px;border-color:color-mix(in srgb,var(--line) 85%,transparent)}
+.tbl thead th{position:sticky;top:0;z-index:1;background:color-mix(in srgb,var(--surface-2) 92%,var(--brand) 8%);font-weight:600}
+.tbl tbody tr:nth-child(even) td{background:color-mix(in srgb,var(--surface-2) 55%,transparent)}
+.tbl tbody tr{transition:background .15s ease}.tbl tbody tr:hover td{background:color-mix(in srgb,var(--brand) 7%,transparent)}
+/* buttons, inputs, chips, pills */
+.btn{border-radius:10px;transition:transform .15s ease,box-shadow .15s ease,background .15s ease,border-color .15s ease}
+.btn:hover{transform:translateY(-1px)}.btn:active{transform:translateY(0) scale(.98)}
+.btn.primary{background:linear-gradient(135deg,var(--brand-2),var(--brand));border-color:transparent;box-shadow:0 6px 16px color-mix(in srgb,var(--brand) 30%,transparent)}
+.btn.primary:hover{box-shadow:0 10px 22px color-mix(in srgb,var(--brand) 38%,transparent)}
+.btn:focus-visible,.chip:focus-visible,.nav-btn:focus-visible{outline:2px solid var(--gold-2);outline-offset:2px}
+.fld input:focus,.fld select:focus,.fld textarea:focus,.tbl input:focus,.tbl select:focus{border-color:var(--brand);box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 20%,transparent);outline:none}
+.chip{border-radius:999px;transition:background .15s ease,border-color .15s ease,transform .15s ease}.chip:hover{transform:translateY(-1px)}
+.chip[aria-pressed="true"]{box-shadow:0 6px 16px rgba(4,20,17,.18)}
+.banner{border-radius:16px}
+/* page change: everything settles in */
+.content.anim>*{animation:cardin .5s cubic-bezier(.2,.9,.25,1) both}
+.content.anim>*:nth-child(2){animation-delay:.05s}.content.anim>*:nth-child(3){animation-delay:.1s}.content.anim>*:nth-child(4){animation-delay:.15s}.content.anim>*:nth-child(n+5){animation-delay:.2s}
+@media (max-width:820px){.pg-hero{padding:14px;gap:12px;border-radius:16px}.pg-ic{width:42px;height:42px;border-radius:12px}.pg-ic .ic{width:22px;height:22px}.pg-hero h2{font-size:17px}.pg-hero p{font-size:13px}}
+@media (max-width:820px){.chips{flex-wrap:nowrap!important;overflow-x:auto;scrollbar-width:none;padding-bottom:4px;-webkit-overflow-scrolling:touch}.chips::-webkit-scrollbar{display:none}.chips>*{flex:none}}
+@media (prefers-reduced-motion:reduce){.pg-hero,.pg-hero::after,.pg-orb,.content.anim>*{animation:none!important}}
 </style>
 </head>
 <body>

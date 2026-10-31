@@ -13,3 +13,16 @@ function dashBanner(C){
   </section>`;
 }
 {const _d=R.dash;R.dash=C=>dashBanner(C)+_d(C)}
+
+// ================================================================ page header on every page: section, icon and the page's description
+// The first lead paragraph of a page moves into a header band, so every page opens the same way.
+function pageGroup(id){let g="";for(const v of VIEWS){if(v.g)g=v.g;else if(v.id===id)return g}return ""}
+{const _r=render;render=function(){_r();
+  if(document.body.classList.contains("signed-out")||cur==="dash")return;
+  const c=document.querySelector("#main .content");if(!c||c.querySelector(".pg-hero"))return;
+  const v=VIEWS.find(x=>x.id===cur);if(!v)return;
+  const lead=[...c.children].find(e=>e.matches("p.lead"));
+  const h=document.createElement("section");h.className="pg-hero";
+  h.innerHTML=`<i class="pg-orb"></i><span class="pg-ic">${icon(v.i)}</span><div class="pg-tx"><span class="pg-crumb">${esc(pageGroup(cur))}</span><h2>${esc(tr(v.t))}</h2>${lead?`<p>${lead.innerHTML}</p>`:""}</div>`;
+  if(lead)lead.remove();
+  const after=[...c.children].filter(e=>e.matches(".banner"));c.insertBefore(h,after.length?after[after.length-1].nextSibling:c.firstChild)}}
