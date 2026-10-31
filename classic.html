@@ -2453,7 +2453,12 @@ function bindGrid(key){
 function normCell(c,v){v=v==null?"":v;if(c.t==="date")return normDate(v);if(c.t==="sel")return normSel(v,c.o);if(c.t==="num"){if(v===""||v==null)return "";return String(Math.round(num(v)*100)/100)}return String(v).trim()}
 const SYSNO_RX=/رقم الفاتورة داخل النظام|system invoice/i;
 const hasSysno=rows=>rows.slice(0,8).some(r=>(r||[]).some(v=>SYSNO_RX.test(String(v||""))));
-function rowsInto(key,rows,colCount,withSys){const cols=COL[key]().filter(c=>c.k!=="sysno"||withSys);let n=0;for(const r of rows){if(!r.slice(0,colCount).some(v=>String(v).trim()!==""))continue;const row=NEWROW[key]();cols.forEach((c,k)=>setV(key,row,c.k,normCell(c,r[k])));DATA[key]().push(row);n++}return n}
+// total / subtotal lines in a spreadsheet (e.g. "إجمالي الربع") are not invoices: skip them so nothing is counted twice
+const TOTAL_RX=/^\s*(الإجمالي|إجمالي|اجمالي|المجموع|مجموع|الاجمالي|total|sub-?total|grand total)/i;
+const isDate=v=>/^\d{4}-\d{2}-\d{2}$/.test(String(normDate(v)||""));
+const isTotalRow=(r,cols)=>r.slice(0,3).some(v=>{const t=String(v??"").trim();return t&&!isDate(t)&&TOTAL_RX.test(t)});
+let SKIPPED_TOTALS=0;
+function rowsInto(key,rows,colCount,withSys){const cols=COL[key]().filter(c=>c.k!=="sysno"||withSys);let n=0;for(const r of rows){if(!r.slice(0,colCount).some(v=>String(v).trim()!==""))continue;if(key!=="tb"&&isTotalRow(r,cols)){SKIPPED_TOTALS++;continue}const row=NEWROW[key]();cols.forEach((c,k)=>setV(key,row,c.k,normCell(c,r[k])));DATA[key]().push(row);n++}return n}
 const SHEET_AR={Setup:"الإعدادات",Checklist:"قائمة_المستندات",TB_Monthly:"ميزان_المراجعة",VAT_Returns:"الإقرارات",Sales_Register:"سجل_المبيعات",Purchase_Register:"سجل_المشتريات",ZATCA_Payments:"المدفوعات"};
 function importTable(key,wb){
   const tmpl={tb:"TB_Monthly",sales:"Sales_Register",pur:"Purchase_Register",pay:"ZATCA_Payments"}[key];let rows,ws=wb.Sheets[tmpl]||wb.Sheets[SHEET_AR[tmpl]];
@@ -2461,7 +2466,7 @@ function importTable(key,wb){
   if(ws){const all=sheetRows(ws);withSys=hasSysno(all);rows=all.slice(5);if(key==="sales"||key==="pur")rows=rows.map(dropTotal)}
   else{rows=sheetRows(wb.Sheets[wb.SheetNames[0]]);withSys=hasSysno(rows);if(withSys&&key==="pur"&&rows.length&&rows[0].some(v=>SYSNO_RX.test(String(v||""))))rows=rows.slice(1);const ni={tb:4,sales:7,pur:7,pay:3}[key];if(rows.length&&typeof rows[0][ni]==="string"&&rows[0][ni]!==""&&!/^[\d,.()\-\s]+$/.test(rows[0][ni]))rows=rows.slice(1)}
   if(key==="tb")rows=rows.filter(r=>String(r[0]).trim()!==""||String(r[1]).trim()!=="");
-  const n=rowsInto(key,rows,COL[key]().length,withSys);S.example=false;save();render();toast(`Imported ${fmtInt(n)} rows`)}
+  const n=rowsInto(key,rows,COL[key]().length,withSys);S.example=false;save();render();toast(SKIPPED_TOTALS?L(`Imported ${fmtInt(n)} rows · skipped ${SKIPPED_TOTALS} total line(s)`,`تم استيراد ${fmtInt(n)} صف · تم تجاهل ${SKIPPED_TOTALS} سطر إجمالي`):`Imported ${fmtInt(n)} rows`);SKIPPED_TOTALS=0}
 function importWorkbook(wb){
   const sh=n=>wb.Sheets[n]||wb.Sheets[SHEET_AR[n]],has=n=>!!sh(n);
   if(!has("TB_Monthly")&&!has("Sales_Register")&&!has("VAT_Returns")){toast("This isn't the VAT Inspection Pack workbook. Use the Import button on each table instead.");return}
