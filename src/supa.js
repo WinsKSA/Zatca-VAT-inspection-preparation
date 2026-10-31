@@ -3,7 +3,7 @@
 const SB_URL="https://xuogrqrjdabhrmicqwhd.supabase.co";
 const SB_KEY="sb_publishable_wNw9BzBBHFMWfpUaA6eIYg_97mL3Oxq";
 const SUPA=REMOTE&&window.FAHS_BACKEND!=="gas";
-let SETPW_OPTIONAL=false;
+let SETPW_OPTIONAL=false, AUTHPOL={otp_required:false};
 let sb=null, COMPANY=null, COMPANIES=[], PLATFORM=false, TEAM=null, PLAT=null;
 // Sessions live only in this tab (sessionStorage): every time the system is opened it starts at the sign-in page.
 if(SUPA){try{Object.keys(localStorage).filter(k=>/^sb-.*-auth-token/.test(k)).forEach(k=>localStorage.removeItem(k))}catch(e){}}
@@ -26,6 +26,7 @@ if(SUPA){
 
 // ---------------------------------------------------------------- start-up and company selection
 async function supaStart(){
+  try{const {data}=await sbc().rpc("auth_policy");if(data)AUTHPOL=data}catch(e){}
   if(/access_token|[?&]code=/.test(location.hash+location.search))window.__fromLink=true;
   if(/access_token|error_description|[?&]code=/.test(location.hash+location.search))setTimeout(()=>{try{history.replaceState(null,"",location.pathname)}catch(e){}},1500);
   sync.state=HAD_CACHE?"refreshing":"loading";
@@ -36,7 +37,11 @@ let SIGNING=false;
 async function afterSignIn(session){
   if(SIGNING)return;SIGNING=true;try{await afterSignIn2(session)}finally{SIGNING=false}
 }
+const EMAIL_AMR=["otp","magiclink","recovery","email/signup","invite"];
+// how this session was proven, read from the access token (the database checks the same claim)
+function emailProven(session){try{const p=JSON.parse(atob(session.access_token.split(".")[1].replace(/-/g,"+").replace(/_/g,"/")));return (p.amr||[]).some(m=>EMAIL_AMR.includes(m.method))}catch(e){return false}}
 async function afterSignIn2(session){
+  if(AUTHPOL.otp_required&&!emailProven(session)){try{await sbc().auth.signOut({scope:"local"})}catch(e){}sync.state="login";sync.msg=L("An email code is required to sign in.","يلزم رمز من البريد الإلكتروني لتسجيل الدخول.");render();return}
   // arrived from an emailed sign-in link: offer to set a password right away (needed for the phone apps)
   if(window.__fromLink){window.__fromLink=false;SETPW_OPTIONAL=true;sync.state="setpw";sync.msg="";render();return}
   const u=session.user;AUTH.user={username:u.email,email:u.email,name:(u.user_metadata&&u.user_metadata.full_name)||u.email.split("@")[0],role:"viewer"};

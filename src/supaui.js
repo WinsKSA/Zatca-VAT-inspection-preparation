@@ -74,6 +74,9 @@ function bindSupa(){
             SIGN.mode="login";sync.msg=L("Account created. Open the confirmation email we sent, then sign in with your password.","تم إنشاء الحساب. افتح رسالة التأكيد التي أرسلناها ثم سجّل الدخول بكلمة المرور.");render();return}
           const {data,error}=await sbc().auth.signInWithPassword({email:SIGN.email,password:pw});
           if(error){err.textContent=/invalid login/i.test(error.message)?L("Wrong email or password. If you have never set a password, sign in with the email link first, then set one from the menu.","البريد أو كلمة المرور غير صحيحة. إذا لم تعيّن كلمة مرور من قبل فادخل برابط البريد أولاً ثم عيّنها من القائمة."):/not confirmed/i.test(error.message)?L("Confirm your email first: open the link we emailed you.","أكّد بريدك أولاً: افتح الرابط الذي أرسلناه إليك."):sbErr(error);return}
+          if(AUTHPOL.otp_required){ // step 2: the password was right, now prove the mailbox with an emailed code
+            try{await sbc().auth.signOut({scope:"local"})}catch(x){}
+            await send();sync.state="otp";sync.msg=L("Password accepted. Step 2 of 2: enter the code we emailed you.","تم قبول كلمة المرور. الخطوة 2 من 2: أدخل الرمز المرسل إلى بريدك.");render();return}
           sync.msg="";await afterSignIn(data.session);return}
         await send();sync.state="otp";sync.msg="";render();return}
       if(st==="setpw"){const a=$("#nPass").value;if(a.length<8){err.textContent=L("Use at least 8 characters.","استخدم 8 أحرف على الأقل.");return}if(a!==$("#nPass2").value){err.textContent=L("The passwords don't match.","كلمتا المرور غير متطابقتين.");return}
@@ -117,7 +120,7 @@ if(SUPA){
         toast(L("Saved.","تم الحفظ."))})};
     const ob=$("#outBtn");if(ob)ob.onclick=()=>{closeMenus();signedOut(L("You have signed out.","تم تسجيل الخروج."))}};
   // when signed in through the emailed link
-  sbc().auth.onAuthStateChange((ev,session)=>{if(ev==="PASSWORD_RECOVERY"){sync.state="setpw";sync.msg="";render();return}if(ev==="SIGNED_IN"&&session&&!COMPANY&&["login","otp"].includes(sync.state))afterSignIn(session)});
+  sbc().auth.onAuthStateChange((ev,session)=>{if(ev==="PASSWORD_RECOVERY"){sync.state="setpw";sync.msg="";render();return}if(ev==="SIGNED_IN"&&session&&!COMPANY&&["login","otp"].includes(sync.state)&&!(AUTHPOL.otp_required&&!emailProven(session)))afterSignIn(session)});
 }
 
 // ---------------------------------------------------------------- Team & access page
