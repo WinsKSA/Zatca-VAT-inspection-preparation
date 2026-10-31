@@ -75,7 +75,7 @@ function authShowcase(){
    <div class="w-dash">
     <div class="w-dash-h"><span class="w-dot"></span><span class="w-dot"></span><span class="w-dot"></span><b>${esc(L("Inspection command center","مركز قيادة الفحص"))}</b></div>
     <div class="w-dash-b">
-     <div class="w-ring"><svg viewBox="0 0 120 120"><defs><linearGradient id="wrg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4cc9b1"/><stop offset="1" stop-color="#e3b866"/></linearGradient></defs><circle cx="60" cy="60" r="50" class="t"/><circle cx="60" cy="60" r="50" class="f"/></svg><div><b class="w-num">92</b><small>%</small></div><span>${esc(L("Readiness","الجاهزية"))}</span></div>
+     <div class="w-ring"><svg viewBox="0 0 120 120"><defs><linearGradient id="wrg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#54c08a"/><stop offset="1" stop-color="#88d8ad"/></linearGradient></defs><circle cx="60" cy="60" r="50" class="t"/><circle cx="60" cy="60" r="50" class="f"/></svg><div><b class="w-num">92</b><small>%</small></div><span>${esc(L("Readiness","الجاهزية"))}</span></div>
      <div class="w-bars">${bars.map((h,i)=>`<i style="--h:${h}%;--d:${(0.6+i*0.07).toFixed(2)}s"></i>`).join("")}</div>
     </div>
     <ul class="w-ticks">${tests.map((t,i)=>`<li style="--d:${(1.4+i*0.45).toFixed(2)}s"><span class="w-ck">✓</span>${esc(t)}</li>`).join("")}</ul>
@@ -91,7 +91,7 @@ function welcomePanel(){const f=[["test",L("39 automated tests on 100% of your d
    ${timeHTML()}
    ${authShowcase()}
    <ul>${f.map(([i,t],k)=>`<li style="--d:${k*90}ms">${icon(i)}<span>${esc(t)}</span></li>`).join("")}</ul>
-   <a class="w-app" href="app.html">${icon("dl")}<span>${esc(L("Get the app for iPhone and Android","حمّل التطبيق لـ iPhone وAndroid"))}</span></a>
+   <p class="w-indep">${esc(L("Independent tool for taxpayers. Not affiliated with ZATCA.","أداة مستقلة للمكلفين، غير تابعة لهيئة الزكاة والضريبة والجمارك."))}</p><a class="w-app" href="app.html">${icon("dl")}<span>${esc(L("Get the app for iPhone and Android","حمّل التطبيق لـ iPhone وAndroid"))}</span></a>
    <p class="w-foot">${esc(typeof SUPA!=="undefined"&&SUPA?L("Each company has its own private, encrypted workspace.","لكل منشأة مساحة عمل خاصة ومشفّرة."):L("Data is stored in your company's Google Sheet.","تُحفظ البيانات في جدول Google الخاص بالمنشأة."))}</p></aside>`}function authScreen(){
   const setup=sync.state==="setup",otp=sync.state==="otp";
   const brand=`<div class="auth-brand"><svg viewBox="0 0 40 40" class="logo" aria-hidden="true"><rect x="2" y="2" width="36" height="36" rx="10" fill="var(--brand)"/><circle cx="18" cy="18" r="8" fill="none" stroke="#fff" stroke-width="3"/><path d="M24 24l7 7" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/><path d="M14.5 18.5l2.5 2.5 4.5-5" fill="none" stroke="var(--gold-2)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><div><div class="wordmark">${LANG==="ar"?"فحص":"Fahs"}</div><div class="tagline slogan-sm">${esc(SLOGAN())}</div></div></div>`;
