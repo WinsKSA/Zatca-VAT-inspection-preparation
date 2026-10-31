@@ -3,7 +3,7 @@
 const API_URL="https://script.google.com/macros/s/AKfycbygC_bY9QKQBoLKMhXA2Yvo_vQ9Vsgdvjo30PThWUxY7YsPv-mo8Z4yNRzEAjkAbyG9Lg/exec";
 const REMOTE=window.FAHS_MODE!=="demo";
 const SALES_F=["date","no","type","cust","cvat","ctype","cat","net","vat","uuid","fat","gl","ev"];
-const PUR_F=["date","no","sup","svat","country","cat","nature","net","vat","valid","claimed","bayan","gl"];
+const PUR_F=["date","no","sup","svat","country","cat","nature","net","vat","valid","claimed","bayan","gl","sysno"];
 const SCHEMA={
  meta:{kind:"kv",get:()=>({example:S.example?"yes":"no",version:"2"}),set:o=>{S.example=o.example==="yes"}},
  setup:{kind:"kv",get:()=>S.setup,set:o=>{Object.assign(S.setup,o)}},
