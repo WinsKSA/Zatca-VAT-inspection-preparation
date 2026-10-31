@@ -9,7 +9,7 @@ const COMP={
  sales:[{h:"Period",f:(r,x)=>x?(x.p||"—"):""},{h:"Expected VAT",n:1,f:(r,x)=>x?x.exp:""},{h:"VAT difference",n:1,f:(r,x)=>x?x.diff:""},{h:"Exceptions",flags:1,f:(r,x)=>x?x.flags.join("; "):""}],
  pur:[{h:"Period",f:(r,x)=>x?(x.p||"—"):""},{h:"Expected VAT",n:1,f:(r,x)=>x?x.exp:""},{h:"VAT claimed",n:1,f:(r,x)=>x?x.claimed:""},{h:"Defensible VAT",n:1,f:(r,x)=>x?x.defensible:""},{h:"VAT at risk",n:1,f:(r,x)=>x?x.risk:""},{h:"Exceptions",flags:1,f:(r,x)=>x?x.flags.join("; "):""}],
  pay:[{h:"Period",f:(r,x)=>x.label},{h:"Due date",f:(r,x)=>x.due?showDate(x.due):""},{h:"Days late",n:1,f:(r,x)=>x.days||""},{h:"Months late",n:1,f:(r,x)=>x.ml||""},{h:"Est. penalty",n:1,f:(r,x)=>x.pen}]};
-L("Duplicate supplier invoice","فاتورة مورد مكررة");L("Foreign supplier without reverse charge","مورد أجنبي دون احتساب عكسي");
+L("Duplicate supplier invoice","فاتورة مورد مكررة");L("Missing supplier invoice number","رقم فاتورة المورد غير موجود");L("Foreign supplier without reverse charge","مورد أجنبي دون احتساب عكسي");
 const DATA={tb:()=>S.tb,sales:()=>S.sales,pur:()=>S.purchases,pay:()=>S.payments};
 const NEWROW={tb:()=>({code:"",name:"",fs:"",map:"",open:"",m:Array(12).fill("")}),sales:()=>({}),pur:()=>({}),pay:()=>({})};
 function getV(key,row,k){if(key==="tb"&&/^m\d+$/.test(k))return row.m[+k.slice(1)]??"";return row[k]??""}

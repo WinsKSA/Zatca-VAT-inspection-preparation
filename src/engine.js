@@ -11,6 +11,7 @@ function monthLabels(){let fy=D(S.setup.fy)||D("2025-01-01");return Array.from({
 function periodOf(ps,s){const d=D(s);if(!d)return 0;const p=ps.find(p=>d>=p.st&&d<=p.en);return p?p.no:0}
 function monthsLate(due,d){if(!due||!d||d<=due)return 0;return (d.getUTCFullYear()-due.getUTCFullYear())*12+d.getUTCMonth()-due.getUTCMonth()+(d.getUTCDate()>due.getUTCDate()?1:0)}
 const normNo=s=>String(s||"").trim().toUpperCase().replace(/\s+/g,"");
+const hasInvNo=s=>/[\p{L}\p{N}]/u.test(String(s||""));
 
 function salesCalc(r,ps,c){
   if(!r.date&&!r.no&&!r.net)return null;
@@ -30,7 +31,7 @@ function purCalc(r,ps,c,dup){
   if(!r.date&&!r.no&&!r.net)return null;
   const p=periodOf(ps,r.date), net=num(r.net), vat=num(r.vat), vatable=PUR_CATS.slice(0,3).includes(r.cat), blocked=/blocked/i.test(r.nature||"");
   const exp=vatable?r2(net*c.rate):0, diff=r2(vat-exp), claimed=r.claimed==="Yes"?vat:0;
-  const defensible=(!dup&&r.claimed==="Yes"&&r.valid==="Yes"&&!blocked&&vatable&&(r.cat!==PUR_CATS[0]||vatOk(r.svat)))?vat:0;
+  const defensible=(!dup&&r.claimed==="Yes"&&r.valid==="Yes"&&hasInvNo(r.no)&&!blocked&&vatable&&(r.cat!==PUR_CATS[0]||vatOk(r.svat)))?vat:0;
   const f=[];
   if(!p)f.push("Date outside audit periods");
   if(!r.cat)f.push("No VAT category");
@@ -38,6 +39,7 @@ function purCalc(r,ps,c,dup){
   if(Math.abs(diff)>c.tol)f.push("VAT ≠ 15% × net");
   if(r.cat===PUR_CATS[0]&&!vatOk(r.svat))f.push("Invalid or missing supplier VAT no");
   if(r.claimed==="Yes"&&r.valid!=="Yes")f.push("VAT claimed without a valid tax invoice");
+  if(!hasInvNo(r.no)&&(r.date||r.net))f.push("Missing supplier invoice number");
   if(r.claimed==="Yes"&&blocked)f.push("Blocked input VAT claimed");
   if(r.cat===PUR_CATS[1]&&!String(r.bayan||"").trim())f.push("Customs declaration no missing");
   if(r.cat===PUR_CATS[2]&&isSaudi(r.country))f.push("Reverse charge used for a local supplier");
@@ -64,7 +66,7 @@ function benford(amts){const c=Array(10).fill(0);let n=0;for(const a of amts){co
 function compute(){
   const c=cfg(), ps=periods();
   const sales=S.sales.map(r=>salesCalc(r,ps,c));
-  const seen=new Map(); const pur=S.purchases.map(r=>{const k=normNo(r.sup)+"|"+normNo(r.no);const dup=!!(r.no&&seen.has(k));if(r.no&&!seen.has(k))seen.set(k,1);return purCalc(r,ps,c,dup)});
+  const seen=new Map(); const pur=S.purchases.map(r=>{const k=normNo(r.sup)+"|"+normNo(r.no);const real=hasInvNo(r.no),dup=!!(real&&seen.has(k));if(real&&!seen.has(k))seen.set(k,1);return purCalc(r,ps,c,dup)});
   const rets=ps.map(p=>retCalc(S.returns[p.i],c,p));
   const pays=S.payments.map(r=>{const p=num(r.p), date=D(r.date), per=ps[p-1], due=per?per.due:null, ml=monthsLate(due,date), amt=num(r.amt);
     return{p,date,due,days:due&&date&&date>due?daysBetween(due,date):0,ml,amt,pen:amt>0?r2(amt*c.lpp*ml):0,label:per?per.label:(p===0&&r.date?"Prior period":"")}});
@@ -144,7 +146,7 @@ const TESTS=[
  T("S11","sales","low","Sales dated outside the audit periods","مبيعات بتاريخ خارج فترات الفحص","—","sales",C=>hitS(C,(r,x)=>!x.p)),
  T("P01","purchases","high","Duplicate supplier invoices (double claim)","فواتير موردين مكررة (خصم مزدوج)","VAT IR Art. 49","pur",C=>hitP(C,(r,x)=>x.dup,(r,x)=>x.claimed)),
  T("P02","purchases","high","Domestic purchases with invalid supplier VAT number","مشتريات محلية برقم ضريبي غير صحيح للمورد","VAT IR Art. 49(7)","pur",C=>hitP(C,(r)=>r.cat===PUR_CATS[0]&&!vatOk(r.svat),(r,x)=>x.claimed)),
- T("P03","purchases","high","Input VAT claimed without a valid tax invoice","ضريبة مدخلات مخصومة دون فاتورة ضريبية صحيحة","VAT IR Art. 49","pur",C=>hitP(C,(r)=>r.claimed==="Yes"&&r.valid!=="Yes",(r,x)=>x.claimed)),
+ T("P03","purchases","high","Input VAT claimed without a valid tax invoice","ضريبة مدخلات مخصومة دون فاتورة ضريبية صحيحة","VAT IR Art. 49","pur",C=>hitP(C,(r)=>r.claimed==="Yes"&&(r.valid!=="Yes"||!hasInvNo(r.no)),(r,x)=>x.claimed)),
  T("P04","purchases","high","Blocked input VAT claimed (entertainment, vehicles, staff benefits)","خصم ضريبة غير قابلة للخصم (ترفيه، سيارات، منافع موظفين)","VAT IR Art. 50","pur",C=>hitP(C,(r)=>r.claimed==="Yes"&&/blocked/i.test(r.nature||""),(r,x)=>x.claimed)),
  T("P05","purchases","medium","Customs VAT claimed without a customs declaration","ضريبة جمارك مخصومة دون بيان جمركي","VAT IR Art. 49(2)","pur",C=>hitP(C,(r)=>r.cat===PUR_CATS[1]&&!String(r.bayan||"").trim(),(r,x)=>x.claimed)),
  T("P06","purchases","medium","Reverse charge applied to a Saudi supplier","تطبيق الاحتساب العكسي على مورد سعودي","VAT Law Art. 47","pur",C=>hitP(C,(r)=>r.cat===PUR_CATS[2]&&isSaudi(r.country))),
